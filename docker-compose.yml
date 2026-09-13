@@ -1,0 +1,32 @@
+# Rabith stack: API (brain + data) + n8n (hands). The web app is served by the API.
+services:
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    ports: ["8787:8787"]
+    env_file: .env
+    environment:
+      N8N_WEBHOOK_BASE: http://n8n:5678/webhook
+      RABITH_DATA_DIR: /data
+    volumes: ["rabith-data:/data"]
+    depends_on: [n8n]
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:latest
+    ports: ["5678:5678"]
+    environment:
+      GENERIC_TIMEZONE: Asia/Jakarta
+      TZ: Asia/Jakarta
+      N8N_HOST: localhost
+      WEBHOOK_URL: http://localhost:5678/
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-change-me-too}
+      # Make the shared secret and API base available to workflows as $env.*
+      RABITH_API_BASE: http://api:8787/api
+      RABITH_WEBHOOK_SECRET: ${RABITH_WEBHOOK_SECRET:-change-me}
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+    volumes: ["n8n-data:/home/node/.n8n", "./n8n/workflows:/workflows:ro"]
+    restart: unless-stopped
+
+volumes:
+  rabith-data:
+  n8n-data:

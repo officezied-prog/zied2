@@ -1,0 +1,14 @@
+{
+  "name": "rabith-platform",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Rabith (رابط) — AI-orchestrated influencer × brand coordination platform for Indonesia, with a Claude-driven agent team and n8n automation.",
+  "workspaces": ["apps/api"],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/api",
+    "start": "npm run start --workspace apps/api",
+    "test": "npm test --workspace apps/api",
+    "seed": "npm run seed --workspace apps/api"
+  },
+  "engines": { "node": ">=20" }
+}
