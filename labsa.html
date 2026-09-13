@@ -1,0 +1,2868 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>لبسة · Labsa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Markazi+Text:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================================
+   SMARTFIT — design tokens
+   Neutral bone/ink base with a single signature accent ("oxblood" —
+   a nod to a wax seal / a shoe sole / a tailor's chalk mark), per the
+   brief's own instruction: white/black/gray + one refined accent.
+   ========================================================================= */
+:root{
+  --bone:#F6F3EE; --paper:#FFFFFF; --ink:#1B1815; --ink-soft:#4A453E;
+  --mute:#8A8378; --line:rgba(27,24,21,.12);
+  --accent:#7C2530; --accent-soft:#F3E4E1; --accent-ink:#FBEFEC;
+  --ok:#2F6B4F; --warn:#B3312C;
+  --r-lg:22px; --r-md:16px; --r-sm:11px;
+  --shadow:0 10px 30px rgba(27,24,21,.08);
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --font-disp-en:'Fraunces', serif; --font-disp-ar:'Markazi Text', serif;
+  --font-ui-en:'IBM Plex Sans', system-ui, sans-serif; --font-ui-ar:'IBM Plex Sans Arabic', system-ui, sans-serif;
+}
+html.dark{
+  --bone:#171512; --paper:#211E1A; --ink:#F3EEE6; --ink-soft:#C9C1B4;
+  --mute:#8F887A; --line:rgba(243,238,230,.12);
+  --accent:#D97D86; --accent-soft:#3A2020; --accent-ink:#2A1416;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bone); color:var(--ink);
+  font-family:var(--font-ui-ar);
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  transition:background .3s,color .3s;
+}
+html[lang="en"] body{font-family:var(--font-ui-en)}
+.disp{font-family:var(--font-disp-ar); font-weight:600}
+html[lang="en"] .disp{font-family:var(--font-disp-en); font-style:italic; font-weight:500}
+
+.shell{width:390px;height:844px;background:var(--paper);position:relative;overflow:hidden;
+  border-radius:44px;box-shadow:0 40px 110px rgba(27,24,21,.3),0 0 0 9px var(--ink),0 0 0 11px var(--mute);
+  display:flex;flex-direction:column;
+  /* Never taller than the viewport. The fixed 844px "phone frame" is a
+     desktop-preview nicety, but on a real phone a fixed height taller
+     than the screen pushes the whole UI out of view — and because .shell
+     clips its overflow, that reads as a blank white page rather than
+     something scrollable. These caps make that impossible at any size. */
+  max-width:100%; max-height:100vh; max-height:100dvh;}
+@media(max-width:480px){body{padding:0;display:block}.shell{border-radius:0;box-shadow:none;width:100%;height:100vh;height:100dvh}}
+
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:calc(var(--safe-t) + 12px) 22px 6px;font-size:12px;font-weight:600;flex-shrink:0;color:var(--ink)}
+
+.screens{flex:1;overflow:hidden;position:relative}
+.screen{display:none;flex-direction:column;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
+.screen::-webkit-scrollbar{display:none}
+
+/* ---- shared primitives ---- */
+.px{padding-inline:22px}
+.stack{display:flex;flex-direction:column}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--mute);text-transform:uppercase}
+html[dir="rtl"] .eyebrow{letter-spacing:0}
+.h1{font-size:30px;line-height:1.15;margin-top:6px}
+.h2{font-size:21px;line-height:1.25}
+.p{font-size:13.5px;line-height:1.65;color:var(--ink-soft)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:14px;
+  padding:15px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .15s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn-pri{background:var(--ink);color:var(--paper)}
+.btn-acc{background:var(--accent);color:#fff}
+.btn-ghost{background:transparent;color:var(--ink);border:1.4px solid var(--line)}
+.btn-sm{padding:9px 14px;font-size:12.5px;border-radius:11px}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.stitch{border-top:1.5px dashed var(--line);position:relative;margin:18px 0}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;
+  border:1.4px solid var(--line);color:var(--ink-soft);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip.pending{background:transparent;border:1.6px dashed var(--mute);color:var(--mute);animation:chippulse 1.1s ease-in-out infinite}
+@keyframes chippulse{0%,100%{opacity:.55}50%{opacity:1}}
+.hidden{display:none!important}
+
+/* ---- bottom nav ---- */
+.nav{display:flex;background:var(--paper);border-top:1px solid var(--line);padding:9px 4px calc(var(--safe-b) + 16px);flex-shrink:0}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--mute)}
+.nav-item svg{width:22px;height:22px;stroke:var(--mute);fill:none;stroke-width:1.7}
+.nav-item.on{color:var(--ink)}
+.nav-item.on svg{stroke:var(--accent)}
+.nav-lbl{font-size:9.5px;font-weight:600}
+
+/* ---- toast ---- */
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);
+  padding:11px 18px;border-radius:12px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;transition:.28s;z-index:400;white-space:nowrap;max-width:88%;text-overflow:ellipsis;overflow:hidden}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---- onboarding / language / auth ---- */
+.onb{justify-content:flex-end;padding-bottom:36px;background:radial-gradient(120% 90% at 50% -10%, var(--accent-soft), transparent 60%)}
+.onb-mark{width:64px;height:64px;border-radius:18px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 22px 18px}
+.onb-word{font-size:15px;font-weight:700;letter-spacing:.02em;color:var(--mute);padding:0 22px;margin-bottom:2px}
+.onb-title{font-size:34px;line-height:1.2;padding:0 22px}
+.onb-sub{padding:12px 22px 0}
+.onb-actions{padding:22px;display:flex;flex-direction:column;gap:10px}
+.onb-lang-link{text-align:center;font-size:12.5px;color:var(--mute);font-weight:600;cursor:pointer}
+
+.lang-opt{display:flex;align-items:center;justify-content:space-between;padding:17px 18px;border:1.6px solid var(--line);border-radius:16px;margin-bottom:11px;cursor:pointer}
+.lang-opt.on{border-color:var(--ink);background:var(--bone)}
+.lang-opt-t{font-size:16px;font-weight:600}
+.lang-opt-s{font-size:11.5px;color:var(--mute);margin-top:2px}
+.lang-check{width:22px;height:22px;border-radius:50%;border:1.6px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px}
+.lang-opt.on .lang-check{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+
+.guest-note{background:var(--accent-ink);border-radius:14px;padding:13px 15px;font-size:11.5px;line-height:1.7;color:var(--ink-soft);margin-top:14px}
+
+/* ---- header used across inner screens ---- */
+.ihdr{display:flex;align-items:center;gap:12px;padding:16px 20px 6px;flex-shrink:0}
+.iback{width:34px;height:34px;border-radius:50%;background:var(--bone);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex-shrink:0}
+.ihdr-t{font-size:17px;font-weight:700;flex:1}
+
+/* ---- home ---- */
+.home-hero{margin:14px 20px 6px;padding:22px;border-radius:24px;background:var(--ink);color:var(--paper);position:relative;overflow:hidden}
+.home-hero::after{content:'';position:absolute;inset-inline-end:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:var(--accent);opacity:.4;filter:blur(2px)}
+.home-hero-t{font-size:22px;position:relative;z-index:1}
+.home-hero-d{font-size:12px;opacity:.75;margin-top:5px;position:relative;z-index:1}
+.home-hero-cta{margin-top:16px;position:relative;z-index:1;background:var(--paper);color:var(--ink);display:inline-flex;padding:11px 18px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer}
+.home-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:14px 20px 4px}
+.home-tile{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center;cursor:pointer}
+.home-tile-ic{font-size:22px}
+.home-tile-t{font-size:11px;font-weight:600;margin-top:6px}
+
+/* ---- person photo ---- */
+.photo-stage{margin:8px 20px;border-radius:22px;background:var(--bone);aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:1.6px dashed var(--line)}
+.photo-stage img{width:100%;height:100%;object-fit:cover}
+.photo-stage.has-img{border-style:solid}
+.photo-none-ic{font-size:40px;opacity:.5}
+.photo-tips{padding:14px 20px 4px;display:flex;flex-direction:column;gap:9px}
+.photo-tip{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink-soft)}
+.photo-tip i{width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-style:normal;flex-shrink:0}
+.photo-actions{display:flex;gap:10px;padding:16px 20px}
+
+/* ---- wardrobe ---- */
+.w-tabs{display:flex;gap:7px;padding:12px 20px 4px;overflow-x:auto;scrollbar-width:none}
+.w-tabs::-webkit-scrollbar{display:none}
+.w-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:12px 20px 20px}
+.w-card{aspect-ratio:3/4;border-radius:16px;background:var(--bone);position:relative;overflow:hidden;cursor:pointer;border:1px solid var(--line)}
+.w-card img{width:100%;height:100%;object-fit:contain;background:var(--bone)}
+.w-card-badge{position:absolute;top:6px;inset-inline-start:6px;background:var(--paper);font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.w-add{aspect-ratio:3/4;border-radius:16px;border:1.8px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--mute)}
+.w-empty{margin:20px;padding:30px 18px;text-align:center;border:1.6px dashed var(--line);border-radius:18px;color:var(--mute);font-size:12px;line-height:1.7}
+.w-empty-ic{font-size:36px;margin-bottom:8px}
+
+/* ---- add garment sheet ---- */
+.sheet-wrap{position:fixed;inset:0;z-index:120;background:rgba(27,24,21,.42);display:none;align-items:flex-end;justify-content:center}
+.sheet-wrap.on{display:flex}
+.sheet{background:var(--paper);width:100%;max-width:390px;max-height:90%;border-radius:26px 26px 0 0;display:flex;flex-direction:column;overflow:hidden}
+.sheet-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;border-bottom:1px solid var(--line);flex-shrink:0}
+.sheet-t{font-size:15px;font-weight:700}
+.sheet-x{width:36px;height:36px;border-radius:50%;background:var(--bone);border:none;font-size:14px;cursor:pointer}
+.sheet-body{padding:16px 18px 22px;overflow-y:auto}
+.cap-btn{display:flex;align-items:center;gap:12px;background:var(--bone);border:1.8px dashed var(--accent);border-radius:16px;padding:15px;margin-bottom:10px;cursor:pointer;position:relative}
+.cap-ic{font-size:22px}
+.cap-t{font-size:12.5px;font-weight:600}
+.cap-hint{font-size:10.5px;color:var(--mute);line-height:1.6;text-align:center;padding:2px 6px 4px}
+.seg-stage{border-radius:16px;overflow:hidden;background:var(--bone);aspect-ratio:1;display:flex;align-items:center;justify-content:center;margin:6px 0 10px;position:relative}
+.seg-stage img{width:100%;height:100%;object-fit:contain}
+.seg-note{font-size:11px;color:var(--mute);text-align:center;margin-bottom:8px;min-height:14px}
+.field-lbl{font-size:11px;font-weight:700;color:var(--mute);margin:12px 0 6px}
+.field-lbl-row{display:flex;align-items:center;justify-content:space-between;margin:12px 0 6px}
+.cat-ai-status{font-size:10.5px;font-weight:600;display:flex;align-items:center;gap:5px}
+.cat-ai-status.loading{color:var(--mute)}
+.cat-ai-status.ok{color:var(--ok)}
+.cat-ai-status.fail{color:var(--mute)}
+.cat-ai-status .dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:catpulse 1s ease-in-out infinite}
+.cat-ai-status.ok .dot,.cat-ai-status.fail .dot{animation:none}
+@keyframes catpulse{0%,100%{opacity:.35}50%{opacity:1}}
+.color-note{font-size:10.5px;color:var(--mute);margin-bottom:8px}
+.field-input{width:100%;border:1.4px solid var(--line);border-radius:12px;padding:11px 13px;font-size:13px;font-family:inherit;background:var(--paper);color:var(--ink)}
+.cat-grid{display:flex;flex-wrap:wrap;gap:7px}
+.color-dots{display:flex;gap:8px;flex-wrap:wrap}
+.color-dot-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;box-shadow:0 0 0 1px var(--line);position:relative;display:flex;align-items:center;justify-content:center}
+.color-dot-check{color:#fff;font-size:13px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.7),0 0 2px rgba(0,0,0,.9)}
+.color-dot-opt.on{border-color:var(--ink)}
+.color-dot-more{display:flex;align-items:center;justify-content:center;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);color:#fff;font-size:15px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.sheet-actions{display:flex;gap:10px;margin-top:16px}
+.multi-item-link{font-size:11px;color:var(--accent);text-decoration:underline;text-align:center;margin:4px 0 14px;cursor:pointer}
+.outfit-progress{background:var(--ink);color:var(--paper);font-size:11px;font-weight:700;text-align:center;padding:7px;border-radius:10px;margin-bottom:10px}
+.outfit-prompt{background:var(--accent-ink);border:1.4px solid var(--accent);border-radius:14px;padding:13px;margin-bottom:12px}
+.op-t{font-size:12.5px;font-weight:700;text-align:center;margin-bottom:10px}
+.op-actions{display:flex;gap:8px}
+.op-actions .btn{flex:1}
+.crop-hint{font-size:11.5px;color:var(--mute);text-align:center;margin-bottom:10px}
+.crop-frame{position:relative;border-radius:14px;overflow:hidden;background:var(--bone);touch-action:none;user-select:none;-webkit-user-select:none}
+.crop-frame img{width:100%;display:block;pointer-events:none}
+.crop-rect{position:absolute;border:2px dashed var(--accent);background:rgba(124,37,48,.12);pointer-events:none}
+.crop-rect.hidden{display:none}
+
+/* ---- outfit builder ---- */
+.build-cat{padding:14px 20px 4px}
+.build-cat-t{font-size:12px;font-weight:700;color:var(--mute);margin-bottom:8px}
+.build-rail{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.build-rail::-webkit-scrollbar{display:none}
+.build-pick{flex-shrink:0;width:64px;height:80px;border-radius:13px;border:1.8px solid var(--line);background:var(--bone);position:relative;cursor:pointer;overflow:hidden}
+.build-pick img{width:100%;height:100%;object-fit:contain}
+.build-pick.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.build-none{flex-shrink:0;width:64px;height:80px;border-radius:13px;border:1.8px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--mute);cursor:pointer;text-align:center;padding:4px}
+.build-none.on{border-color:var(--ink);color:var(--ink);font-weight:700}
+.cmd-divider{text-align:center;font-size:10.5px;color:var(--mute);margin:16px 20px 0;position:relative}
+.cmd-box{margin:10px 20px 22px;display:flex;gap:8px}
+.cmd-box input{flex:1;border:1.4px solid var(--line);border-radius:13px;padding:12px 14px;font-size:12.5px;font-family:inherit;background:var(--paper);color:var(--ink)}
+.build-sticky{position:sticky;bottom:0;background:linear-gradient(to top,var(--paper) 70%,transparent);padding:18px 20px 14px}
+.build-hint{font-size:11px;color:var(--accent);text-align:center;margin-bottom:8px;min-height:14px}
+.build-photo-card{display:flex;align-items:center;gap:12px;margin:14px 20px 0;padding:11px;border:1.4px solid var(--line);border-radius:16px;cursor:pointer;background:var(--paper)}
+.bpc-thumb{width:44px;height:56px;border-radius:11px;object-fit:cover;background:var(--bone);flex-shrink:0}
+.bpc-empty{display:flex;align-items:center;justify-content:center;font-size:22px;border:1.4px dashed var(--line)}
+.bpc-txt{flex:1;min-width:0}
+.bpc-t{font-size:13px;font-weight:700}
+.bpc-d{font-size:10.5px;color:var(--mute);margin-top:3px;line-height:1.5}
+.bpc-act{font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0}
+
+/* ---- processing ---- */
+.proc-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:30px}
+.proc-ring{width:74px;height:74px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc-step{font-size:13px;font-weight:600;color:var(--ink-soft);text-align:center}
+.proc-note{font-size:11px;color:var(--mute);text-align:center;max-width:260px}
+
+/* ---- result ---- */
+.res-stage{margin:10px 20px;border-radius:20px;overflow:hidden;background:var(--bone);aspect-ratio:3/4;position:relative}
+.res-stage canvas, .res-stage img{width:100%;height:100%;object-fit:cover;display:block}
+.res-fail{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:22px;text-align:center;font-size:12px;line-height:1.7;color:var(--ink-soft);white-space:pre-wrap}
+.res-fail-ic{font-size:30px}
+.res-label{margin:0 20px;font-size:11px;color:var(--mute);line-height:1.6;text-align:center;padding-top:6px}
+.adjust-box{margin:12px 20px 0;background:var(--bone);border-radius:14px;padding:13px}
+.adjust-t{font-size:11.5px;font-weight:700;margin-bottom:10px;text-align:center}
+.adjust-row{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.adjust-lbl{font-size:10.5px;color:var(--mute);width:64px;flex-shrink:0}
+.adjust-row input[type=range]{flex:1}
+.adjust-val{font-size:10.5px;color:var(--ink);width:38px;text-align:center;flex-shrink:0;font-weight:700}
+.compare-wrap{position:relative;margin:10px 20px;border-radius:20px;overflow:hidden;aspect-ratio:3/4;background:var(--bone)}
+.compare-wrap img,.compare-wrap canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* The overlay must be a real box before clip-path means anything: as a
+   static div whose only child is absolutely positioned it collapsed to
+   zero height, so inset() clipped the "after" image away entirely and
+   the compare screen showed the before photo twice. Clipped from the
+   LEFT edge in both directions on purpose — these are photographs laid
+   out in physical pixels, and mirroring the split for RTL would make the
+   knob travel the opposite way to the finger dragging it. */
+.compare-after{position:absolute;inset:0;clip-path:inset(0 50% 0 0)}
+.compare-handle{position:absolute;top:0;bottom:0;left:50%;width:3px;background:#fff;transform:translateX(-50%);box-shadow:0 0 0 1px rgba(0,0,0,.1)}
+.compare-knob{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.res-actions{display:flex;gap:9px;padding:16px 20px}
+.res-actions .btn{flex:1}
+.res-upgrade{margin:6px 20px 18px;background:var(--bone);border-radius:14px;padding:13px 15px}
+.res-upgrade-t{font-size:12px;font-weight:700}
+.res-upgrade-d{font-size:11px;color:var(--mute);margin-top:4px;line-height:1.6}
+
+/* ---- saved ---- */
+.saved-list{padding:8px 20px 20px;display:flex;flex-direction:column;gap:10px}
+.saved-card{display:flex;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:10px;cursor:pointer}
+.saved-thumb{width:58px;height:74px;border-radius:11px;object-fit:cover;background:var(--bone);flex-shrink:0}
+.saved-name{font-size:13px;font-weight:700}
+.saved-date{font-size:10.5px;color:var(--mute);margin-top:3px}
+.saved-x{width:26px;height:26px;border-radius:50%;background:var(--bone);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;flex-shrink:0;align-self:center}
+
+/* ---- profile ---- */
+.prof-row{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--line);cursor:pointer}
+.prof-row-t{font-size:13.5px;font-weight:600}
+.prof-row-s{font-size:11px;color:var(--mute);margin-top:2px}
+.switch{width:42px;height:25px;border-radius:20px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0}
+.switch.on{background:var(--ink)}
+.switch i{position:absolute;top:2.5px;inset-inline-start:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;font-style:normal}
+.switch.on i{inset-inline-start:calc(100% - 22.5px)}
+.danger-btn{color:var(--warn);font-weight:700}
+.confirm-wrap{position:fixed;inset:0;z-index:150;background:rgba(27,24,21,.5);display:none;align-items:center;justify-content:center;padding:26px}
+.confirm-wrap.on{display:flex}
+.confirm-card{background:var(--paper);border-radius:20px;padding:22px;max-width:330px}
+.confirm-t{font-size:15px;font-weight:700}
+.confirm-d{font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6}
+.confirm-actions{display:flex;gap:9px;margin-top:18px}
+</style>
+</head>
+<body>
+<!-- ===================================================================
+     DIAGNOSTIC TRAP — runs before anything else. A blank white screen is
+     the least debuggable failure there is: it hides whether the cause was
+     a script error, a CSS problem, or a layout collapse. This makes the
+     app say what went wrong on screen instead, so a phone screenshot is
+     enough to identify the real cause. It costs nothing when all is well.
+     =================================================================== -->
+<div id="bootErr" style="display:none;position:fixed;inset:0;z-index:99999;background:#fff;color:#1B1815;
+     font:13px/1.6 system-ui,sans-serif;padding:22px;overflow:auto;direction:ltr;text-align:left">
+  <div style="font-weight:700;font-size:15px;margin-bottom:10px">Labsa — startup problem</div>
+  <div id="bootErrMsg" style="white-space:pre-wrap;word-break:break-word;background:#F6F3EE;padding:12px;border-radius:10px"></div>
+  <div id="bootErrHint" style="margin-top:12px;color:#8A6A4E"></div>
+</div>
+<script>
+(function(){
+  function show(label, detail){
+    try{
+      var box=document.getElementById('bootErr');
+      var msg=document.getElementById('bootErrMsg');
+      if(!box||!msg) return;
+      msg.textContent = (msg.textContent? msg.textContent+'\n\n' : '') + label + ': ' + detail;
+      box.style.display='block';
+    }catch(e){}
+  }
+  window.addEventListener('error', function(ev){
+    show('Script error', (ev.message||'?') + '\nline ' + (ev.lineno||'?') + ':' + (ev.colno||'?'));
+  });
+  window.addEventListener('unhandledrejection', function(ev){
+    var r = ev.reason;
+    show('Unhandled promise', (r && (r.message||r.toString())) || 'unknown');
+  });
+  /* Layout watchdog: if nothing is actually visible shortly after load,
+     report that too — this distinguishes "JS died" from "CSS/layout
+     collapsed", which a blank page alone can never tell us apart.
+     It must only fire on a GENUINE collapse: an environment with no
+     layout engine at all reports every rect as 0x0, so a zero-height
+     shell means "no layout available", not "the app is broken". */
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      try{
+        if(document.getElementById('bootErr').style.display==='block') return;
+        var active=document.querySelector('.screen.active');
+        var shell=document.getElementById('shell');
+        var shellH = shell ? shell.getBoundingClientRect().height : 0;
+        var activeH = active ? active.getBoundingClientRect().height : 0;
+        var noLayoutEngine = shellH === 0 && activeH === 0;
+        if(noLayoutEngine) return;
+        var collapsed = !active || activeH <= 20;
+        if(collapsed){
+          var sr = shell ? shell.getBoundingClientRect() : null;
+          show('Nothing rendered',
+            'active screen: ' + (active? active.id : 'NONE') +
+            '\nactive height: ' + Math.round(activeH) +
+            '\nshell: ' + (sr? Math.round(sr.width)+'x'+Math.round(sr.height) : 'missing') +
+            '\nviewport: ' + window.innerWidth + 'x' + window.innerHeight);
+          document.getElementById('bootErrHint').textContent =
+            'Please screenshot this screen — it identifies the exact cause.';
+        }
+      }catch(e){}
+    }, 1200);
+  });
+})();
+</script>
+<div class="shell" id="shell">
+
+  <div class="statusbar"><span id="sbTime">9:41</span><span>📶 🔋</span></div>
+
+  <div class="screens" id="screens">
+
+    <!-- ============ ONBOARDING ============ -->
+    <div class="screen active onb" id="scr-onb">
+      <div class="onb-mark">🧵</div>
+      <div class="onb-word disp" data-i18n="brand">لبسة</div>
+      <div class="onb-title disp" data-i18n="onb_h">جرّبي ملابسك قبل أن ترتديها</div>
+      <div class="onb-sub p" data-i18n="onb_p">التقطي صورتك، أضيفي قطعك، واعرضي كيف تبدو الإطلالة عليكِ — كل ذلك على جهازك.</div>
+      <div class="onb-actions">
+        <button class="btn btn-pri" onclick="go('lang')" data-i18n="onb_start">ابدئي</button>
+        <div class="onb-lang-link" onclick="go('lang')" data-i18n="onb_lang">العربية / English</div>
+      </div>
+    </div>
+
+    <!-- ============ LANGUAGE PICKER ============ -->
+    <div class="screen" id="scr-lang">
+      <div class="ihdr"><div class="iback" onclick="go('onb')">‹</div></div>
+      <div class="px stack" style="gap:2px;padding-top:8px">
+        <div class="h1 disp" data-i18n="lang_t">اختاري اللغة</div>
+        <div class="p" data-i18n="lang_d">يمكنك تغييرها لاحقاً من الإعدادات في أي وقت.</div>
+      </div>
+      <div class="px" style="margin-top:22px">
+        <div class="lang-opt on" id="langOptAr" onclick="pickLang('ar')">
+          <div><div class="lang-opt-t">العربية</div><div class="lang-opt-s">RTL</div></div>
+          <div class="lang-check">✓</div>
+        </div>
+        <div class="lang-opt" id="langOptEn" onclick="pickLang('en')">
+          <div><div class="lang-opt-t">English</div><div class="lang-opt-s">LTR</div></div>
+          <div class="lang-check">✓</div>
+        </div>
+      </div>
+      <div class="px" style="margin-top:auto;padding-bottom:26px">
+        <button class="btn btn-pri" onclick="go('auth')" data-i18n="onb_start">ابدئي</button>
+      </div>
+    </div>
+
+    <!-- ============ AUTH (honest guest-only for this prototype) ============ -->
+    <div class="screen" id="scr-auth">
+      <div class="ihdr"><div class="iback" onclick="go('lang')">‹</div></div>
+      <div class="px stack" style="gap:2px;padding-top:8px">
+        <div class="h1 disp" data-i18n="auth_t">حسابك</div>
+        <div class="p" data-i18n="auth_d" style="margin-top:8px">إنشاء حساب حقيقي عبر البريد أو Apple أو Google يحتاج خادماً لا نملكه في هذه النسخة التجريبية — تابعي كضيفة الآن؛ بياناتك تبقى على جهازك فقط.</div>
+      </div>
+      <div class="px" style="margin-top:24px">
+        <button class="btn btn-pri" onclick="startGuest()" data-i18n="auth_guest">المتابعة كضيفة</button>
+        <div class="guest-note" data-i18n="auth_note">تجريبي: لا حساب حقيقياً بعد</div>
+      </div>
+    </div>
+
+    <!-- ============ HOME ============ -->
+    <div class="screen" id="scr-home">
+      <div class="px" style="padding-top:16px">
+        <div class="eyebrow" data-i18n="home_greet">مساء الإطلالات،</div>
+        <div class="h2 disp" style="margin-top:2px" id="homeName">ضيفة</div>
+      </div>
+      <div class="home-hero" onclick="go('build')">
+        <div class="home-hero-t disp" data-i18n="home_cta_t">جرّبي إطلالة الآن</div>
+        <div class="home-hero-d" data-i18n="home_cta_d">اختاري صورتك وقطعك، وشاهدي التركيب</div>
+        <div class="home-hero-cta" data-i18n="home_go">ابدئي التجربة ›</div>
+      </div>
+      <div class="home-row">
+        <div class="home-tile" onclick="go('wardrobe')"><div class="home-tile-ic">🧺</div><div class="home-tile-t" data-i18n="home_wardrobe">خزانتي</div></div>
+        <div class="home-tile" onclick="go('saved')"><div class="home-tile-ic">💾</div><div class="home-tile-t" data-i18n="home_saved">المحفوظة</div></div>
+        <div class="home-tile" onclick="openAdd()"><div class="home-tile-ic">➕</div><div class="home-tile-t" data-i18n="home_add">أضيفي قطعة</div></div>
+      </div>
+    </div>
+
+    <!-- ============ PERSON PHOTO ============ -->
+    <div class="screen" id="scr-photo">
+      <div class="ihdr"><div class="iback" onclick="go('home')">‹</div><div class="ihdr-t" data-i18n="photo_t">صورتك</div></div>
+      <div class="px p" data-i18n="photo_d" style="margin-top:2px">قفي أمام خلفية بسيطة، والجسم كاملاً أو حتى الخصر ظاهر بوضوح، مع إضاءة جيدة من الأمام.</div>
+      <div class="photo-stage" id="photoStage"><div class="photo-none-ic">🧍</div></div>
+      <div class="photo-tips">
+        <div class="photo-tip"><i>✓</i><span data-i18n="photo_tip1">إضاءة أمامية لا خلفية</span></div>
+        <div class="photo-tip"><i>✓</i><span data-i18n="photo_tip2">خلفية بسيطة غير مزدحمة</span></div>
+        <div class="photo-tip"><i>✓</i><span data-i18n="photo_tip3">الجسم كاملاً داخل الإطار</span></div>
+      </div>
+      <div class="photo-actions">
+        <button class="btn btn-pri" style="flex:1" onclick="triggerCapture('personCamInput')" data-i18n="photo_take">التقطي صورة</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="triggerCapture('personGalInput')" data-i18n="photo_gallery">من المعرض</button>
+        <input type="file" id="personCamInput" accept="image/*" capture="user" style="display:none" onchange="onPersonPhoto(this.files[0]); this.value=''">
+        <input type="file" id="personGalInput" accept="image/*" style="display:none" onchange="onPersonPhoto(this.files[0]); this.value=''">
+      </div>
+    </div>
+
+    <!-- ============ WARDROBE ============ -->
+    <div class="screen" id="scr-wardrobe">
+      <div class="ihdr">
+        <div class="iback" onclick="go('home')">‹</div>
+        <div class="ihdr-t h2 disp" style="flex:1" data-i18n="ward_t">خزانتي</div>
+        <div style="font-size:11.5px;color:var(--mute);font-weight:600" id="wardCountLbl">0</div>
+      </div>
+      <div class="w-tabs" id="wardTabs"></div>
+      <div class="w-grid" id="wardGrid"></div>
+      <div class="w-empty hidden" id="wardEmpty">
+        <div class="w-empty-ic">🧺</div>
+        <div style="font-weight:700" data-i18n="ward_empty_t">خزانتك فارغة</div>
+        <div style="margin-top:4px" data-i18n="ward_empty_d">صوّري أول قطعة، أو استوردي صورة محفوظة من إنستغرام أو أي تطبيق آخر.</div>
+      </div>
+    </div>
+
+    <!-- ============ GARMENT DETAIL ============ -->
+    <div class="screen" id="scr-detail">
+      <div class="ihdr"><div class="iback" onclick="go('wardrobe')">‹</div><div class="ihdr-t" data-i18n="detail_t">تفاصيل القطعة</div></div>
+      <div class="photo-stage has-img" style="aspect-ratio:1;margin-top:6px"><img id="detailImg" alt=""></div>
+      <div class="px" id="detailBody" style="margin-top:10px"></div>
+      <div class="px" style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-ghost" style="flex:1" onclick="deleteDetailItem()" data-i18n="detail_del">حذف القطعة</button>
+      </div>
+    </div>
+
+    <!-- ============ OUTFIT BUILDER ============ -->
+    <div class="screen" id="scr-build">
+      <div class="ihdr"><div class="iback" onclick="go('home')">‹</div></div>
+      <div class="px">
+        <div class="h2 disp" data-i18n="build_t">منشئ الإطلالة</div>
+        <div class="p" style="margin-top:4px" data-i18n="build_d">اختاري قطعة من كل فئة تريدين تجربتها — يمكنك ترك أي فئة فارغة.</div>
+      </div>
+      <div class="build-photo-card" id="buildPhotoCard" onclick="go('photo')"></div>
+      <div id="buildCats"></div>
+      <div class="build-sticky">
+        <div class="build-hint" id="buildHint"></div>
+        <button class="btn btn-acc" style="width:100%" id="buildGoBtn" onclick="startTryOn()" data-i18n="build_go">جرّبي هذه الإطلالة ✨</button>
+      </div>
+      <div class="cmd-divider"><span data-i18n="build_cmd_or">أو، اختياري: صِفي الطلب بالكلام بدل اللمس</span></div>
+      <div class="cmd-box">
+        <input id="cmdInput" data-i18n-ph="build_cmd_ph" placeholder="اكتبي مثلاً: البسيني القميص الأصفر مع البنطال الأزرق">
+        <button class="btn btn-ghost btn-sm" onclick="runCommand()" data-i18n="build_cmd_run">تنفيذ</button>
+      </div>
+    </div>
+
+    <!-- ============ AI PROCESSING ============ -->
+    <div class="screen" id="scr-proc">
+      <div class="proc-wrap">
+        <div class="proc-ring"></div>
+        <div class="h2 disp" data-i18n="proc_t">جارٍ إنشاء إطلالتك</div>
+        <div class="proc-step" id="procStepLbl" data-i18n="proc_1">تحديد وضعية جسمك…</div>
+        <div class="proc-note" data-i18n="proc_note">كل هذا يحدث على جهازك — لا شيء يُرفع لأي خادم.</div>
+      </div>
+    </div>
+
+    <!-- ============ RESULT ============ -->
+    <div class="screen" id="scr-result">
+      <div class="ihdr"><div class="iback" onclick="go('build')">‹</div><div class="ihdr-t" data-i18n="res_t">النتيجة</div></div>
+      <div class="res-stage" id="resStage"></div>
+      <div class="res-label" data-i18n="res_label">معاينة مركّبة تلقائياً بحسب وضعية جسمك — وليست صورة واقعية بجودة استوديو.</div>
+      <div class="adjust-box">
+        <div class="adjust-t" data-i18n="adj_t">لم يضبط المقاس تماماً؟ عدّليه بنفسك</div>
+        <div class="adjust-row">
+          <span class="adjust-lbl" data-i18n="adj_size">الحجم</span>
+          <input type="range" id="adjScale" min="60" max="150" value="100" oninput="onAdjust()">
+          <span class="adjust-val" id="adjScaleVal">100%</span>
+        </div>
+        <div class="adjust-row">
+          <span class="adjust-lbl" data-i18n="adj_updown">أعلى / أسفل</span>
+          <input type="range" id="adjY" min="-25" max="25" value="0" oninput="onAdjust()">
+          <span class="adjust-val" id="adjYVal">0</span>
+        </div>
+        <div class="adjust-row">
+          <span class="adjust-lbl" data-i18n="adj_leftright">يمين / يسار</span>
+          <input type="range" id="adjX" min="-25" max="25" value="0" oninput="onAdjust()">
+          <span class="adjust-val" id="adjXVal">0</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="resetAdjust()" data-i18n="adj_reset">إعادة الضبط</button>
+      </div>
+      <div class="res-actions">
+        <button class="btn btn-ghost" onclick="showCompare()" data-i18n="res_compare">قبل / بعد</button>
+        <button class="btn btn-ghost" onclick="startTryOn()" data-i18n="res_retry">محاولة أخرى</button>
+      </div>
+      <div class="px"><input class="field-input" id="resNameInput" data-i18n-ph="res_name_ph" placeholder="اسمي هذه الإطلالة…"></div>
+      <div class="res-actions">
+        <button class="btn btn-pri" onclick="saveResult()" data-i18n="res_save">حفظ الإطلالة</button>
+        <button class="btn btn-ghost" onclick="downloadResult()" data-i18n="res_download">تنزيل</button>
+      </div>
+      <div class="res-upgrade">
+        <div class="res-upgrade-t" data-i18n="res_upgrade_t">تريدين واقعية استوديو حقيقية؟</div>
+        <div class="res-upgrade-d" data-i18n="res_upgrade_d">يتطلب ربطاً بخدمة مدفوعة خارجية ومشاركة صورتك معها — معطّل افتراضياً، فعّليه من الإعدادات إن أردتِ.</div>
+      </div>
+    </div>
+
+    <!-- ============ COMPARE (before/after slider) ============ -->
+    <div class="screen" id="scr-compare">
+      <div class="ihdr"><div class="iback" onclick="go('result')">‹</div><div class="ihdr-t" data-i18n="res_compare">قبل / بعد</div></div>
+      <div class="compare-wrap" id="compareWrap"
+           onmousedown="compareDown(event)" onmousemove="compareMove(event)"
+           onmouseup="compareUp()" onmouseleave="compareUp()"
+           ontouchstart="compareDown(event)" ontouchmove="compareMove(event)"
+           ontouchend="compareUp()" ontouchcancel="compareUp()">
+        <img id="compareBefore" alt="">
+        <div class="compare-after" id="compareAfterWrap"><img id="compareAfter" alt=""></div>
+        <div class="compare-handle" id="compareHandle"><div class="compare-knob">↔</div></div>
+      </div>
+    </div>
+
+    <!-- ============ SAVED OUTFITS ============ -->
+    <div class="screen" id="scr-saved">
+      <div class="ihdr"><div class="iback" onclick="go('home')">‹</div><div class="ihdr-t h2 disp" data-i18n="saved_t">الإطلالات المحفوظة</div></div>
+      <div class="saved-list" id="savedList"></div>
+      <div class="w-empty hidden" id="savedEmpty"><div class="w-empty-ic">💾</div><div data-i18n="saved_empty">لم تحفظي أي إطلالة بعد</div></div>
+    </div>
+
+    <!-- ============ PROFILE / SETTINGS / PRIVACY ============ -->
+    <div class="screen" id="scr-profile">
+      <div class="ihdr"><div class="iback" onclick="go('home')">‹</div><div class="ihdr-t h2 disp" data-i18n="prof_t">حسابي</div></div>
+      <div class="px" style="font-size:11.5px;color:var(--mute);margin-top:2px" data-i18n="prof_local">حساب محلي على هذا الجهاز فقط</div>
+
+      <div style="margin-top:14px">
+        <div class="prof-row" onclick="go('lang')"><div><div class="prof-row-t" data-i18n="prof_lang">اللغة</div></div><div id="profLangVal" style="color:var(--mute);font-size:12.5px">العربية</div></div>
+        <div class="prof-row" onclick="toggleDark()"><div><div class="prof-row-t" data-i18n="prof_dark">الوضع الداكن</div></div><div class="switch" id="darkSwitch"><i></i></div></div>
+      </div>
+
+      <div class="px" style="margin-top:18px;font-size:12px;font-weight:700;color:var(--mute)" data-i18n="prof_privacy">الخصوصية والبيانات</div>
+      <div class="prof-row" onclick="askDeleteAll()"><div class="prof-row-t danger-btn" data-i18n="prof_delete_all">حذف كل بياناتي نهائياً</div></div>
+
+      <div class="px" style="margin-top:18px">
+        <div class="card" style="padding:14px">
+          <div style="font-size:12.5px;font-weight:700" data-i18n="prof_about">عن هذه النسخة</div>
+          <div class="p" style="margin-top:5px;font-size:11.5px" data-i18n="prof_about_d">نسخة أولية تجريبية: المعالجة كلها على جهازك، بلا خادم وبلا حساب حقيقي بعد.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ ADD GARMENT SHEET (global overlay) ============ -->
+  <div class="sheet-wrap" id="addSheet" onclick="if(event.target===this) closeAdd()">
+    <div class="sheet">
+      <div class="sheet-bar"><div class="sheet-t" data-i18n="add_t">إضافة قطعة</div><button class="sheet-x" onclick="closeAdd()">✕</button></div>
+      <div class="sheet-body">
+        <div id="addCapture">
+          <div class="cap-btn" onclick="triggerCapture('camFileInput')"><span class="cap-ic">📷</span><span class="cap-t" data-i18n="add_cam">التقطي صورة القطعة</span></div>
+          <div class="cap-btn" onclick="triggerCapture('galFileInput')"><span class="cap-ic">🖼️</span><span class="cap-t" data-i18n="add_gal">من المعرض / محفوظ من تطبيق آخر</span></div>
+          <input type="file" id="camFileInput" accept="image/*" capture="environment" style="display:none" onchange="onGarmentFile(this.files[0]); this.value=''">
+          <input type="file" id="galFileInput" accept="image/*" style="display:none" onchange="onGarmentFile(this.files[0]); this.value=''">
+          <div class="cap-hint" data-i18n="add_hint">احفظي صورة القطعة من إنستغرام أو تيك توك أو بينتريست إلى معرض هاتفك أولاً، ثم اخترها من هنا. لا نتصفح حساباتك أبداً.</div>
+        </div>
+        <div id="addReview" class="hidden">
+          <div class="outfit-progress hidden" id="outfitProgress"></div>
+          <div class="outfit-prompt hidden" id="outfitPrompt">
+            <div class="op-t"><span data-i18n="outfit_found_a">وجدتُ</span> <span id="outfitCount">0</span> <span data-i18n="outfit_found_b">قطع في هذه الصورة</span></div>
+            <div class="op-actions">
+              <button class="btn btn-ghost btn-sm" onclick="dismissOutfitPrompt()" data-i18n="outfit_no">لا، قطعة واحدة فقط</button>
+              <button class="btn btn-acc btn-sm" onclick="startOutfitQueue()" data-i18n="outfit_yes">أضيفيها كلها</button>
+            </div>
+          </div>
+          <div class="seg-stage"><img id="segImg" alt=""></div>
+          <div class="seg-note" id="segNote" data-i18n="add_removing">جارٍ عزل القطعة عن الخلفية…</div>
+          <div id="segThresholdWrap" class="hidden">
+            <div class="field-lbl" data-i18n="add_threshold">حساسية العزل</div>
+            <input type="range" id="segThreshold" min="8" max="80" value="28" oninput="reSegment()" style="width:100%">
+          </div>
+          <div class="multi-item-link" onclick="openCropFromReview()" data-i18n="multi_item_link">الصورة فيها أكثر من قطعة؟ حدّدي كل واحدة على حدة</div>
+          <div class="field-lbl" data-i18n="add_name">اسم القطعة</div>
+          <input class="field-input" id="fName">
+          <div class="field-lbl-row">
+            <div class="field-lbl" style="margin:0" data-i18n="add_cat">فئة</div>
+            <div class="cat-ai-status" id="catAiStatus"></div>
+          </div>
+          <div class="cat-grid" id="fCatGrid"></div>
+          <div class="field-lbl" data-i18n="add_color">اللون</div>
+          <div class="color-note" id="colorNote" data-i18n="color_detected">اللون المكتشف تلقائياً من صورتك، أول دائرة:</div>
+          <div class="color-dots" id="fColorDots"></div>
+          <input type="color" id="colorPicker" style="display:none" onchange="onCustomColor(this.value)">
+          <div class="field-lbl" data-i18n="add_brand">العلامة التجارية (اختياري)</div>
+          <input class="field-input" id="fBrand">
+          <div class="field-lbl" data-i18n="add_season">الموسم</div>
+          <div class="cat-grid" id="fSeasonGrid"></div>
+          <div class="field-lbl" data-i18n="add_notes">ملاحظاتك (اختياري)</div>
+          <input class="field-input" id="fNotes">
+          <div class="sheet-actions">
+            <button class="btn btn-ghost" style="flex:1" onclick="closeAdd()" data-i18n="add_cancel">إلغاء</button>
+            <button class="btn btn-pri" style="flex:1" onclick="saveGarment()" data-i18n="add_save">حفظ في الخزانة</button>
+          </div>
+        </div>
+        <div id="addCrop" class="hidden">
+          <div class="crop-hint" data-i18n="crop_hint">اسحبي لتحديد قطعة واحدة من الصورة</div>
+          <div class="crop-frame" id="cropFrame"
+               onpointerdown="cropPointerDown(event)" onpointermove="cropPointerMove(event)" onpointerup="cropPointerUp(event)" onpointerleave="cropPointerUp(event)">
+            <img id="cropImg" alt="" draggable="false">
+            <div class="crop-rect hidden" id="cropRectEl"></div>
+          </div>
+          <div class="sheet-actions">
+            <button class="cad-btn" onclick="closeCropBackToReview()" data-i18n="add_cancel">إلغاء</button>
+            <button class="cad-btn pri" id="cropConfirmBtn" disabled onclick="confirmCrop()" data-i18n="crop_use">استخدام هذا التحديد</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ DELETE-ALL CONFIRM ============ -->
+  <div class="confirm-wrap" id="confirmWrap" onclick="if(event.target===this) closeConfirm()">
+    <div class="confirm-card">
+      <div class="confirm-t" data-i18n="prof_delete_all">حذف كل بياناتي نهائياً</div>
+      <div class="confirm-d" data-i18n="prof_delete_confirm">سيُحذف كل شيء نهائياً من هذا الجهاز: صورتك، خزانتك، وإطلالاتك المحفوظة. لا يمكن التراجع.</div>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeConfirm()" data-i18n="prof_delete_no">تراجع</button>
+        <button class="btn btn-acc" style="flex:1" onclick="deleteAllData()" data-i18n="prof_delete_yes">نعم، احذفي كل شيء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CROP-ANOTHER-ITEM CONFIRM ============ -->
+  <div class="confirm-wrap" id="cropNextWrap" onclick="if(event.target===this) declineCropNext()">
+    <div class="confirm-card">
+      <div class="confirm-t" data-i18n="crop_next">أضيفي قطعة أخرى من هذه الصورة؟</div>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" style="flex:1" onclick="declineCropNext()" data-i18n="crop_next_no">لا، أنهيتُ</button>
+        <button class="btn btn-pri" style="flex:1" onclick="acceptCropNext()" data-i18n="crop_next_yes">نعم، قصّي التالية</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="nav" id="mainNav">
+    <div class="nav-item on" data-nav="home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M4 11 L12 4 L20 11 M6 10 V19 H18 V10" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-lbl" data-i18n="nav_home">الرئيسية</span></div>
+    <div class="nav-item" data-nav="wardrobe" onclick="go('wardrobe')"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg><span class="nav-lbl" data-i18n="nav_wardrobe">الخزانة</span></div>
+    <div class="nav-item" data-nav="build" onclick="go('build')"><svg viewBox="0 0 24 24"><path d="M9 4 L12 7 L15 4 M12 7 V10 M7 10 L5 20 H19 L17 10 Z" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nav-lbl" data-i18n="nav_try">جرّبي</span></div>
+    <div class="nav-item" data-nav="saved" onclick="go('saved')"><svg viewBox="0 0 24 24"><path d="M6 4h9l3 3v13H6z"/><path d="M9 4v6l3-2 3 2V4"/></svg><span class="nav-lbl" data-i18n="nav_saved">المحفوظة</span></div>
+    <div class="nav-item" data-nav="profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span class="nav-lbl" data-i18n="nav_profile">حسابي</span></div>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* =========================================================================
+   i18n — Arabic / English only, never mixed on one screen (per brief).
+   Switching language swaps <html lang/dir> AND every string in one pass.
+   ========================================================================= */
+var SF_DICT = {
+ar:{
+  brand:'لبسة', brand_sub:'Labsa',
+  onb_h:'جرّبي ملابسك قبل أن ترتديها', onb_p:'التقطي صورتك، أضيفي قطعك، واعرضي كيف تبدو الإطلالة عليكِ — كل ذلك على جهازك.',
+  onb_start:'ابدئي', onb_lang:'العربية / English',
+  lang_t:'اختاري اللغة', lang_d:'يمكنك تغييرها لاحقاً من الإعدادات في أي وقت.',
+  auth_t:'حسابك', auth_d:'إنشاء حساب حقيقي عبر البريد أو Apple أو Google يحتاج خادماً لا نملكه في هذه النسخة التجريبية — تابعي كضيفة الآن؛ بياناتك تبقى على جهازك فقط.',
+  auth_guest:'المتابعة كضيفة', auth_note:'تجريبي: لا حساب حقيقياً بعد',
+  home_greet:'مساء الإطلالات،', home_cta_t:'جرّبي إطلالة الآن', home_cta_d:'اختاري صورتك وقطعك، وشاهدي التركيب',
+  home_go:'ابدئي التجربة ›', home_wardrobe:'خزانتي', home_saved:'المحفوظة', home_add:'أضيفي قطعة',
+  nav_home:'الرئيسية', nav_wardrobe:'الخزانة', nav_try:'جرّبي', nav_saved:'المحفوظة', nav_profile:'حسابي',
+
+  photo_t:'صورتك', photo_d:'قفي أمام خلفية بسيطة، والجسم كاملاً أو حتى الخصر ظاهر بوضوح، مع إضاءة جيدة من الأمام.',
+  photo_take:'التقطي صورة', photo_gallery:'من المعرض', photo_retake:'إعادة الالتقام',
+  photo_tip1:'إضاءة أمامية لا خلفية', photo_tip2:'خلفية بسيطة غير مزدحمة', photo_tip3:'الجسم كاملاً داخل الإطار',
+  photo_none:'لم تُلتقط صورة بعد',
+
+  ward_t:'خزانتي', ward_count:'قطعة', ward_empty_t:'خزانتك فارغة', ward_empty_d:'صوّري أول قطعة، أو استوردي صورة محفوظة من إنستغرام أو أي تطبيق آخر.',
+  cat_shirt:'👕 قميص', cat_trouser:'👖 بنطال', cat_jacket:'🧥 سترة', cat_dress:'👗 فستان', cat_skirt:'🩱 تنورة',
+  cat_shoe:'👟 حذاء', cat_bag:'👜 حقيبة', cat_hat:'🎩 قبعة', cat_acc:'💍 إكسسوار', cat_all:'الكل',
+
+  add_t:'إضافة قطعة', add_cam:'التقطي صورة القطعة', add_gal:'من المعرض / محفوظ من تطبيق آخر',
+  add_hint:'احفظي صورة القطعة من إنستغرام أو تيك توك أو بينتريست إلى معرض هاتفك أولاً، ثم اخترها من هنا. لا نتصفح حساباتك أبداً.',
+  add_removing:'جارٍ عزل القطعة عن الخلفية…', add_redo:'إعادة العزل', add_threshold:'حساسية العزل',
+  add_name:'اسم القطعة', add_color:'اللون', add_brand:'العلامة التجارية (اختياري)', add_season:'الموسم',
+  add_notes:'ملاحظاتك (اختياري)', add_save:'حفظ في الخزانة', add_cancel:'إلغاء',
+  season_all:'كل الفصول', season_summer:'صيفي', season_winter:'شتوي',
+  occ_formal:'رسمي', occ_casual:'كاجوال', occ_sport:'رياضي',
+
+  detail_t:'تفاصيل القطعة', detail_del:'حذف القطعة', detail_edit:'تعديل',
+
+  build_t:'منشئ الإطلالة', build_d:'اختاري قطعة من كل فئة تريدين تجربتها — يمكنك ترك أي فئة فارغة.',
+  build_full:'إطلالة كاملة', build_swap:'قطعة واحدة فقط', build_cmd_ph:'اكتبي مثلاً: البسيني القميص الأصفر مع البنطال الأزرق',
+  build_cmd_run:'تنفيذ', build_cmd_empty:'اكتبي أمراً أولاً، مثل: البسيني القميص الأصفر', build_cmd_or:'أو، اختياري: صِفي الطلب بالكلام بدل اللمس', build_go:'جرّبي هذه الإطلالة ✨', build_need_photo:'أضيفي صورتك أولاً من شاشة "صورتك"',
+  build_need_items:'أضيفي قطعتين على الأقل لتجربة إطلالة',
+
+  proc_t:'جارٍ إنشاء إطلالتك', proc_1:'تحديد وضعية جسمك…', proc_2:'عزل القطع المختارة…', proc_3:'تركيب الإطلالة…',
+  proc_note:'كل هذا يحدث على جهازك — لا شيء يُرفع لأي خادم.',
+
+  res_t:'النتيجة', res_label:'معاينة مركّبة تلقائياً بحسب وضعية جسمك — وليست صورة واقعية بجودة استوديو.',
+  res_compare:'قبل / بعد', res_save:'حفظ الإطلالة', res_retry:'محاولة أخرى', res_change:'تغيير الصورة',
+  res_share:'مشاركة', res_download:'تنزيل', res_name_ph:'اسمي هذه الإطلالة…',
+  res_upgrade_t:'تريدين واقعية استوديو حقيقية؟', res_upgrade_d:'يتطلب ربطاً بخدمة مدفوعة خارجية ومشاركة صورتك معها — معطّل افتراضياً، فعّليه من الإعدادات إن أردتِ.',
+
+  saved_t:'الإطلالات المحفوظة', saved_empty:'لم تحفظي أي إطلالة بعد', saved_retry:'إعادة التجربة', saved_del:'حذف',
+
+  prof_t:'حسابي', prof_local:'حساب محلي على هذا الجهاز فقط', prof_lang:'اللغة', prof_dark:'الوضع الداكن',
+  prof_privacy:'الخصوصية والبيانات', prof_delete_all:'حذف كل بياناتي نهائياً', prof_delete_confirm:'سيُحذف كل شيء نهائياً من هذا الجهاز: صورتك، خزانتك، وإطلالاتك المحفوظة. لا يمكن التراجع.',
+  prof_delete_yes:'نعم، احذفي كل شيء', prof_delete_no:'تراجع', prof_deleted:'تم حذف كل بياناتك من هذا الجهاز',
+  prof_about:'عن هذه النسخة', prof_about_d:'نسخة أولية تجريبية: المعالجة كلها على جهازك، بلا خادم وبلا حساب حقيقي بعد.',
+
+  err_seg:'تعذّر عزل الخلفية تلقائياً — جرّبي خلفية أبسط أو صحّحي الحساسية يدوياً',
+  err_storage_full:'ذاكرة الجهاز ممتلئة — احذفي بعض القطع أو الإطلالات المحفوظة ثم أعيدي المحاولة',
+  err_storage:'تعذّر الحفظ على هذا الجهاز',
+  seg_unsure:'العزل غير مؤكد لهذه الصورة — راجعي المعاينة، وصحّحي الحساسية إن لزم',
+  cat_ai_quick_prefix:'تخمين سريع من شكل القطعة:',
+  seg_fallback:'تعذّر تمييز القطعة عن الخلفية بثقة — عُرضت الصورة كاملة، صحّحي الحساسية أو تابعي كما هي',
+  seg_none:'لم تُميَّز خلفية واضحة لإزالتها — اسحبي شريط الحساسية يميناً لمحاولة أقوى، أو تابعي بالصورة كاملة',
+  cat_ai_prefix:'✨ الذكاء الاصطناعي يقترح:', color_custom:'لون آخر',
+  add_cat:'فئة', color_detected:'اللون المكتشف تلقائياً من صورتك، أول دائرة:',
+  cat_ai_loading:'جارٍ التعرّف على نوع القطعة بالذكاء الاصطناعي…',
+  cat_ai_first_load:'أول استخدام يحمّل نموذجاً (~١٥٠ ميجابايت) — يُحفظ على جهازك بعدها ولن يتكرر',
+  multi_item_link:'الصورة فيها أكثر من قطعة؟ حدّدي كل واحدة على حدة',
+  crop_hint:'اسحبي لتحديد قطعة واحدة من الصورة',
+  crop_use:'استخدام هذا التحديد',
+  crop_next:'أضيفي قطعة أخرى من هذه الصورة؟',
+  crop_next_yes:'نعم، قصّي التالية', crop_next_no:'لا، أنهيتُ',
+  outfit_scanning:'جارٍ فحص الصورة بحثاً عن كل القطع…',
+  outfit_found_a:'وجدتُ', outfit_found_b:'قطع في هذه الصورة',
+  outfit_yes:'أضيفيها كلها', outfit_no:'لا، قطعة واحدة فقط',
+  outfit_progress:'القطعة {n} من {total}',
+  build_photo_ready:'صورتك جاهزة',
+  adj_t:'لم يضبط المقاس تماماً؟ عدّليه بنفسك',
+  adj_size:'الحجم', adj_updown:'أعلى / أسفل', adj_leftright:'يمين / يسار', adj_reset:'إعادة الضبط',
+  res_failed:'تعذّر إنشاء الإطلالة — جرّبي صورة أوضح، أو أعيدي المحاولة',
+  res_label_fallback:'تعذّر تحديد وضعية جسمك بدقة — وُضعت القطع على تقدير عام. عدّلي المقاس والموضع أدناه، أو أعيدي التصوير بجسم كامل وإضاءة أفضل.',
+  cat_ai_fail:'تعذّر التعرّف التلقائي — اخترتُ نوعاً افتراضياً، عدّليه إذا لزم',
+  err_pose:'تعذّر تحديد وضعية الجسم بوضوح — أعيدي الالتقاط بإضاءة أفضل والجسم كاملاً داخل الإطار',
+  err_model:'تعذّر تحميل نموذج التحليل — تأكدي من الاتصال بالإنترنت وحاولي مجدداً',
+},
+en:{
+  brand:'Labsa', brand_sub:'لبسة',
+  onb_h:'Try it before you wear it', onb_p:'Photograph yourself, add your clothes, and see the outfit on you — all on your own device.',
+  onb_start:'Get started', onb_lang:'English / العربية',
+  lang_t:'Choose your language', lang_d:'You can change this anytime from settings.',
+  auth_t:'Your account', auth_d:'Real sign-in with email, Apple, or Google needs a server this prototype does not have — continue as a guest for now; your data stays only on this device.',
+  auth_guest:'Continue as guest', auth_note:'Prototype: no real account yet',
+  home_greet:'Good outfit weather,', home_cta_t:'Try an outfit now', home_cta_d:'Pick your photo and pieces, see them combined',
+  home_go:'Start trying ›', home_wardrobe:'My Wardrobe', home_saved:'Saved', home_add:'Add a piece',
+  nav_home:'Home', nav_wardrobe:'Wardrobe', nav_try:'Try On', nav_saved:'Saved', nav_profile:'Profile',
+
+  photo_t:'Your photo', photo_d:'Stand against a plain background, full body or at least to the waist, with good light facing you.',
+  photo_take:'Take a photo', photo_gallery:'From gallery', photo_retake:'Retake',
+  photo_tip1:'Light facing you, not behind you', photo_tip2:'A plain, uncluttered background', photo_tip3:'Your whole body inside the frame',
+  photo_none:'No photo yet',
+
+  ward_t:'My Wardrobe', ward_count:'items', ward_empty_t:'Your wardrobe is empty', ward_empty_d:'Photograph your first item, or import a photo you saved from Instagram or any other app.',
+  cat_shirt:'👕 Shirt', cat_trouser:'👖 Trousers', cat_jacket:'🧥 Jacket', cat_dress:'👗 Dress', cat_skirt:'🩱 Skirt',
+  cat_shoe:'👟 Shoes', cat_bag:'👜 Bag', cat_hat:'🎩 Hat', cat_acc:'💍 Accessory', cat_all:'All',
+
+  add_t:'Add a piece', add_cam:'Photograph the item', add_gal:'From gallery / saved from another app',
+  add_hint:'Save the item photo from Instagram, TikTok, or Pinterest to your phone gallery first, then pick it here. We never browse your accounts.',
+  add_removing:'Removing the background…', add_redo:'Redo removal', add_threshold:'Removal sensitivity',
+  add_name:'Item name', add_color:'Color', add_brand:'Brand (optional)', add_season:'Season',
+  add_notes:'Your notes (optional)', add_save:'Save to wardrobe', add_cancel:'Cancel',
+  season_all:'All seasons', season_summer:'Summer', season_winter:'Winter',
+  occ_formal:'Formal', occ_casual:'Casual', occ_sport:'Sport',
+
+  detail_t:'Item details', detail_del:'Delete item', detail_edit:'Edit',
+
+  build_t:'Outfit builder', build_d:'Pick one item from any categories you want to try — you can leave any category empty.',
+  build_full:'Full outfit', build_swap:'Swap one piece only', build_cmd_ph:'Try: put me in the yellow shirt with the blue trousers',
+  build_cmd_run:'Run', build_cmd_empty:'Type a command first, like: put me in the yellow shirt', build_cmd_or:'Or, optional: describe it in words instead of tapping', build_go:'Try this outfit ✨', build_need_photo:'Add your photo first from the "Your photo" screen',
+  build_need_items:'Add at least two items to try an outfit',
+
+  proc_t:'Building your outfit', proc_1:'Reading your body pose…', proc_2:'Isolating the chosen pieces…', proc_3:'Compositing the outfit…',
+  proc_note:'All of this happens on your device — nothing is uploaded anywhere.',
+
+  res_t:'Result', res_label:'An automatically composed preview based on your body pose — not a studio-quality photorealistic photo.',
+  res_compare:'Before / After', res_save:'Save outfit', res_retry:'Try again', res_change:'Change photo',
+  res_share:'Share', res_download:'Download', res_name_ph:'Name this outfit…',
+  res_upgrade_t:'Want true studio-quality realism?', res_upgrade_d:'Requires connecting a paid external service and sharing your photo with it — off by default; enable it from settings if you want it.',
+
+  saved_t:'Saved outfits', saved_empty:'You haven\u2019t saved an outfit yet', saved_retry:'Try again', saved_del:'Delete',
+
+  prof_t:'Profile', prof_local:'Local account on this device only', prof_lang:'Language', prof_dark:'Dark mode',
+  prof_privacy:'Privacy & data', prof_delete_all:'Permanently delete all my data', prof_delete_confirm:'Everything will be permanently deleted from this device: your photo, wardrobe, and saved outfits. This cannot be undone.',
+  prof_delete_yes:'Yes, delete everything', prof_delete_no:'Cancel', prof_deleted:'All your data has been deleted from this device',
+  prof_about:'About this build', prof_about_d:'An early prototype: all processing happens on your device — no server, no real account yet.',
+
+  err_seg:'Could not auto-remove the background — try a simpler background or adjust sensitivity manually',
+  err_storage_full:'This device is out of storage — delete a few items or saved outfits and try again',
+  err_storage:'Could not save on this device',
+  seg_unsure:'This cut-out is uncertain — check the preview and adjust the sensitivity if needed',
+  cat_ai_quick_prefix:'Quick guess from the shape:',
+  seg_fallback:'Could not confidently isolate the item — showing the full photo instead; adjust sensitivity or continue as is',
+  seg_none:'No clear background was found to remove — drag the sensitivity slider higher to try harder, or continue with the full photo',
+  cat_ai_prefix:'✨ AI suggests:', color_custom:'Custom color',
+  add_cat:'Category', color_detected:'Colour auto-detected from your photo, first circle:',
+  cat_ai_loading:'Recognizing the item type with AI…',
+  cat_ai_first_load:'First use downloads a model (~150MB) — cached on your device afterwards, only happens once',
+  multi_item_link:'More than one item in this photo? Mark each one separately',
+  crop_hint:'Drag to select a single item from the photo',
+  crop_use:'Use this selection',
+  crop_next:'Add another item from this same photo?',
+  crop_next_yes:'Yes, crop the next one', crop_next_no:'No, I\u2019m done',
+  outfit_scanning:'Scanning the photo for every garment…',
+  outfit_found_a:'Found', outfit_found_b:'garments in this photo',
+  outfit_yes:'Add them all', outfit_no:'No, just one item',
+  outfit_progress:'Item {n} of {total}',
+  build_photo_ready:'Your photo is ready',
+  adj_t:'Not quite the right fit? Adjust it yourself',
+  adj_size:'Size', adj_updown:'Up / down', adj_leftright:'Left / right', adj_reset:'Reset',
+  res_failed:'Could not build the outfit — try a clearer photo, or try again',
+  res_label_fallback:'Your body pose could not be read precisely — pieces were placed on a rough estimate. Adjust size and position below, or retake with your full body and better light.',
+  cat_ai_fail:'Could not auto-recognize — picked a default category, adjust if needed',
+  err_pose:'Could not read the body pose clearly — retake with better light and your whole body in frame',
+  err_model:'Could not load the analysis model — check your connection and try again',
+}
+};
+function t(k){ return (SF_DICT[SF.lang] && SF_DICT[SF.lang][k]) || k; }
+function applyI18n(){
+  document.documentElement.lang = SF.lang;
+  document.documentElement.dir = SF.lang==='ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.getAttribute('data-i18n-html')); });
+  if(SFRender[SF.screen]) SFRender[SF.screen]();
+}
+/* Both of these used to write the language as a BARE string while boot
+   read it back with JSON.parse. The parse threw, and because boot wrapped
+   the language and the dark-mode read in ONE try block, the throw skipped
+   the theme too: changing the language once meant the app silently forgot
+   both preferences on every later launch. One writer, one reader, one
+   format — and the reader below still accepts the old bare value so
+   anyone who already has one keeps their setting. */
+function setLang(l){ SF.lang=l; sfSet('sf_lang', l); applyI18n(); }
+
+const SF = { lang:'ar', screen:'onb', dark:false };
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove('show'),2400); }
+const NAV_SCREENS = ['home','wardrobe','build','saved','profile'];
+function go(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const s=document.getElementById('scr-'+name); if(s){ s.classList.add('active'); s.scrollTop=0; }
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('on', n.dataset.nav===name));
+  document.getElementById('mainNav').classList.toggle('hidden', NAV_SCREENS.indexOf(name)===-1);
+  SF.screen=name;
+  if(SFRender[name]) SFRender[name]();
+}
+const SFRender = {};
+
+function pickLang(l){
+  SF.lang=l;
+  document.getElementById('langOptAr').classList.toggle('on', l==='ar');
+  document.getElementById('langOptEn').classList.toggle('on', l==='en');
+  applyI18n();
+}
+function startGuest(){
+  sfSet('sf_lang', SF.lang);
+  ProfileDB.set({guest:true, name: SF.lang==='ar'?'ضيفة':'Guest'});
+  go('home');
+}
+
+/* =========================================================================
+   STORAGE — everything lives in localStorage on this device. No server,
+   no account, nothing uploaded. This is stated plainly in the Profile
+   screen and is a real, load-bearing fact, not a caption.
+   ========================================================================= */
+function sfGet(k, d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+/* A wardrobe is nothing but base64 images, and localStorage gives a page
+   roughly 5MB. The old version answered a full quota with a bare "⚠️"
+   toast and returned false, which every caller ignored — so the item
+   looked saved, appeared in the grid from in-memory state, and was simply
+   gone on the next launch. Now the failure is named, and it is the
+   caller's job to not pretend otherwise. */
+function sfIsQuotaError(e){
+  return !!e && (e.name==='QuotaExceededError' || e.name==='NS_ERROR_DOM_QUOTA_REACHED' || e.code===22 || e.code===1014);
+}
+function sfSet(k, v){
+  try{ localStorage.setItem(k, JSON.stringify(v)); return true; }
+  catch(e){ toast(sfIsQuotaError(e) ? t('err_storage_full') : t('err_storage')); return false; }
+}
+
+var ProfileDB = {
+  get(){ return sfGet('sf_profile', null); },
+  set(p){ sfSet('sf_profile', Object.assign({}, this.get()||{}, p)); }
+};
+var PersonDB = {
+  get(){ return sfGet('sf_person', null); },
+  set(p){ sfSet('sf_person', p); },
+  clear(){ localStorage.removeItem('sf_person'); }
+};
+var WardrobeDB = {
+  all(){ return sfGet('sf_wardrobe', []); },
+  save(items){ return sfSet('sf_wardrobe', items); },
+  add(item){ const items=this.all(); items.unshift(item); return this.save(items); },
+  remove(id){ const items=this.all().filter(i=>i.id!==id); this.save(items); return items; },
+  get_(id){ return this.all().find(i=>i.id===id); }
+};
+var OutfitDB = {
+  all(){ return sfGet('sf_outfits', []); },
+  save(list){ return sfSet('sf_outfits', list); },
+  add(o){ const list=this.all(); list.unshift(o); return this.save(list); },
+  remove(id){ const list=this.all().filter(o=>o.id!==id); this.save(list); return list; }
+};
+
+var SF_CATS = [
+  {id:'shirt', k:'cat_shirt'}, {id:'trouser', k:'cat_trouser'}, {id:'jacket', k:'cat_jacket'},
+  {id:'dress', k:'cat_dress'}, {id:'skirt', k:'cat_skirt'}, {id:'shoe', k:'cat_shoe'},
+  {id:'bag', k:'cat_bag'}, {id:'hat', k:'cat_hat'}, {id:'acc', k:'cat_acc'}
+];
+var SF_PALETTE = ['#1B1815','#F6F3EE','#7C2530','#C9A227','#2F6B4F','#2D4B73','#8A8378','#D9A9AE'];
+function catLabel(id){ const c=SF_CATS.find(x=>x.id===id); return c? t(c.k) : id; }
+/* Item names, brands and notes are free text typed by the person and are
+   then interpolated straight into innerHTML. An apostrophe in "Levi's"
+   was enough to break the markup and blank the card; anything sharper
+   than that is a script-injection route into her own app. Escaped at
+   every interpolation point instead. */
+function sfEsc(v){
+  return String(v==null?'':v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* =========================================================================
+   PURE MATH — image I/O, background removal, and pose-anchored placement.
+   Kept free of DOM globals where possible so it can be unit tested with
+   synthetic pixel/keypoint data, independent of a live camera or model.
+   ========================================================================= */
+function sfFileToImg(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{ const img=new Image(); img.onload=()=>resolve(img); img.onerror=reject; img.src=reader.result; };
+    reader.onerror=reject; reader.readAsDataURL(file);
+  });
+}
+/* Phone photos carry an EXIF orientation flag: the pixels are stored in
+   one rotation and a tag says how to turn them. Browsers apply that tag
+   when showing an <img>, but drawing to a canvas has historically not
+   always agreed — which is exactly how a photo ends up sideways or
+   upside-down once composited. createImageBitmap with 'from-image' bakes
+   the correct orientation into the pixels, so everything downstream
+   (pose detection, cropping, compositing) works on an upright image.
+   Falls back to the plain path where it isn't supported. */
+async function sfFileToOrientedCanvas(file, maxSide){
+  maxSide = maxSide || 1100;
+  if(typeof createImageBitmap === 'function'){
+    try{
+      const bmp = await createImageBitmap(file, {imageOrientation:'from-image'});
+      let w=bmp.width, h=bmp.height;
+      const scale=Math.min(1, maxSide/Math.max(w,h));
+      w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(bmp,0,0,w,h);
+      if(bmp.close) bmp.close();
+      return cv;
+    }catch(e){ /* fall through */ }
+  }
+  const img = await sfFileToImg(file);
+  return sfImgToCanvas(img, maxSide);
+}
+function sfImgToCanvas(img, maxSide){
+  maxSide=maxSide||800;
+  let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+  const scale=Math.min(1, maxSide/Math.max(w,h));
+  w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  cv.getContext('2d').drawImage(img,0,0,w,h);
+  return cv;
+}
+/* =========================================================================
+   COLOUR MODEL — a perceptual distance plus a deterministic clustering
+   pass, shared by background removal, swatch detection and the offline
+   classifier so all three agree on what "the same colour" means.
+   ========================================================================= */
+/* Weighted-RGB ("redmean") distance. Plain Euclidean RGB under-weights
+   green, which is exactly where human vision is most sensitive — it is
+   why a mid-grey backdrop and an olive garment could read as "almost the
+   same colour" to the old segmenter and get cut together. One extra
+   multiply, far closer to perceived difference. Squared form used in the
+   hot loops; 0..765 in the rooted form. */
+function sfColorDist2(a, b){
+  const rm = (a[0] + b[0]) * 0.5;
+  const dr = a[0]-b[0], dg = a[1]-b[1], db = a[2]-b[2];
+  return ((512+rm)*dr*dr)/256 + 4*dg*dg + ((767-rm)*db*db)/256;
+}
+function sfColorDist(a, b){ return Math.sqrt(sfColorDist2(a, b)); }
+
+/* Leader clustering over a coarse colour histogram. Bins are visited
+   most-common-first and each either joins the first cluster within
+   `mergeDist` or starts a new one, so the result is fully deterministic
+   — a real k-means would need seeding and iteration for no benefit at
+   this scale. Every bin's counts land somewhere; nothing is discarded,
+   which is what keeps the border/centre shares below trustworthy. */
+function sfHistAdd(hist, r, g, b, field){
+  const key = ((r>>3)<<10) | ((g>>3)<<5) | (b>>3);
+  let e = hist.get(key);
+  if(!e){ e = {r:0, g:0, b:0, n:0, border:0, centre:0}; hist.set(key, e); }
+  e.r += r; e.g += g; e.b += b; e.n++;
+  if(field) e[field]++;
+}
+function sfHistClusters(hist, maxClusters, mergeDist){
+  const bins = [];
+  hist.forEach(e => bins.push({ c: [e.r/e.n, e.g/e.n, e.b/e.n], n: e.n, border: e.border, centre: e.centre }));
+  bins.sort((a, b) => (b.n - a.n) || (a.c[0]-b.c[0]) || (a.c[1]-b.c[1]) || (a.c[2]-b.c[2]));
+  const md2 = mergeDist * mergeDist;
+  const out = [];
+  for(const bin of bins){
+    let host = null;
+    for(const cl of out){ if(sfColorDist2(cl.c, bin.c) <= md2){ host = cl; break; } }
+    if(!host && out.length < maxClusters){
+      out.push({ c: bin.c.slice(), n: bin.n, border: bin.border, centre: bin.centre });
+      continue;
+    }
+    if(!host){                       // past the cap: fold into the nearest
+      let bd = Infinity;
+      for(const cl of out){ const d = sfColorDist2(cl.c, bin.c); if(d < bd){ bd = d; host = cl; } }
+    }
+    const tot = host.n + bin.n;
+    host.c = [ (host.c[0]*host.n + bin.c[0]*bin.n)/tot,
+               (host.c[1]*host.n + bin.c[1]*bin.n)/tot,
+               (host.c[2]*host.n + bin.c[2]*bin.n)/tot ];
+    host.n = tot; host.border += bin.border; host.centre += bin.centre;
+  }
+  return out;
+}
+function sfNearestCluster(clusters, c){
+  let best = -1, bd = Infinity;
+  for(let i = 0; i < clusters.length; i++){
+    const d = sfColorDist2(clusters[i].c, c);
+    if(d < bd){ bd = d; best = i; }
+  }
+  return { i: best, d2: bd };
+}
+
+/* =========================================================================
+   BACKGROUND REMOVAL
+   -------------------------------------------------------------------------
+   Earlier versions all asked a one-sided question — "how far is this pixel
+   from the background colour?" (corner sample, then border majority), or
+   "…from the subject colour?" — and each broke on a real photo from this
+   project. Guessing the background fails on a close-up where the garment
+   itself owns most of the border; guessing a single subject colour fails
+   on anything two-toned, because a black band across a red dress is as far
+   from "red" as the wall behind it is, so the band got cut out with the
+   wall.
+
+   Both questions are the wrong question. What actually separates a garment
+   from its backdrop is OWNERSHIP: a colour that appears mostly around the
+   rim of the frame is the backdrop, a colour that appears mostly in the
+   middle is the item — whatever those colours happen to be, however many
+   of them there are. So this samples a border ring and a centre box,
+   clusters the colours once, and asks of each cluster only "where does
+   this colour mostly live?". Every case above falls out of that single
+   rule: the close-up's navy is 100% of the centre so it stays even though
+   it is also most of the rim; the red dress's black band is centre-owned
+   so it stays; a gradient or patterned backdrop is rim-owned across all
+   of its shades so it all goes.
+
+   A pixel is then background if it is nearer a rim-owned cluster than a
+   centre-owned one, and connectivity from the border still stops the cut
+   from punching holes inside the item. Pure and testable: pixels in,
+   pixels out, no DOM.
+   ========================================================================= */
+function sfRemoveBg(data, w, h, threshold){
+  threshold = threshold == null ? 28 : threshold;
+  const out = new Uint8ClampedArray(data.length);
+  out.set(data);
+  const n = w * h;
+  if(n <= 0) return out;
+
+  /* ---- 1. who owns which colour? ---- */
+  const ring = Math.max(1, Math.round(Math.min(w, h) * 0.06));
+  const cx0 = Math.round(w*0.22), cx1 = Math.max(cx0+1, Math.round(w*0.78));
+  const cy0 = Math.round(h*0.22), cy1 = Math.max(cy0+1, Math.round(h*0.78));
+  const stepX = Math.max(1, Math.round(w/170)), stepY = Math.max(1, Math.round(h/170));
+  const hist = new Map();
+  let borderN = 0, centreN = 0;
+  for(let y = 0; y < h; y += stepY){
+    const rim = y < ring || y >= h - ring;
+    for(let x = 0; x < w; x += stepX){
+      const isBorder = rim || x < ring || x >= w - ring;
+      const isCentre = !isBorder && x >= cx0 && x < cx1 && y >= cy0 && y < cy1;
+      if(!isBorder && !isCentre) continue;
+      const i = (y*w + x) * 4;
+      sfHistAdd(hist, data[i], data[i+1], data[i+2], isBorder ? 'border' : 'centre');
+      if(isBorder) borderN++; else centreN++;
+    }
+  }
+  const clusters = sfHistClusters(hist, 18, 22);
+  const shares = clusters.map(cl => ({
+    cl,
+    b: borderN ? cl.border / borderN : 0,
+    c: centreN ? cl.centre / centreN : 0
+  }));
+  /* Is there a colour that plainly belongs to the middle and not to the
+     rim? Answering this FIRST is what separates the two situations that
+     otherwise look identical from shares alone: a small item centred on a
+     big plain backdrop, and a garment that fills the whole frame. In both
+     the backdrop-or-garment colour dominates the rim AND most of the
+     centre box. The difference is that the first one also contains a
+     second colour that is all centre and no rim — the item — and the
+     second one does not. */
+  const itemFound = shares.some(s => s.c > 0.06 && s.b < s.c * 0.6);
+  /* What the sensitivity slider really controls: how far to trust the rim.
+     There is a pair of situations that the border/centre shares alone
+     genuinely cannot tell apart — not a matter of tuning, the numbers
+     overlap. A pale stripe on a pale wall puts a colour on both the rim
+     and the middle; so does a grainy backdrop whose shades split across
+     several clusters. One wants keeping, the other wants cutting, and
+     they can land on identical shares.
+
+     So the default errs toward the garment (keeping too much costs one
+     drag of this slider; erasing half the item cannot be undone at all),
+     and pushing the slider past the middle switches to the blunt reading
+     — whatever leans to the rim is backdrop. Without that second mode
+     the slider was powerless over exactly the photos that needed it:
+     once a colour had been ruled "garment" no amount of sensitivity
+     could remove it, so the control did nothing at all on the photos
+     where it was the only thing left to try. */
+  const trustRim = threshold >= 42;
+  const bg = [], subj = [];
+  for(const s of shares){
+    const bShare = s.b, cShare = s.c;
+    if(bShare <= 0 && cShare <= 0) continue;          // seen in neither sample
+    let isBg;
+    if(trustRim){
+      isBg = bShare > cShare;
+    } else {
+      /* A colour that frames essentially the WHOLE rim is backdrop even
+         when it also fills much of the centre box — but only once an item
+         has actually been located elsewhere in the photo, so a garment
+         filling the entire frame is never mistaken for its own backdrop. */
+      const framesTheRim = bShare >= 0.85 && (itemFound || cShare < 0.85);
+      isBg = framesTheRim || bShare > cShare * 1.6 + 0.02;
+    }
+    (isBg ? bg : subj).push(s.cl);
+  }
+  /* Nothing rim-owned means the item fills the frame — there is no
+     background to remove and inventing one would eat the garment.
+     Nothing centre-owned means we never saw the item; same reasoning in
+     reverse. Either way the honest answer is "unchanged", and the caller
+     already has a message for a photo that came back untouched. */
+  if(!bg.length || !subj.length) return out;
+
+  /* ---- 2. border-connected fill, decided by which side is nearer ---- */
+  const aggression = Math.max(0.45, Math.min(2.4, threshold / 28));
+  const tol2 = Math.pow(52 + threshold * 2.9, 2);     // absolute brake
+  const mask = new Uint8Array(n);                     // 1 = background
+  const seen = new Uint8Array(n);
+  const stack = new Int32Array(n);
+  let sp = 0;
+  for(let x = 0; x < w; x++){ stack[sp++] = x; stack[sp++] = (h-1)*w + x; }
+  for(let y = 0; y < h; y++){ stack[sp++] = y*w; stack[sp++] = y*w + (w-1); }
+  const c = [0, 0, 0];
+  while(sp > 0){
+    const i = stack[--sp];
+    if(seen[i]) continue;
+    seen[i] = 1;
+    const p = i*4;
+    c[0] = data[p]; c[1] = data[p+1]; c[2] = data[p+2];
+    const nb = sfNearestCluster(bg, c);
+    const ns = sfNearestCluster(subj, c);
+    if(!(nb.d2 <= ns.d2 * aggression * aggression && nb.d2 <= tol2)) continue;
+    mask[i] = 1;
+    const x = i % w, y = (i - x) / w;
+    if(x > 0   && !seen[i-1]) stack[sp++] = i-1;
+    if(x < w-1 && !seen[i+1]) stack[sp++] = i+1;
+    if(y > 0   && !seen[i-w]) stack[sp++] = i-w;
+    if(y < h-1 && !seen[i+w]) stack[sp++] = i+w;
+  }
+
+  /* ---- 3. drop stray islands ----
+     Sensor noise or a logo on the backdrop can survive as a handful of
+     freckles floating beside the garment, which then drag the item's
+     bounding box — and therefore its size on the body — wildly off.
+     Keep only components that are a real share of the largest one, so a
+     genuine second piece (the other shoe of a pair) is never dropped. */
+  const label = new Int32Array(n).fill(-1);
+  const areas = [];
+  const q = new Int32Array(n);
+  for(let s = 0; s < n; s++){
+    if(mask[s] || label[s] >= 0) continue;
+    const id = areas.length; let qs = 0, qe = 0; q[qe++] = s; label[s] = id;
+    let area = 0;
+    while(qs < qe){
+      const i = q[qs++]; area++;
+      const x = i % w, y = (i - x) / w;
+      if(x > 0   && !mask[i-1] && label[i-1] < 0){ label[i-1] = id; q[qe++] = i-1; }
+      if(x < w-1 && !mask[i+1] && label[i+1] < 0){ label[i+1] = id; q[qe++] = i+1; }
+      if(y > 0   && !mask[i-w] && label[i-w] < 0){ label[i-w] = id; q[qe++] = i-w; }
+      if(y < h-1 && !mask[i+w] && label[i+w] < 0){ label[i+w] = id; q[qe++] = i+w; }
+    }
+    areas.push(area);
+  }
+  if(areas.length > 1){
+    let biggest = 0;
+    for(const a of areas) if(a > biggest) biggest = a;
+    const floor = Math.max(biggest * 0.02, n * 0.004);
+    for(let i = 0; i < n; i++){ if(!mask[i] && areas[label[i]] < floor) mask[i] = 1; }
+  }
+
+  /* ---- 4. feather and de-fringe the cut edge ----
+     A hard 0/255 alpha is what makes a composited garment look stuck on
+     with glue, and every edge pixel it keeps is really a blend of garment
+     and backdrop — a white wall leaves a white halo. So the outermost
+     ring gets partial alpha from its 3x3 coverage, and its colour is
+     pulled back toward the nearest centre-owned cluster in proportion to
+     how much backdrop it is carrying. */
+  for(let y = 0; y < h; y++){
+    for(let x = 0; x < w; x++){
+      const i = y*w + x, p = i*4;
+      if(mask[i]){ out[p+3] = 0; continue; }
+      let cover = 0;
+      for(let dy = -1; dy <= 1; dy++){
+        const yy = y + dy; if(yy < 0 || yy >= h) continue;
+        for(let dx = -1; dx <= 1; dx++){
+          const xx = x + dx; if(xx < 0 || xx >= w) continue;
+          if(!mask[yy*w + xx]) cover++;
+        }
+      }
+      if(cover >= 9) continue;                        // fully interior
+      const a = Math.max(0.25, Math.min(1, (cover - 2) / 5));
+      out[p+3] = Math.round(data[p+3] * a);
+      c[0] = data[p]; c[1] = data[p+1]; c[2] = data[p+2];
+      const near = sfNearestCluster(subj, c);
+      if(near.i >= 0){
+        const pull = (1 - a) * 0.7, keep = 1 - pull, ref = subj[near.i].c;
+        out[p]   = Math.round(c[0]*keep + ref[0]*pull);
+        out[p+1] = Math.round(c[1]*keep + ref[1]*pull);
+        out[p+2] = Math.round(c[2]*keep + ref[2]*pull);
+      }
+    }
+  }
+  return out;
+}
+
+/* How much can we trust the cut? The centre of a garment photo is the
+   one region we are entitled to assume is the item, so if it came back
+   mostly transparent the segmentation misread this photo — whatever the
+   overall numbers say. A whole-image opaque fraction cannot see this: a
+   cut that erases the garment and keeps the wall can land at a perfectly
+   ordinary-looking 30%. Pure and testable. */
+function sfSegmentQuality(data, w, h){
+  const x0=Math.round(w*0.3), x1=Math.max(x0+1, Math.round(w*0.7));
+  const y0=Math.round(h*0.3), y1=Math.max(y0+1, Math.round(h*0.7));
+  let opaque=0, total=0;
+  for(let y=y0;y<y1;y++){
+    for(let x=x0;x<x1;x++){ total++; if(data[(y*w+x)*4+3] > 128) opaque++; }
+  }
+  return total ? opaque/total : 0;
+}
+
+/* The item's swatch. Averaging every surviving pixel — what this used to
+   do — turns a red shirt with white cuffs into pink: a colour that is
+   nowhere in the garment, useless as a swatch and worse than useless when
+   "the red shirt" has to be matched by name later. Clustering and taking
+   the largest group returns a colour that is actually IN the photo. */
+function sfDominantColor(data){
+  const hist = new Map();
+  let seen = 0;
+  const step = Math.max(4, (Math.floor(data.length / 4 / 20000) || 1) * 4);
+  for(let i = 0; i < data.length; i += step){
+    if(data[i+3] < 80) continue;
+    sfHistAdd(hist, data[i], data[i+1], data[i+2], null);
+    seen++;
+  }
+  if(!seen) return '#999999';
+  const clusters = sfHistClusters(hist, 10, 62);
+  let best = clusters[0];
+  for(const cl of clusters) if(!best || cl.n > best.n) best = cl;
+  if(!best) return '#999999';
+  return '#' + best.c.map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('');
+}
+
+
+/* =========================================================================
+   SILHOUETTE FEATURES — what the cut-out itself says about the garment.
+   -------------------------------------------------------------------------
+   Category recognition rested entirely on CLIP: a ~150MB download that has
+   to finish before the app can say anything at all, and that answers
+   "unknown" whenever the person is offline, on a metered connection, or
+   simply not willing to wait. Yet the segmenter has already produced the
+   one thing that separates most clothing at a glance — the outline. A
+   garment with a tall silhouette that splits in two below the middle is
+   trousers; one that is wider at the hem than the shoulder is a skirt;
+   one wider than it is tall is a shoe. None of that needs a neural
+   network or a single byte of network.
+
+   So this reads a handful of shape numbers straight off the alpha mask.
+   They feed three things: an instant first guess, a fallback when CLIP
+   never arrives, and the input vector the on-device model below is
+   trained on. Pure — pixels in, numbers out.
+   ========================================================================= */
+var SF_FEATURE_NAMES = ['aspect','fill','wTop','wMid','wBot','legGap','symmetry','cy','widestPos','sat','light'];
+var SF_SLICES = 12;
+
+function sfGarmentFeatures(data, w, h){
+  const box = sfAlphaBounds(data, w, h, 12);
+  const bw = Math.max(1, box.w), bh = Math.max(1, box.h);
+  const minRun = Math.max(2, Math.round(bw * 0.06));
+  const prof = [], runsPerSlice = [], margins = [];
+  let opaque = 0, sumY = 0, sumR = 0, sumG = 0, sumB = 0;
+
+  for(let s = 0; s < SF_SLICES; s++){
+    const y0 = box.y + Math.floor(bh * s / SF_SLICES);
+    const y1 = box.y + Math.max(Math.floor(bh * (s+1) / SF_SLICES), Math.floor(bh * s / SF_SLICES) + 1);
+    let left = -1, right = -1, runs = 0, rows = 0;
+    for(let y = y0; y < y1 && y < box.y + bh; y++){
+      let rowRuns = 0, run = 0;
+      for(let x = box.x; x < box.x + bw; x++){
+        const on = data[(y*w + x)*4 + 3] > 12;
+        if(on){
+          opaque++; sumY += (y - box.y) / bh;
+          const p = (y*w + x)*4; sumR += data[p]; sumG += data[p+1]; sumB += data[p+2];
+          if(left < 0 || x < left) left = x;
+          if(x > right) right = x;
+          run++;
+        } else {
+          if(run >= minRun) rowRuns++;
+          run = 0;
+        }
+      }
+      if(run >= minRun) rowRuns++;
+      runs += rowRuns; rows++;
+    }
+    const width = (left >= 0) ? (right - left + 1) / bw : 0;
+    prof.push(width);
+    runsPerSlice.push(rows ? runs / rows : 0);
+    margins.push(left >= 0 ? [ (left - box.x) / bw, (box.x + bw - 1 - right) / bw ] : [0.5, 0.5]);
+  }
+
+  const mean = (a, i0, i1) => { let t = 0, n = 0; for(let i = i0; i <= i1; i++){ t += a[i]; n++; } return n ? t/n : 0; };
+  const fill = opaque / (bw * bh);
+  const cy = opaque ? sumY / opaque : 0.5;
+  /* "Does the bottom half split into more than one piece?" is the single
+     most decisive shape fact in a wardrobe: it is what makes trousers
+     trousers and not a long skirt. */
+  let split = 0, splitSlices = 0;
+  for(let s = Math.floor(SF_SLICES * 0.55); s < SF_SLICES; s++){ splitSlices++; if(runsPerSlice[s] >= 1.6) split++; }
+  const legGap = splitSlices ? split / splitSlices : 0;
+  let sym = 0;
+  for(const [l, r] of margins) sym += 1 - Math.min(1, Math.abs(l - r) * 2);
+  sym /= margins.length;
+  let widest = 0, widestPos = 0.5;
+  prof.forEach((v, i) => { if(v > widest){ widest = v; widestPos = i / (SF_SLICES - 1); } });
+
+  // colour, as hue-independent saturation/lightness (hue says nothing about category)
+  let sat = 0, light = 0;
+  if(opaque){
+    const r = sumR/opaque/255, g = sumG/opaque/255, b = sumB/opaque/255;
+    const mx = Math.max(r,g,b), mn = Math.min(r,g,b);
+    light = (mx + mn) / 2;
+    sat = (mx === mn) ? 0 : (mx - mn) / (1 - Math.abs(2*light - 1) || 1);
+  }
+
+  const aspect = Math.max(0.25, Math.min(3.5, bh / bw));
+  return [
+    (aspect - 0.25) / 3.25,
+    Math.max(0, Math.min(1, fill)),
+    mean(prof, 0, 2), mean(prof, 5, 6), mean(prof, 9, 11),
+    legGap, Math.max(0, Math.min(1, sym)), Math.max(0, Math.min(1, cy)),
+    widestPos, Math.max(0, Math.min(1, sat)), Math.max(0, Math.min(1, light))
+  ];
+}
+
+/* Ideal silhouettes, in the same units the features come out in. Scoring
+   against a prototype beats a chain of if-statements: every category is
+   stated in one readable line, thresholds cannot contradict each other,
+   and "how sure" falls out of the distance instead of being invented. */
+var SF_PROTOTYPES = {
+  //          aspect  fill  wTop  wMid  wBot  legGap  sym   cy   widest
+  shirt:   [ 0.246, 0.72, 0.95, 0.80, 0.72, 0.00, 0.90, 0.47, 0.20 ],
+  jacket:  [ 0.277, 0.70, 0.95, 0.85, 0.80, 0.05, 0.90, 0.48, 0.15 ],
+  dress:   [ 0.508, 0.62, 0.75, 0.62, 0.95, 0.00, 0.88, 0.55, 0.90 ],
+  trouser: [ 0.385, 0.55, 0.95, 0.85, 0.80, 0.85, 0.90, 0.50, 0.05 ],
+  skirt:   [ 0.215, 0.72, 0.62, 0.82, 1.00, 0.05, 0.90, 0.55, 0.95 ],
+  shoe:    [ 0.077, 0.72, 0.55, 0.85, 0.95, 0.05, 0.55, 0.58, 0.80 ],
+  bag:     [ 0.231, 0.78, 0.70, 0.95, 0.90, 0.10, 0.85, 0.55, 0.60 ],
+  hat:     [ 0.114, 0.72, 0.55, 0.85, 1.00, 0.02, 0.92, 0.60, 0.90 ],
+  acc:     [ 0.185, 0.35, 0.70, 0.80, 0.75, 0.15, 0.75, 0.50, 0.50 ]
+};
+var SF_PROTO_WEIGHTS = [2.2, 1.0, 1.0, 1.0, 1.2, 2.4, 0.6, 0.8, 1.0];
+
+function sfSoftmax(scores){
+  let mx = -Infinity;
+  for(const k in scores) if(scores[k] > mx) mx = scores[k];
+  let sum = 0; const out = {};
+  for(const k in scores){ const e = Math.exp(scores[k] - mx); out[k] = e; sum += e; }
+  for(const k in out) out[k] = sum ? out[k]/sum : 0;
+  return out;
+}
+function sfHeuristicScores(f){
+  const raw = {};
+  for(const cat in SF_PROTOTYPES){
+    const p = SF_PROTOTYPES[cat];
+    let d = 0;
+    for(let i = 0; i < p.length; i++){ const e = (f[i] - p[i]) * SF_PROTO_WEIGHTS[i]; d += e*e; }
+    raw[cat] = -d * 5.5;                     // temperature: distance -> logit
+  }
+  return sfSoftmax(raw);
+}
+
+/* =========================================================================
+   ON-DEVICE LEARNING
+   -------------------------------------------------------------------------
+   Every correction the person makes is a labelled training example that
+   the app used to throw away. Override "shirt" to "jacket" forty times
+   and the forty-first photo was guessed exactly as badly as the first.
+
+   This keeps a small multinomial logistic model over the silhouette
+   features, trained by one step of gradient descent each time a garment
+   is saved — so it learns from the category she actually settled on,
+   whether she accepted the suggestion or corrected it. It is not a
+   replacement for CLIP; it is a third opinion whose weight in the blend
+   grows with the number of examples it has seen, from "ignore me" at zero
+   to roughly half the vote once it has seen a wardrobe's worth.
+
+   Everything stays in localStorage on the device, like the rest of the
+   app. Nothing is uploaded, and "delete my data" deletes this too.
+
+   The model functions are pure over an explicit model object so that
+   learning can be tested for actual convergence rather than merely for
+   not throwing.
+   ========================================================================= */
+var SF_BRAIN_KEY = 'sf_brain';
+function sfCatIds(){ return SF_CATS.map(c => c.id); }
+
+function sfModelNew(){ return { v:1, n:0, w:{} }; }
+function sfModelScores(model, f){
+  const raw = {};
+  for(const c of sfCatIds()){
+    const w = model.w[c];
+    let z = 0;
+    if(w){ z = w[0]; for(let i = 0; i < f.length; i++) z += w[i+1] * f[i]; }
+    raw[c] = z;
+  }
+  return sfSoftmax(raw);
+}
+function sfModelTrain(model, f, cat, lr){
+  lr = (lr == null) ? 0.5 : lr;
+  const decay = 0.0004;
+  const p = sfModelScores(model, f);
+  for(const c of sfCatIds()){
+    if(!model.w[c]) model.w[c] = new Array(f.length + 1).fill(0);
+    const w = model.w[c];
+    const g = (((c === cat) ? 1 : 0) - p[c]) * lr;
+    w[0] += g - decay * w[0];
+    for(let i = 0; i < f.length; i++) w[i+1] += g * f[i] - decay * w[i+1];
+  }
+  model.n++;
+  return model;
+}
+/* How far to trust the learned model, as a function of how much it has
+   seen. Deliberately slow: a model with three examples that has already
+   overruled CLIP is worse than no model at all. */
+function sfModelTrust(n){ return n / (n + 18); }
+
+/* Combine the three opinions. Any of them may be absent — CLIP when it
+   has not loaded, the learned model when it is new — and the blend has
+   to stay a valid distribution in every combination. */
+function sfBlendScores(heur, learned, trust, clip){
+  const ids = sfCatIds();
+  const out = {};
+  const wLearn = (learned ? trust : 0);
+  const wClip  = (clip ? 0.55 : 0);
+  const wHeur  = Math.max(0.12, 1 - wLearn - wClip);
+  let total = wLearn + wClip + wHeur;
+  for(const c of ids){
+    out[c] = ((heur[c] || 0) * wHeur
+            + (learned ? (learned[c] || 0) * wLearn : 0)
+            + (clip ? (clip[c] || 0) * wClip : 0)) / (total || 1);
+  }
+  return out;
+}
+function sfTopCat(scores){
+  let best = null, bv = -Infinity;
+  for(const c in scores){ if(scores[c] > bv){ bv = scores[c]; best = c; } }
+  return { cat: best, confidence: bv };
+}
+
+function sfBrainLoad(){
+  const b = sfGet(SF_BRAIN_KEY, null);
+  if(b && b.v === 1 && b.model && b.fit && b.seg) return b;
+  return { v:1, model: sfModelNew(), fit: { scale:1, dx:0, dy:0, n:0 }, seg: { value:28, n:0 } };
+}
+function sfBrainSave(b){ return sfSet(SF_BRAIN_KEY, b); }
+function sfBrainReset(){
+  try{ localStorage.removeItem(SF_BRAIN_KEY); }catch(e){}
+}
+
+/* Trained on the category the person actually saved — an accepted
+   suggestion is as much a signal as a correction. */
+function sfBrainLearnCategory(features, cat){
+  if(!features || !cat) return;
+  const b = sfBrainLoad();
+  sfModelTrain(b.model, features, cat);
+  sfBrainSave(b);
+}
+function sfBrainPredict(features, clipScores){
+  const heur = sfHeuristicScores(features);
+  const b = sfBrainLoad();
+  const trust = sfModelTrust(b.model.n);
+  const learned = b.model.n > 0 ? sfModelScores(b.model, features) : null;
+  const blended = sfBlendScores(heur, learned, trust, clipScores || null);
+  const top = sfTopCat(blended);
+  return { cat: top.cat, confidence: top.confidence, scores: blended, trust: trust, samples: b.model.n };
+}
+
+/* ---- learned fit prior ----
+   If every render for this person comes out 8% too large and she drags it
+   back every single time, the app should start there next time instead of
+   making her repeat the correction. An exponential mean, so a change of
+   photo or of body is followed within a few outfits rather than being
+   averaged away forever. Only recorded on an explicit "this one is
+   right" — saving or downloading the result. */
+function sfBrainLearnFit(adj){
+  if(!adj) return;
+  const b = sfBrainLoad();
+  const a = b.fit.n === 0 ? 1 : 0.35;
+  b.fit.scale = b.fit.scale * (1-a) + adj.scale * a;
+  b.fit.dx    = b.fit.dx    * (1-a) + adj.dx    * a;
+  b.fit.dy    = b.fit.dy    * (1-a) + adj.dy    * a;
+  b.fit.n++;
+  sfBrainSave(b);
+}
+function sfBrainFitPrior(){
+  const b = sfBrainLoad();
+  if(b.fit.n < 2) return { scale:1, dx:0, dy:0 };     // one correction is not a pattern
+  return {
+    scale: Math.max(0.6, Math.min(1.5, b.fit.scale)),
+    dx: Math.max(-25, Math.min(25, Math.round(b.fit.dx))),
+    dy: Math.max(-25, Math.min(25, Math.round(b.fit.dy)))
+  };
+}
+/* Same idea for the cut-out sensitivity: someone who always photographs
+   against the same wall should not have to find the same slider position
+   for every single item. */
+function sfBrainLearnThreshold(v){
+  if(!(v > 0)) return;
+  const b = sfBrainLoad();
+  const a = b.seg.n === 0 ? 1 : 0.4;
+  b.seg.value = b.seg.value * (1-a) + v * a;
+  b.seg.n++;
+  sfBrainSave(b);
+}
+function sfBrainThreshold(){
+  const b = sfBrainLoad();
+  if(b.seg.n < 2) return 28;
+  return Math.max(8, Math.min(90, Math.round(b.seg.value)));
+}
+
+/* ---- pose-anchored placement math (pure: keypoints in, a rect out) ---- */
+function kp(pose, name){ const p=(pose||[]).find(k=>k.name===name); return p && p.score>0.25 ? p : null; }
+function mid(a,b){ return a&&b ? {x:(a.x+b.x)/2, y:(a.y+b.y)/2} : (a||b||null); }
+function dist(a,b){ return a&&b ? Math.hypot(a.x-b.x, a.y-b.y) : 0; }
+function angleOf(a,b){ return a&&b ? Math.atan2(b.y-a.y, b.x-a.x) : 0; }
+
+/* =========================================================================
+   WHOLE-OUTFIT DETECTION — for a photo of a person WEARING several
+   garments (a lookbook/outfit shot). Detecting arbitrary overlapping
+   clothes with no other information is a hard object-detection problem,
+   but a photo of a dressed person carries a huge shortcut: the pose. Once
+   MoveNet gives shoulders, hips, knees and ankles, each garment's rough
+   location is known geometrically — a jacket lives across the shoulders,
+   trousers between hips and ankles, shoes at the feet. So this crops each
+   body region, runs the SAME CLIP classifier on each crop separately, and
+   returns one candidate item per region. Each is then reviewed and saved
+   through the existing single-item pipeline, so nothing downstream had to
+   change and every result stays editable.
+   ========================================================================= */
+/* pure: body-region rectangles (in source pixels) from pose keypoints */
+function sfOutfitRegions(pose, w, h){
+  const ls=kp(pose,'left_shoulder'), rs=kp(pose,'right_shoulder');
+  const lh=kp(pose,'left_hip'), rh=kp(pose,'right_hip');
+  const la=kp(pose,'left_ankle'), ra=kp(pose,'right_ankle');
+  const shMid=mid(ls,rs), hipMid=mid(lh,rh), ankMid=mid(la,ra);
+  if(!shMid || !hipMid) return [];
+  const shW = dist(ls,rs) || Math.abs(w*0.25);
+  const halfW = Math.max(shW*1.15, w*0.12);
+  const out=[];
+  function push(cats, cx, top, bottom, padW){
+    const x0=Math.max(0, Math.round(cx-padW)), x1=Math.min(w, Math.round(cx+padW));
+    const y0=Math.max(0, Math.round(top)), y1=Math.min(h, Math.round(bottom));
+    if(x1-x0 < 8 || y1-y0 < 8) return;
+    out.push({cats, x:x0, y:y0, w:x1-x0, h:y1-y0});
+  }
+  const torsoTop = shMid.y - shW*0.35;
+  const torsoBot = hipMid.y + shW*0.10;
+  // outer layer and top occupy the same region — CLIP decides which it is
+  push(['jacket','shirt','dress'], shMid.x, torsoTop, torsoBot, halfW);
+  const legTop = hipMid.y - shW*0.05;
+  const legBot = ankMid ? ankMid.y + shW*0.05 : h;
+  push(['trouser','skirt'], hipMid.x, legTop, legBot, halfW*0.95);
+  if(ankMid) push(['shoe'], ankMid.x, ankMid.y - shW*0.22, Math.min(h, ankMid.y + shW*0.45), halfW*0.9);
+  return out;
+}
+async function sfDetectOutfit(sourceCanvas){
+  let pose = await sfDetectPose(sourceCanvas);
+  if(!pose) return [];
+  const regions = sfOutfitRegions(pose, sourceCanvas.width, sourceCanvas.height);
+  const found=[];
+  for(const r of regions){
+    try{
+      const crop = sfExtractCrop(sourceCanvas, r);
+      const small = sfCanvasResize(crop, 420);
+      const res = await sfSuggestGarmentCategory(small, r.cats);
+      if(res && res.confidence>0.12){
+        found.push({ rect:r, cat:res.cat, confidence:res.confidence, canvas:small });
+      }
+    }catch(e){}
+  }
+  return sfDedupeOutfit(found);
+}
+/* Two regions can still land on the same answer — a long coat reads as a
+   dress from the torso crop and, where it reaches the knees, again from
+   the leg crop. Offering the same garment twice makes the review queue
+   ask the person to save a duplicate. Keep the more confident one.
+   Pure over plain objects, so it is testable without a model. */
+function sfDedupeOutfit(found){
+  const byCat = new Map();
+  for(const f of found){
+    const prev = byCat.get(f.cat);
+    if(!prev || f.confidence > prev.confidence) byCat.set(f.cat, f);
+  }
+  return found.filter(f => byCat.get(f.cat) === f);
+}
+
+function sfAnchorFor(cat, pose){
+  const ls=kp(pose,'left_shoulder'), rs=kp(pose,'right_shoulder');
+  const lh=kp(pose,'left_hip'), rh=kp(pose,'right_hip');
+  const lk=kp(pose,'left_knee'), rk=kp(pose,'right_knee');
+  const la=kp(pose,'left_ankle'), ra=kp(pose,'right_ankle');
+  const nose=kp(pose,'nose'), lear=kp(pose,'left_ear'), rear=kp(pose,'right_ear');
+  let shMid=mid(ls,rs); const hipMidReal=mid(lh,rh), kneeMid=mid(lk,rk), ankleMid=mid(la,ra);
+
+  /* MoveNet names keypoints from the SUBJECT's point of view: a person
+     facing the camera has their LEFT shoulder on the RIGHT of the image.
+     Measuring an angle as left -> right therefore yields a vector pointing
+     LEFT, i.e. 180°, and every garment came out upside down. Ordering the
+     pair by their image x makes the vector always point right, so a level
+     pose is 0° under either naming convention. */
+  function lineAngle(a, b){
+    if(!a || !b) return null;
+    const first = a.x <= b.x ? a : b, second = a.x <= b.x ? b : a;
+    return angleOf(first, second);
+  }
+  const shAngle  = lineAngle(ls, rs);
+  const hipAngle = lineAngle(lh, rh);
+  /* Use the line that actually governs the garment: a top hangs from the
+     shoulders, trousers sit on the hips. Falling back to the other line
+     keeps a half-visible body working instead of returning nothing. */
+  const topAngle = (shAngle != null) ? shAngle : (hipAngle != null ? hipAngle : 0);
+  const botAngle = (hipAngle != null) ? hipAngle : (shAngle != null ? shAngle : 0);
+  const midAngle = (shAngle != null && hipAngle != null) ? (shAngle + hipAngle)/2 : topAngle;
+
+  /* Body width, robust to a turned torso. Taking the shoulder span alone
+     means a three-quarter pose — extremely common in a photo someone
+     takes of herself — reports a narrow body and every garment comes out
+     pinched. The hips give a second, independent estimate of the same
+     thing; trusting the larger of the two recovers the real scale. */
+  const shSpan = dist(ls,rs), hipSpan = dist(lh,rh);
+  const shW = Math.max(shSpan, hipSpan*1.15) || shSpan || hipSpan*1.15 || 1;
+
+  /* A photo cropped at the waist is explicitly invited by the onboarding
+     ("full body, or even just down to the waist"), and used to render
+     nothing at all: every torso garment needed a hip keypoint and
+     returned null without one. The hips of a standing adult sit about
+     1.45 shoulder-widths below the shoulders, which is a far better
+     answer than refusing to draw. Anything that genuinely needs the legs
+     — trousers, a skirt, shoes — still declines, because guessing where
+     an unseen knee is would be inventing the result. */
+  const hipMid = hipMidReal || (shMid ? {x: shMid.x, y: shMid.y + shW*1.45} : null);
+  if(!shMid && hipMidReal) shMid = {x: hipMidReal.x, y: hipMidReal.y - shW*1.45};
+
+  const torsoH = dist(shMid,hipMid) || shW*1.45;
+  const legH = dist(hipMid,ankleMid) || torsoH*1.4;
+
+  /* Widths are multiples of the shoulder-JOINT distance the pose model
+     reports (acromion to acromion), not of a worn garment's outer edge.
+     A real shirt sits only ~20% wider than that, a jacket ~30%; hips are
+     slightly narrower than shoulders. The earlier values (1.85x for a
+     shirt) drew every garment 30-55% oversized, which is why a top could
+     swallow the whole torso. */
+  if(cat==='shirt'){
+    if(!shMid||!hipMid) return null;
+    return { cx: shMid.x, cy:(shMid.y+hipMid.y)/2, w: shW*1.20, h: torsoH*1.15, angle: topAngle };
+  }
+  if(cat==='jacket'){
+    if(!shMid||!hipMid) return null;
+    return { cx: shMid.x, cy:(shMid.y+hipMid.y)/2, w: shW*1.32, h: torsoH*1.20, angle: topAngle };
+  }
+  if(cat==='dress'){
+    if(!shMid) return null;
+    const bottom = kneeMid || hipMidReal;
+    if(!bottom) return null;          // no idea how far down the body goes
+    return { cx: shMid.x, cy:(shMid.y+bottom.y)/2, w: shW*1.24, h: (dist(shMid,bottom)||torsoH*2)*1.1, angle: midAngle };
+  }
+  if(cat==='trouser'){
+    if(!hipMidReal) return null;
+    const bottom = ankleMid || kneeMid;
+    if(!bottom) return null;
+    return { cx: hipMidReal.x, cy:(hipMidReal.y+bottom.y)/2, w: shW*1.02, h:(dist(hipMidReal,bottom)||legH)*1.05, angle: botAngle };
+  }
+  if(cat==='skirt'){
+    if(!hipMidReal) return null;
+    const bottom = kneeMid;
+    if(!bottom) return null;
+    return { cx: hipMidReal.x, cy:(hipMidReal.y+bottom.y)/2, w: shW*1.10, h:(dist(hipMidReal,bottom)||torsoH*.7)*1.15, angle: botAngle };
+  }
+  if(cat==='shoe'){
+    /* Sized from the shank (knee to ankle) where it is visible, not from
+       the shoulders: it is the measurement closest to the foot, so it
+       stays right when the upper body is turned, leaning or partly out of
+       frame. Bounded by the shoulder estimate so a badly-read knee cannot
+       produce a shoe the size of the person. */
+    const shank = Math.max(dist(lk,la), dist(rk,ra)) || dist(kneeMid, ankleMid);
+    const footW = shank ? Math.min(shW*0.46, shank*0.55) : shW*0.42;
+    const footH = footW*0.66;
+    const out=[];
+    if(la) out.push({cx:la.x, cy:la.y+footH*0.42, w:footW, h:footH, angle:0});
+    if(ra) out.push({cx:ra.x, cy:ra.y+footH*0.42, w:footW, h:footH, angle:0, mirror:true});
+    return out.length? out : null;
+  }
+  if(cat==='hat'){
+    /* Anchored to the ear line, not to the nose. The nose moves whenever
+       the head turns, and it carries no orientation at all, so a tilted
+       head got a stubbornly level hat floating off to one side. The ears
+       give both the centre of the skull and the angle it is held at. */
+    const earMid = mid(lear, rear);
+    const head = earMid || nose;
+    if(!head) return null;
+    const earW = dist(lear,rear) || shW*.55;
+    const earAngle = lineAngle(lear, rear);
+    const ang = (earAngle != null) ? earAngle : topAngle;
+    const lift = earW*0.95;
+    return { cx: head.x - Math.sin(ang)*lift, cy: head.y - Math.cos(ang)*lift,
+             w: earW*1.7, h: earW*1.1, angle: ang };
+  }
+  if(cat==='bag'){
+    if(!hipMid) return null;
+    /* side is decided in IMAGE space, not by keypoint name, for the same
+       reason the shoulder angle is: 'left_hip' sits on the image right. */
+    const side = (lh&&rh) ? (lh.x>rh.x ? 1 : -1) : 1;
+    return { cx: hipMid.x + side*shW*.65, cy: hipMid.y - torsoH*.1, w: shW*.6, h: shW*.7, angle: midAngle*0.5 };
+  }
+  if(cat==='acc'){
+    if(!shMid) return null;
+    /* A necklace sits at the base of the neck, so it rides the shoulder
+       line and tilts with it. */
+    return { cx: shMid.x + Math.sin(topAngle)*torsoH*.08,
+             cy: shMid.y - Math.cos(topAngle)*torsoH*.08,
+             w: shW*.5, h: shW*.35, angle: topAngle };
+  }
+  return null;
+}
+
+/* =========================================================================
+   POSE MODEL — TensorFlow.js MoveNet, loaded from a public CDN at runtime.
+   Runs entirely in the browser; the photo is never sent anywhere. If the
+   model can't load (offline, blocked), the builder still works — the
+   compositor simply falls back to a fixed torso-box anchor.
+   ========================================================================= */
+var sfPoseModel=null, sfPosePromise=null;
+function sfLoadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+async function sfLoadPoseModel(){
+  if(sfPoseModel) return sfPoseModel;
+  if(sfPosePromise) return sfPosePromise;
+  sfPosePromise = (async()=>{
+    try{
+      if(!window.tf) await sfLoadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
+      if(!window.poseDetection) await sfLoadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js');
+      sfPoseModel = await window.poseDetection.createDetector(window.poseDetection.SupportedModels.MoveNet,
+        {modelType: window.poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING});
+    }catch(e){ sfPoseModel=null; }
+    return sfPoseModel;
+  })();
+  return sfPosePromise;
+}
+async function sfDetectPose(canvasEl){
+  const model = await sfLoadPoseModel();
+  if(!model) return null;
+  try{
+    const poses = await model.estimatePoses(canvasEl);
+    return (poses && poses[0]) ? poses[0].keypoints : null;
+  }catch(e){ return null; }
+}
+/* fallback anchor set used when the pose model is unavailable: a fixed
+   torso box roughly where a centred standing photo usually places it */
+/* Fallback anchors used when the pose model is unavailable. These follow
+   the SAME convention as real MoveNet output — keypoints named from the
+   subject's point of view, so 'left_*' sits on the RIGHT of the image.
+   An earlier version mirrored this, which made every test agree with
+   itself while the real model produced garments rotated 180°. */
+function sfFallbackPose(w,h){
+  return [
+    {name:'left_shoulder', x:w*0.64, y:h*0.28, score:1}, {name:'right_shoulder', x:w*0.36, y:h*0.28, score:1},
+    {name:'left_hip', x:w*0.60, y:h*0.54, score:1}, {name:'right_hip', x:w*0.40, y:h*0.54, score:1},
+    {name:'left_knee', x:w*0.58, y:h*0.72, score:1}, {name:'right_knee', x:w*0.42, y:h*0.72, score:1},
+    {name:'left_ankle', x:w*0.57, y:h*0.90, score:1}, {name:'right_ankle', x:w*0.43, y:h*0.90, score:1},
+    {name:'nose', x:w*0.5, y:h*0.12, score:1}, {name:'left_ear', x:w*0.54, y:h*0.13, score:1}, {name:'right_ear', x:w*0.46, y:h*0.13, score:1}
+  ];
+}
+
+/* =========================================================================
+   GARMENT CATEGORY MODEL — CLIP zero-shot classification (transformers.js,
+   runs the ONNX-converted model fully in the browser). Replaces an
+   earlier MobileNet + keyword-guessing version: MobileNet was trained on
+   general ImageNet photos, not fashion, and matching its output labels
+   against a hand-written regex table added a whole layer where things
+   could go wrong. CLIP compares the photo directly against the app's own
+   category names as plain text — "a photo of trousers" — no translation
+   table in between. Trade-off worth knowing: the model is a genuinely
+   larger download (~150MB) the first time it's needed; the browser
+   caches it afterwards, and everything still runs on-device — nothing is
+   ever uploaded. Same contract as before ({cat, confidence} or null), so
+   nothing else in the add-garment flow had to change. */
+let sfClipPipeline=null, sfClipPromise=null;
+var SF_CLIP_LABELS=[
+  ['a photo of a shirt or top','shirt'], ['a photo of trousers or pants','trouser'],
+  ['a photo of a jacket or coat','jacket'], ['a photo of a dress','dress'],
+  ['a photo of a skirt','skirt'], ['a photo of shoes or sneakers','shoe'],
+  ['a photo of a handbag or purse','bag'], ['a photo of a hat or cap','hat'],
+  ['a photo of jewelry or an accessory','acc']
+];
+async function sfLoadClipModel(){
+  if(sfClipPipeline) return sfClipPipeline;
+  if(sfClipPromise) return sfClipPromise;
+  sfClipPromise = (async()=>{
+    try{
+      const mod = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0');
+      sfClipPipeline = await mod.pipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch16');
+    }catch(e){ sfClipPipeline=null; }
+    return sfClipPipeline;
+  })();
+  return sfClipPromise;
+}
+/* `only` narrows the label set to the categories that can plausibly
+   appear in this crop. sfOutfitRegions has always worked out that a crop
+   taken between the hips and the ankles can only hold trousers or a
+   skirt, and has always returned that list — but nothing read it, so the
+   leg crop was scored against all nine labels and cheerfully came back
+   "shirt". Zero-shot classification is a comparison against whatever you
+   offer it: offering it impossible answers is how it picks one. */
+async function sfSuggestGarmentCategory(canvasEl, only){
+  const clip = await sfLoadClipModel();
+  if(!clip) return null;
+  const labels = (only && only.length)
+    ? SF_CLIP_LABELS.filter(l => only.indexOf(l[1]) !== -1)
+    : SF_CLIP_LABELS;
+  if(!labels.length) return null;
+  try{
+    const dataUrl = canvasEl.toDataURL('image/jpeg', 0.85);
+    const preds = await clip(dataUrl, labels.map(l=>l[0]));
+    if(!preds || !preds.length) return null;
+    const top = preds[0];
+    const match = labels.find(l=>l[0]===top.label);
+    return match ? {cat: match[1], confidence: top.score} : null;
+  }catch(e){ return null; }
+}
+
+/* =========================================================================
+   ADD-GARMENT FLOW
+   ========================================================================= */
+/* A hidden real <input type=file> triggered explicitly via .click() from a
+   normal visible button — more reliable across constrained WebViews than
+   an invisible input absolutely-positioned under a label, which some
+   embedded preview surfaces hit-test inconsistently. Must stay synchronous
+   with the tap so the browser still counts it as a real user gesture. */
+function triggerCapture(inputId){
+  const el = document.getElementById(inputId);
+  if(el) el.click();
+}
+var addCanvas=null, addRemovedData=null, addColor=null, addCat=null, addCatManual=false, addSeason='all';
+var addFeatures=null;        // silhouette vector for the item under review
+/* An earlier version of this file tried to make the phone's back gesture
+   close an open sheet, by pushing a history entry when a sheet opened.
+   That interacts badly with the kind of embedded "system preview" some
+   apps use to show an HTML file (their own back/close control can end up
+   fighting this page's own history), which can trap the person instead of
+   helping them. Removed: closing now relies only on the visible ✕ button
+   and tapping outside the panel — both work the same everywhere. */
+function openAdd(){
+  document.getElementById('addSheet').classList.add('on');
+  document.getElementById('addCapture').classList.remove('hidden');
+  document.getElementById('addReview').classList.add('hidden');
+  document.getElementById('addCrop').classList.add('hidden');
+  addOriginalCanvas=null; multiItemMode=false;
+  /* Start the CLIP model downloading the moment the person shows intent
+     to add an item — not only once a photo is picked. It is a genuinely
+     large download (~150MB); starting it here gives it a head start, so
+     by the time a photo is actually chosen the model may already be
+     ready instead of starting from zero exactly when an answer is
+     wanted immediately. Fire-and-forget: nothing here waits on it. */
+  sfLoadClipModel();
+}
+function closeAdd(){
+  document.getElementById('addSheet').classList.remove('on');
+  addOriginalCanvas=null; multiItemMode=false;
+}
+/* =========================================================================
+   MULTI-ITEM CROP — for one photo containing several garments (a flat-lay
+   of a full outfit, for instance). CLIP and the segmenter both assume one
+   photo holds one item; reliably detecting and separating several items
+   automatically needs real object-detection, which nothing free and
+   client-side does well for overlapping clothing. Instead: keep the full
+   original photo, let the person draw a rectangle around ONE item at a
+   time, and run that crop through the exact same proven pipeline
+   (segment, recognise, save) as a normal single photo — repeatable for
+   each item in the same photo without re-taking or re-picking it.
+   ========================================================================= */
+/* pure: maps a rectangle drawn on a SCALED on-screen preview back to pixel
+   coordinates on the real, full-resolution source canvas */
+function sfMapCropRect(dispRect, dispW, dispH, srcW, srcH){
+  const scaleX = srcW/dispW, scaleY = srcH/dispH;
+  let x = Math.round(dispRect.x*scaleX), y = Math.round(dispRect.y*scaleY);
+  let w = Math.round(dispRect.w*scaleX), h = Math.round(dispRect.h*scaleY);
+  x = Math.max(0, Math.min(x, srcW-1));
+  y = Math.max(0, Math.min(y, srcH-1));
+  w = Math.max(1, Math.min(w, srcW-x));
+  h = Math.max(1, Math.min(h, srcH-y));
+  return {x,y,w,h};
+}
+function sfExtractCrop(sourceCanvas, rect){
+  const out=document.createElement('canvas'); out.width=rect.w; out.height=rect.h;
+  out.getContext('2d').drawImage(sourceCanvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+  return out;
+}
+function sfCanvasResize(sourceCanvas, maxSide){
+  let w=sourceCanvas.width, h=sourceCanvas.height;
+  const scale=Math.min(1, maxSide/Math.max(w,h));
+  const nw=Math.max(1,Math.round(w*scale)), nh=Math.max(1,Math.round(h*scale));
+  const out=document.createElement('canvas'); out.width=nw; out.height=nh;
+  out.getContext('2d').drawImage(sourceCanvas,0,0,nw,nh);
+  return out;
+}
+
+var addOriginalCanvas=null, cropDrag=null, cropCurRect=null, multiItemMode=false;
+
+/* shared by a fresh file pick AND a crop confirm — the one proven path
+   that segments, suggests a category, and readies the review form */
+function processGarmentCanvas(canvas){
+  addCanvas = sfCanvasResize(canvas, 520);
+  document.getElementById('fName').value=''; document.getElementById('fBrand').value=''; document.getElementById('fNotes').value='';
+  addCat=SF_CATS[0].id; addCatManual=false; addSeason='all'; catPending=false; addFeatures=null;
+  /* Start from the sensitivity this person's photos have needed before
+     rather than from the same factory 28 every single time. */
+  try{
+    const slider=document.getElementById('segThreshold');
+    if(slider) slider.value = sfBrainThreshold();
+  }catch(e){}
+  renderCatGrid(); renderSeasonGrid();
+  setCatAiStatus('loading', t('cat_ai_loading'));
+  reSegment();
+  document.getElementById('segThresholdWrap').classList.remove('hidden');
+  runGarmentRecognition(addCanvas);
+}
+
+function openCropFromReview(){
+  if(!addOriginalCanvas) return;
+  document.getElementById('addReview').classList.add('hidden');
+  document.getElementById('addCrop').classList.remove('hidden');
+  const img=document.getElementById('cropImg');
+  img.src = addOriginalCanvas.toDataURL('image/jpeg', 0.9);
+  cropCurRect=null;
+  document.getElementById('cropRectEl').classList.add('hidden');
+  document.getElementById('cropConfirmBtn').disabled=true;
+  multiItemMode=true;
+}
+function closeCropBackToReview(){
+  document.getElementById('addCrop').classList.add('hidden');
+  document.getElementById('addReview').classList.remove('hidden');
+}
+function cropFrameXY(ev){
+  const frame=document.getElementById('cropFrame');
+  const r=frame.getBoundingClientRect();
+  const p = ev.touches ? ev.touches[0] : ev;
+  return { x: Math.max(0,Math.min(r.width, p.clientX-r.left)), y: Math.max(0,Math.min(r.height, p.clientY-r.top)), w:r.width, h:r.height };
+}
+function cropPointerDown(ev){
+  const p=cropFrameXY(ev);
+  cropDrag={x0:p.x, y0:p.y, dispW:p.w, dispH:p.h};
+  cropCurRect={x:p.x,y:p.y,w:0,h:0};
+  const el=document.getElementById('cropRectEl'); el.classList.remove('hidden');
+  document.getElementById('cropConfirmBtn').disabled=true;
+}
+function cropPointerMove(ev){
+  if(!cropDrag) return;
+  const p=cropFrameXY(ev);
+  const x=Math.min(cropDrag.x0,p.x), y=Math.min(cropDrag.y0,p.y);
+  const w=Math.abs(p.x-cropDrag.x0), h=Math.abs(p.y-cropDrag.y0);
+  cropCurRect={x,y,w,h};
+  const el=document.getElementById('cropRectEl');
+  el.style.left=x+'px'; el.style.top=y+'px'; el.style.width=w+'px'; el.style.height=h+'px';
+}
+function cropPointerUp(){
+  if(!cropDrag) return;
+  const big = cropCurRect && cropCurRect.w>18 && cropCurRect.h>18;
+  document.getElementById('cropConfirmBtn').disabled = !big;
+  cropDrag=null;
+}
+function confirmCrop(){
+  if(!cropCurRect || !addOriginalCanvas) return;
+  const rect = sfMapCropRect(cropCurRect, cropDrag ? cropDrag.dispW : document.getElementById('cropFrame').getBoundingClientRect().width,
+                              cropDrag ? cropDrag.dispH : document.getElementById('cropFrame').getBoundingClientRect().height,
+                              addOriginalCanvas.width, addOriginalCanvas.height);
+  const cropped = sfExtractCrop(addOriginalCanvas, rect);
+  document.getElementById('addCrop').classList.add('hidden');
+  document.getElementById('addReview').classList.remove('hidden');
+  processGarmentCanvas(cropped);
+}
+
+async function onGarmentFile(file){
+  if(!file) return;
+  document.getElementById('addCapture').classList.add('hidden');
+  document.getElementById('addReview').classList.remove('hidden');
+  document.getElementById('segNote').textContent = t('add_removing');
+  document.getElementById('segThresholdWrap').classList.add('hidden');
+  multiItemMode=false; outfitQueue=[]; outfitQueueIdx=0;
+  try{
+    addOriginalCanvas = await sfFileToOrientedCanvas(file, 1100);
+    processGarmentCanvas(addOriginalCanvas);
+    /* If the photo turns out to be a person wearing an outfit, offer to
+       pull out every garment at once instead of the person having to crop
+       each one by hand. Runs alongside the normal single-item flow, which
+       stays fully usable if this finds nothing. */
+    setCatAiStatus('loading', t('outfit_scanning'));
+    sfDetectOutfit(addOriginalCanvas).then(found=>{
+      if(found && found.length>1){
+        outfitFound = found;
+        document.getElementById('outfitCount').textContent = found.length;
+        document.getElementById('outfitPrompt').classList.remove('hidden');
+      }
+    }).catch(()=>{});
+  }catch(e){ document.getElementById('segNote').textContent = t('err_seg'); setCatAiStatus('fail', t('cat_ai_fail')); }
+}
+
+/* ---- reviewing a whole detected outfit, one garment at a time ---- */
+var outfitFound=[], outfitQueue=[], outfitQueueIdx=0;
+function startOutfitQueue(){
+  document.getElementById('outfitPrompt').classList.add('hidden');
+  outfitQueue = outfitFound.slice();
+  outfitQueueIdx = 0;
+  multiItemMode = false;           // the queue drives progression, not the crop prompt
+  loadOutfitQueueItem();
+}
+function dismissOutfitPrompt(){ document.getElementById('outfitPrompt').classList.add('hidden'); }
+function loadOutfitQueueItem(){
+  const cur = outfitQueue[outfitQueueIdx];
+  if(!cur){ closeAdd(); return; }
+  document.getElementById('addCrop').classList.add('hidden');
+  document.getElementById('addReview').classList.remove('hidden');
+  processGarmentCanvas(cur.canvas);
+  addCat = cur.cat; addCatManual = false; catPending = false;
+  renderCatGrid();
+  setCatAiStatus('ok', t('cat_ai_prefix')+' '+catLabel(cur.cat));
+  updateOutfitProgress();
+}
+function updateOutfitProgress(){
+  const el=document.getElementById('outfitProgress');
+  if(!el) return;
+  if(outfitQueue.length>1){
+    el.classList.remove('hidden');
+    el.textContent = t('outfit_progress').replace('{n}', outfitQueueIdx+1).replace('{total}', outfitQueue.length);
+  } else el.classList.add('hidden');
+}
+
+/* the AI category call can take a few real seconds the first time (it has
+   to fetch the model), and nothing here blocks Save while it runs — so
+   without a visible status a person can easily save before it ever
+   speaks up, and it reads as "the app doesn't recognise anything". A
+   hard timeout also guarantees the status never hangs on "loading…"
+   forever if the model never resolves at all (e.g. no network). */
+function setCatAiStatus(kind, text){
+  const el = document.getElementById('catAiStatus'); if(!el) return;
+  el.className = 'cat-ai-status ' + kind;
+  el.innerHTML = (kind==='loading' ? '<span class="dot"></span>' : '') + text;
+}
+var garmentRecognitionSeq = 0;
+var catPending = false;
+function runGarmentRecognition(canvasEl){
+  const seq = ++garmentRecognitionSeq;
+  let settled = false;
+  catPending = true; renderCatGrid();
+  /* Answer NOW from the cut-out we already have. CLIP is a ~150MB
+     download and used to be the only opinion in the room, so until it
+     landed — sometimes a minute, sometimes never — the form just sat on
+     "shirt" with a spinner beside it. The silhouette is free and already
+     in memory, and together with whatever the person has taught the app
+     so far it is right often enough to be a real starting point rather
+     than a placeholder. CLIP still overrules it the moment it arrives. */
+  let features = null;
+  try{
+    if(addRemovedData && addCanvas){
+      features = sfGarmentFeatures(addRemovedData, addCanvas.width, addCanvas.height);
+      const fast = sfBrainPredict(features, null);
+      if(fast && fast.cat && !addCatManual){
+        addCat = fast.cat;
+        renderCatGrid();
+        setCatAiStatus('loading', t('cat_ai_quick_prefix')+' '+catLabel(fast.cat));
+      }
+    }
+  }catch(e){ features = null; }
+  addFeatures = features;
+  /* CLIP is a real download (~150MB) the first time — cached by the
+     browser afterwards, but the first attempt on a slow connection needs
+     real room to finish rather than being called a failure too early. */
+  const slowNotice = setTimeout(()=>{
+    if(settled || seq!==garmentRecognitionSeq) return;
+    setCatAiStatus('loading', t('cat_ai_first_load'));
+  }, 5000);
+  const timeout = setTimeout(()=>{
+    if(settled || seq!==garmentRecognitionSeq) return;
+    settled = true; catPending = false; renderCatGrid();
+    setCatAiStatus('fail', t('cat_ai_fail'));
+  }, 60000);
+  sfSuggestGarmentCategory(canvasEl).then(res=>{
+    if(settled || seq!==garmentRecognitionSeq) return;
+    settled = true; catPending = false; clearTimeout(timeout); clearTimeout(slowNotice);
+    /* Blend rather than replace: CLIP leads, but the shape reader and
+       anything this person has already corrected still get a vote. */
+    if(res && res.confidence>0.15 && features){
+      const clipScores = {}; clipScores[res.cat] = res.confidence;
+      const blended = sfBrainPredict(features, clipScores);
+      if(!addCatManual){ addCat = blended.cat; }
+      renderCatGrid();
+      setCatAiStatus('ok', t('cat_ai_prefix')+' '+catLabel(addCat));
+    } else if(res && res.confidence>0.15){
+      if(!addCatManual){ addCat = res.cat; }
+      renderCatGrid();
+      setCatAiStatus('ok', t('cat_ai_prefix')+' '+catLabel(res.cat));
+    } else if(features){
+      /* CLIP had nothing useful — the silhouette guess already on screen
+         is the answer, not a failure to report. */
+      renderCatGrid();
+      setCatAiStatus('ok', t('cat_ai_quick_prefix')+' '+catLabel(addCat));
+    } else {
+      renderCatGrid();
+      setCatAiStatus('fail', t('cat_ai_fail'));
+    }
+  }).catch(()=>{
+    if(settled || seq!==garmentRecognitionSeq) return;
+    settled = true; catPending = false; clearTimeout(timeout); clearTimeout(slowNotice);
+    renderCatGrid();
+    if(features) setCatAiStatus('ok', t('cat_ai_quick_prefix')+' '+catLabel(addCat));
+    else setCatAiStatus('fail', t('cat_ai_fail'));
+  });
+}
+function reSegment(){
+  if(!addCanvas) return;
+  try{
+    const ctx=addCanvas.getContext('2d');
+    const {width:w,height:h}=addCanvas;
+    if(!ctx || !w || !h) throw new Error('bad canvas');
+    const raw = ctx.getImageData(0,0,w,h).data;
+    const threshold = +(document.getElementById('segThreshold').value||sfBrainThreshold());
+    let removed = sfRemoveBg(raw, w, h, threshold);
+    /* Safety net, both directions. Too much removed (uneven lighting, low
+       contrast with the garment) can erase the garment itself, leaving a
+       blank preview. But the opposite also happened silently: if almost
+       NOTHING gets removed (the corner-colour match came out too strict
+       for this photo's noise/gradient), the note stayed empty and the
+       person just saw their unprocessed photo with no explanation at all
+       — indistinguishable from "the button does nothing". Both directions
+       now fall back to showing the honest full photo and say so plainly,
+       with a concrete next step (the slider) rather than silence. */
+    const keptFraction = sfOpaqueFraction(removed);
+    const centreKept = sfSegmentQuality(removed, w, h);
+    let fallbackKind = null;
+    if(keptFraction < 0.06){ removed = raw; fallbackKind = 'erased'; }
+    else if(keptFraction > 0.93){ removed = raw; fallbackKind = 'none'; }
+    /* A third case the two fractions above cannot see: a cut that kept a
+       perfectly ordinary share of the photo but took it from the wrong
+       side, leaving a hollow where the garment was. The middle of a
+       garment photo is the one place we are entitled to expect the item,
+       so a hollow centre means this cut is not to be trusted — say so
+       rather than letting it through as if it were fine. */
+    else if(centreKept < 0.45){ fallbackKind = 'unsure'; }
+    addRemovedData = removed;
+    const out=document.createElement('canvas'); out.width=w; out.height=h;
+    out.getContext('2d').putImageData(new ImageData(addRemovedData, w, h), 0, 0);
+    document.getElementById('segImg').src = out.toDataURL('image/png');
+    addColor = sfDominantColor(addRemovedData);
+    renderColorDots();
+    document.getElementById('segNote').textContent =
+      fallbackKind==='erased' ? t('seg_fallback') :
+      fallbackKind==='none' ? t('seg_none') :
+      fallbackKind==='unsure' ? t('seg_unsure') : '';
+  }catch(e){ document.getElementById('segNote').textContent = t('err_seg'); }
+}
+/* fraction of pixels that survived removal (alpha > 0) — pure, testable */
+function sfOpaqueFraction(data){
+  let opaque=0, total=data.length/4;
+  for(let i=3;i<data.length;i+=4){ if(data[i]>0) opaque++; }
+  return total? opaque/total : 0;
+}
+/* Tight bounding box of the actual garment inside its image. After
+   background removal the picture keeps its ORIGINAL dimensions, so the
+   garment usually floats inside a large transparent margin. Stretching
+   that whole padded image onto the body box scales and offsets the
+   garment by however much empty space happens to surround it — which is
+   why a jacket could end up covering an entire body. Pure and testable. */
+function sfAlphaBounds(data, w, h, threshold){
+  threshold = threshold==null ? 12 : threshold;
+  let minX=w, minY=h, maxX=-1, maxY=-1;
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      if(data[(y*w+x)*4+3] > threshold){
+        if(x<minX) minX=x;
+        if(x>maxX) maxX=x;
+        if(y<minY) minY=y;
+        if(y>maxY) maxY=y;
+      }
+    }
+  }
+  if(maxX < 0) return {x:0, y:0, w:w, h:h};   // fully transparent: use as-is
+  return {x:minX, y:minY, w:maxX-minX+1, h:maxY-minY+1};
+}
+/* Place a garment of a given aspect ratio into a body region WITHOUT
+   distorting it. Clothing is matched to body width first (a shirt's width
+   is what must line up with the shoulders), with height following the
+   garment's real proportions, capped so a long image can't run absurdly
+   past the region. Torso pieces hang DOWN from the top of their region
+   rather than being centred in it, which is how clothes actually sit. */
+function sfPlaceGarment(srcW, srcH, box, topAnchored){
+  if(!srcW || !srcH) return {cx:box.cx, cy:box.cy, w:box.w, h:box.h};
+  const aspect = srcH/srcW;
+  let w = box.w;
+  let h = w*aspect;
+  const maxH = box.h*1.25;
+  if(h > maxH){ h = maxH; w = h/aspect; }
+  const cy = topAnchored ? (box.cy - box.h/2) + h/2 : box.cy;
+  return {cx:box.cx, cy:cy, w:w, h:h};
+}
+function renderCatGrid(){
+  const wrap=document.getElementById('fCatGrid'); wrap.innerHTML='';
+  SF_CATS.forEach(c=>{
+    const isSel = c.id===addCat;
+    const pendingDefault = isSel && catPending && !addCatManual;
+    const b=document.createElement('div');
+    b.className='chip'+(isSel && !pendingDefault?' on':'')+(pendingDefault?' pending':'');
+    b.textContent=catLabel(c.id)+(pendingDefault?' …':'');
+    b.onclick=()=>{ addCat=c.id; addCatManual=true; renderCatGrid(); };
+    wrap.appendChild(b);
+  });
+}
+function renderSeasonGrid(){
+  const wrap=document.getElementById('fSeasonGrid'); wrap.innerHTML='';
+  [['all','season_all'],['summer','season_summer'],['winter','season_winter']].forEach(([id,k])=>{
+    const b=document.createElement('div'); b.className='chip'+(id===addSeason?' on':'');
+    b.textContent=t(k); b.onclick=()=>{ addSeason=id; renderSeasonGrid(); };
+    wrap.appendChild(b);
+  });
+}
+/* fixed swatches PLUS a real native colour picker for anything else —
+   "8 preset dots" alone is not enough choice, per the report. The
+   detected swatch also gets an explicit ✓ badge now, not just a thin
+   border, since "first circle" was easy to miss at this size. */
+function renderColorDots(){
+  const wrap=document.getElementById('fColorDots'); wrap.innerHTML='';
+  const opts = addColor ? [addColor, ...SF_PALETTE] : SF_PALETTE;
+  opts.slice(0,8).forEach((hex,i)=>{
+    const d=document.createElement('div'); d.className='color-dot-opt'+(i===0?' on':''); d.style.background=hex;
+    if(i===0 && addColor) d.innerHTML='<span class="color-dot-check">✓</span>';
+    d.onclick=()=>{ addColor=hex; document.querySelectorAll('.color-dot-opt').forEach(x=>{x.classList.remove('on'); x.innerHTML='';}); d.classList.add('on'); };
+    wrap.appendChild(d);
+  });
+  const more=document.createElement('div'); more.className='color-dot-opt color-dot-more';
+  more.textContent='+';
+  more.onclick=()=>document.getElementById('colorPicker').click();
+  wrap.appendChild(more);
+}
+function onCustomColor(hex){
+  addColor=hex; renderColorDots();
+  document.querySelectorAll('.color-dot-opt')[0].classList.add('on');
+}
+function saveGarment(){
+  if(!addCanvas || !addRemovedData){ toast(t('err_seg')); return; }
+  if(!addCat){ addCat=SF_CATS[0].id; renderCatGrid(); }
+  const w=addCanvas.width, h=addCanvas.height;
+  const out=document.createElement('canvas'); out.width=w; out.height=h;
+  out.getContext('2d').putImageData(new ImageData(addRemovedData, w, h), 0, 0);
+  const item = {
+    id:'g_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    img: out.toDataURL('image/png'),
+    category: addCat, name: document.getElementById('fName').value.trim() || catLabel(addCat),
+    color: addColor, brand: document.getElementById('fBrand').value.trim(),
+    season: addSeason, notes: document.getElementById('fNotes').value.trim(),
+    addedAt: Date.now()
+  };
+  if(!WardrobeDB.add(item)){ return; }   // sfSet already said why; do not claim success
+  /* The category she settled on is a labelled example — whether she
+     accepted the suggestion or overrode it. This is the only place the
+     app ever gets ground truth, so it is the only place worth learning
+     from. Same for the sensitivity she left the slider on. */
+  try{
+    if(addFeatures) sfBrainLearnCategory(addFeatures, addCat);
+    const th = +(document.getElementById('segThreshold').value||0);
+    if(th) sfBrainLearnThreshold(th);
+  }catch(e){}
+  renderWardrobe();
+  toast(t('add_save')+' ✓');
+  if(outfitQueue.length && outfitQueueIdx < outfitQueue.length-1){
+    outfitQueueIdx++;
+    loadOutfitQueueItem();
+  } else if(outfitQueue.length){
+    outfitQueue=[]; outfitQueueIdx=0;
+    closeAdd();
+  } else if(multiItemMode && addOriginalCanvas){
+    document.getElementById('cropNextWrap').classList.add('on');
+  } else {
+    closeAdd();
+  }
+}
+function acceptCropNext(){
+  document.getElementById('cropNextWrap').classList.remove('on');
+  openCropFromReview();
+}
+function declineCropNext(){
+  document.getElementById('cropNextWrap').classList.remove('on');
+  multiItemMode=false; addOriginalCanvas=null;
+  closeAdd();
+}
+
+/* =========================================================================
+   PERSON PHOTO
+   ========================================================================= */
+async function onPersonPhoto(file){
+  if(!file) return;
+  try{
+    const cv = await sfFileToOrientedCanvas(file, 900);
+    const dataUrl = cv.toDataURL('image/jpeg', .85);
+    PersonDB.set({ img: dataUrl, w: cv.width, h: cv.height, capturedAt: Date.now(), pose:null });
+    renderPersonPhoto();
+    toast('✓');
+  }catch(e){ toast(t('err_seg')); }
+}
+function renderPersonPhoto(){
+  const stage=document.getElementById('photoStage'); if(!stage) return;
+  const p=PersonDB.get();
+  if(p&&p.img){ stage.classList.add('has-img'); stage.innerHTML='<img src="'+sfEsc(p.img)+'" alt="">'; }
+  else{ stage.classList.remove('has-img'); stage.innerHTML='<div class="photo-none-ic">🧍</div>'; }
+}
+
+/* =========================================================================
+   WARDROBE SCREEN
+   ========================================================================= */
+var wardFilter='';
+function renderWardTabs(){
+  const wrap=document.getElementById('wardTabs'); if(!wrap) return; wrap.innerHTML='';
+  const mk=(id,label)=>{ const c=document.createElement('div'); c.className='chip'+(wardFilter===id?' on':''); c.textContent=label;
+    c.onclick=()=>{ wardFilter=id; renderWardTabs(); renderWardGrid(); }; wrap.appendChild(c); };
+  mk('', t('cat_all'));
+  SF_CATS.forEach(c=>mk(c.id, catLabel(c.id)));
+}
+function renderWardGrid(){
+  const grid=document.getElementById('wardGrid'); if(!grid) return;
+  const items = WardrobeDB.all().filter(i=> !wardFilter || i.category===wardFilter);
+  grid.innerHTML='';
+  items.forEach(it=>{
+    const card=document.createElement('div'); card.className='w-card';
+    card.innerHTML='<img src="'+sfEsc(it.img)+'" alt="'+sfEsc(it.name)+'"><div class="w-card-badge">'+sfEsc(catLabel(it.category))+'</div>';
+    card.onclick=()=> openDetail(it.id);
+    grid.appendChild(card);
+  });
+  const add=document.createElement('div'); add.className='w-add'; add.onclick=openAdd;
+  add.innerHTML='<div style="font-size:22px">＋</div>';
+  grid.appendChild(add);
+  document.getElementById('wardEmpty').classList.toggle('hidden', WardrobeDB.all().length>0);
+  document.getElementById('wardCountLbl').textContent = WardrobeDB.all().length+' '+t('ward_count');
+}
+function renderWardrobe(){ renderWardTabs(); renderWardGrid(); }
+
+var detailId=null;
+function openDetail(id){
+  detailId=id; const it=WardrobeDB.get_(id); if(!it) return;
+  document.getElementById('detailImg').src=it.img;
+  document.getElementById('detailBody').innerHTML =
+    '<div class="h2" style="margin-top:2px">'+sfEsc(it.name)+'</div>'+
+    '<div class="p" style="margin-top:6px">'+sfEsc(catLabel(it.category))+' · '+sfEsc(it.brand||'—')+'</div>'+
+    (it.notes? '<div class="p" style="margin-top:6px">'+sfEsc(it.notes)+'</div>' : '');
+  go('detail');
+}
+function deleteDetailItem(){
+  if(!detailId) return;
+  WardrobeDB.remove(detailId);
+  delete sfBoundsCache[detailId];
+  for(const c in buildPicks){ if(buildPicks[c]===detailId) delete buildPicks[c]; }
+  detailId=null;
+  toast('✓'); go('wardrobe');
+}
+
+/* =========================================================================
+   OUTFIT BUILDER
+   ========================================================================= */
+var buildPicks = {}; // cat -> item id
+function renderBuild(){
+  const wrap=document.getElementById('buildCats'); if(!wrap) return; wrap.innerHTML='';
+  const items=WardrobeDB.all();
+  SF_CATS.forEach(c=>{
+    const list=items.filter(i=>i.category===c.id);
+    if(!list.length) return;
+    const box=document.createElement('div'); box.className='build-cat';
+    const lbl=document.createElement('div'); lbl.className='build-cat-t'; lbl.textContent=catLabel(c.id);
+    const rail=document.createElement('div'); rail.className='build-rail';
+    const none=document.createElement('div'); none.className='build-none'+(!buildPicks[c.id]?' on':'');
+    none.textContent='—'; none.onclick=()=>{ delete buildPicks[c.id]; renderBuild(); };
+    rail.appendChild(none);
+    list.forEach(it=>{
+      const p=document.createElement('div'); p.className='build-pick'+(buildPicks[c.id]===it.id?' on':'');
+      p.innerHTML='<img src="'+sfEsc(it.img)+'" alt="">';
+      p.onclick=()=>{ buildPicks[c.id]=it.id; renderBuild(); };
+      rail.appendChild(p);
+    });
+    box.appendChild(lbl); box.appendChild(rail); wrap.appendChild(box);
+  });
+  const n=Object.keys(buildPicks).length;
+  const btn=document.getElementById('buildGoBtn');
+  /* Never disable this button. It used to be disabled whenever no person
+     photo existed — but the ONLY route to the photo screen lived inside
+     startTryOn(), which a disabled button can never run. That made the
+     requirement both invisible and impossible to satisfy: the button
+     simply looked broken. Now it always responds, and startTryOn() says
+     what is missing and navigates there. */
+  btn.disabled = false;
+  const hint=document.getElementById('buildHint');
+  if(hint){
+    if(!PersonDB.get()) hint.textContent = t('build_need_photo');
+    else if(n<1) hint.textContent = t('build_need_items');
+    else hint.textContent = '';
+  }
+  const pc=document.getElementById('buildPhotoCard');
+  if(pc){
+    const person=PersonDB.get();
+    pc.innerHTML = person
+      ? '<img class="bpc-thumb" src="'+sfEsc(person.img)+'" alt=""><div class="bpc-txt"><div class="bpc-t">'+t('photo_t')+'</div><div class="bpc-d">'+t('build_photo_ready')+'</div></div><div class="bpc-act">'+t('res_change')+'</div>'
+      : '<div class="bpc-thumb bpc-empty">🧍</div><div class="bpc-txt"><div class="bpc-t">'+t('photo_t')+'</div><div class="bpc-d">'+t('build_need_photo')+'</div></div><div class="bpc-act">'+t('photo_take')+'</div>';
+  }
+}
+/* very small deterministic command parser: matches wardrobe item names /
+   colours / categories mentioned in free text and updates the current
+   picks accordingly — no network call, no external AI needed.
+   Arabic's definite article ("ال") means a garment named "قميص أصفر" and
+   a command like "البسيني القميص الأصفر" don't share one exact substring
+   even though they obviously mean the same thing — so this compares
+   normalised word-by-word overlap instead of requiring one exact match. */
+function sfNormalizeArabic(s){
+  return (s||'').toLowerCase()
+    .replace(/[إأآا]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
+    .replace(/[\u064B-\u0652]/g,'')       // strip diacritics
+    .replace(/[^\wء-ي\s]/g,' ')
+    .trim()
+    .split(/\s+/)
+    .map(w2 => w2.replace(/^ال/,''))     // strip a leading definite article,
+    .join(' ');                          // per word — JS's \b only knows ASCII
+}                                        // letters, so it never fires on Arabic
+/* Colour words the command parser understands, as real RGB rather than
+   as palette constants to be matched exactly. Arabic entries are stored
+   already normalised (no definite article, alef folded) because that is
+   the form sfNormalizeArabic produces. */
+var SF_COLOR_WORDS = {
+  black:[27,24,21],   اسود:[27,24,21],
+  white:[246,243,238], ابيض:[246,243,238],
+  red:[150,35,45],     احمر:[150,35,45],
+  yellow:[201,162,39], اصفر:[201,162,39],
+  green:[47,107,79],   اخضر:[47,107,79],
+  blue:[45,75,115],    ازرق:[45,75,115],
+  grey:[138,131,120],  gray:[138,131,120], رمادي:[138,131,120],
+  pink:[217,169,174],  وردي:[217,169,174], زهري:[217,169,174],
+  beige:[222,205,180], بيج:[222,205,180],
+  brown:[104,72,48],   بني:[104,72,48],
+  navy:[30,40,80],     كحلي:[30,40,80],
+  orange:[205,110,40], برتقالي:[205,110,40],
+  purple:[95,60,120],  بنفسجي:[95,60,120]
+};
+function sfHexToRgb(hex){
+  if(typeof hex!=='string') return null;
+  const m=/^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if(!m) return null;
+  const v=parseInt(m[1],16);
+  return [(v>>16)&255, (v>>8)&255, v&255];
+}
+function sfColorWordRGB(text){
+  for(const w in SF_COLOR_WORDS){ if(text.indexOf(w)!==-1) return SF_COLOR_WORDS[w]; }
+  return null;
+}
+function sfWordOverlap(needleWords, haystack){
+  if(!needleWords.length) return 0;
+  let hits=0;
+  needleWords.forEach(w=>{ if(w && haystack.includes(w)) hits++; });
+  return hits/needleWords.length;
+}
+function runCommand(){
+  const raw=(document.getElementById('cmdInput').value||'').trim();
+  if(!raw){ toast(t('build_cmd_empty')); return; }
+  const low=sfNormalizeArabic(raw);
+  const items=WardrobeDB.all();
+  let matched=0;
+  items.forEach(it=>{
+    const needleWords=sfNormalizeArabic(it.name).split(/\s+/).filter(Boolean);
+    const overlap=sfWordOverlap(needleWords, low);
+    if(overlap>=0.6){ buildPicks[it.category]=it.id; matched++; }
+  });
+  if(!matched){
+    // fall back to colour+category co-occurrence, e.g. "yellow shirt" / "قميص أصفر"
+    SF_CATS.forEach(c=>{
+      const catNames=[c.id, sfNormalizeArabic(t(c.k).replace(/^[^\wء-ي]+/,''))];
+      const mentionsCat = catNames.some(n=>n && low.includes(n));
+      if(!mentionsCat) return;
+      const inCat = items.filter(i=>i.category===c.id);
+      if(!inCat.length) return;
+      let best=inCat[0];
+      const wanted = sfColorWordRGB(low);
+      if(wanted){
+        /* This used to demand item.color === '#C9A227' exactly. Every
+           swatch the app detects is measured off a photo, so it is
+           something like #C7A531 and never once equalled a palette
+           constant: "the yellow shirt" simply never resolved. Nearest
+           colour wins instead, and only if it is near ENOUGH — a
+           wardrobe with no yellow in it should decline rather than hand
+           back whatever was least unlike yellow. */
+        let bd=Infinity, hit=null;
+        for(const i of inCat){
+          const rgb=sfHexToRgb(i.color); if(!rgb) continue;
+          const d=sfColorDist(rgb, wanted);
+          if(d<bd){ bd=d; hit=i; }
+        }
+        if(hit && bd<=190) best=hit;
+      }
+      if(best){ buildPicks[c.id]=best.id; matched++; }
+    });
+  }
+  renderBuild();
+  toast(matched? '✓ '+matched : t('build_need_items'));
+}
+
+/* =========================================================================
+   TRY-ON: pose detection + composite render (the honest "Path A" preview)
+   ========================================================================= */
+var lastResultDataUrl=null, lastPersonDataUrl=null, lastResultError=null;
+var sfBoundsCache={};   // item id -> tight alpha bounds (stable for a saved item)
+/* The pose used for the last render is cached so the adjustment sliders
+   can recomposite instantly without re-running pose detection. */
+var lastPose=null, lastPoseFallback=false;
+var adjust={scale:1, dx:0, dy:0};
+function onAdjust(){
+  adjust.scale = (+document.getElementById('adjScale').value)/100;
+  adjust.dx = +document.getElementById('adjX').value;
+  adjust.dy = +document.getElementById('adjY').value;
+  document.getElementById('adjScaleVal').textContent = Math.round(adjust.scale*100)+'%';
+  document.getElementById('adjXVal').textContent = adjust.dx;
+  document.getElementById('adjYVal').textContent = adjust.dy;
+  recomposite();
+}
+/* "Reset" means back to where this render started — which, once the app
+   has learned how this person's photos sit, is her learned starting
+   point rather than a factory 100%. Snapping to 100% would undo that
+   correction every time the button was pressed. */
+function resetAdjust(){
+  adjust = sfBrainFitPrior();
+  document.getElementById('adjScale').value=Math.round(adjust.scale*100);
+  document.getElementById('adjX').value=adjust.dx;
+  document.getElementById('adjY').value=adjust.dy;
+  document.getElementById('adjScaleVal').textContent=Math.round(adjust.scale*100)+'%';
+  document.getElementById('adjXVal').textContent=String(adjust.dx);
+  document.getElementById('adjYVal').textContent=String(adjust.dy);
+  recomposite();
+}
+async function recomposite(){
+  if(!lastPose) return;
+  const person=PersonDB.get(); if(!person) return;
+  try{
+    lastResultDataUrl = await sfComposite(person, lastPose, adjust);
+    renderResult();
+  }catch(e){}
+}
+
+/* The actual render. Split out of startTryOn so the sliders can call it
+   directly with different adjustment values. */
+async function sfComposite(person, pose, adj){
+  adj = adj || {scale:1,dx:0,dy:0};
+  const img=new Image();
+  await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=person.img; });
+  const stageCv=document.createElement('canvas'); stageCv.width=person.w; stageCv.height=person.h;
+  const ctx=stageCv.getContext('2d');
+  ctx.drawImage(img,0,0,person.w,person.h);
+  const shiftUnit = Math.max(person.w, person.h)/100;
+
+  const order=['trouser','skirt','dress','shirt','jacket','shoe','bag','hat','acc'];
+  const topAnchoredCats = {shirt:1, jacket:1, dress:1, trouser:1, skirt:1};
+  for(const cat of order){
+    const id=buildPicks[cat]; if(!id) continue;
+    const it=WardrobeDB.get_(id); if(!it) continue;
+    const anchor = sfAnchorFor(cat, pose);
+    if(!anchor) continue;
+    const anchors = Array.isArray(anchor) ? anchor : [anchor];
+    const gImg=new Image();
+    await new Promise((res)=>{ gImg.onload=res; gImg.onerror=res; gImg.src=it.img; });
+    if(!gImg.width || !gImg.height) continue;
+    /* The tight bounds never change for a saved item, but this used to
+       decode the PNG and scan every one of its pixels again on every
+       single frame of a slider drag — several hundred thousand pixels
+       per garment, per tick, which is exactly why the adjustment sliders
+       stuttered. Computed once per item and remembered. */
+    let src = sfBoundsCache[it.id];
+    if(!src){
+      src = {x:0, y:0, w:gImg.width, h:gImg.height};
+      try{
+        const gc=document.createElement('canvas');
+        gc.width=gImg.width; gc.height=gImg.height;
+        const gctx=gc.getContext('2d');
+        gctx.drawImage(gImg,0,0);
+        const gdata=gctx.getImageData(0,0,gc.width,gc.height).data;
+        src = sfAlphaBounds(gdata, gc.width, gc.height);
+      }catch(e){}
+      sfBoundsCache[it.id] = src;
+    }
+    for(const a of anchors){
+      const p = sfPlaceGarment(src.w, src.h, a, !!topAnchoredCats[cat]);
+      const dw=p.w*adj.scale, dh=p.h*adj.scale;
+      /* Scaling must grow a top-anchored garment DOWNWARD from the
+         shoulders, not outward from its middle — otherwise enlarging it
+         with the slider lifts the collar up over the head. */
+      let cy = p.cy;
+      if(topAnchoredCats[cat]) cy = (p.cy - p.h/2) + dh/2;
+      ctx.save();
+      ctx.translate(p.cx + adj.dx*shiftUnit, cy + adj.dy*shiftUnit);
+      ctx.rotate(a.angle||0);
+      if(a.mirror) ctx.scale(-1,1);
+      /* A soft shadow under the garment is the cheapest thing that stops
+         a composite reading as a sticker: without it every piece floats
+         at exactly the same depth as the photo behind it. Kept small and
+         low-contrast — it is a hint of contact, not a drop shadow. */
+      ctx.shadowColor = 'rgba(0,0,0,0.30)';
+      ctx.shadowBlur = Math.max(3, dw*0.045);
+      ctx.shadowOffsetY = Math.max(1, dh*0.012);
+      /* Drawn fully opaque. The old flat 0.97 made every garment very
+         slightly see-through, which on a dark body photo greyed pale
+         fabric; the feathered alpha the segmenter now produces does the
+         blending where blending actually belongs — at the edges. */
+      ctx.drawImage(gImg, src.x, src.y, src.w, src.h, -dw/2, -dh/2, dw, dh);
+      ctx.restore();
+    }
+  }
+  return stageCv.toDataURL('image/jpeg', .9);
+}
+
+async function startTryOn(){
+  const person=PersonDB.get();
+  if(!person){ toast(t('build_need_photo')); go('photo'); return; }
+  if(Object.keys(buildPicks).length<1){ toast(t('build_need_items')); return; }
+  go('proc');
+  const steps=['proc_1','proc_2','proc_3'];
+  let i=0;
+  document.getElementById('procStepLbl').textContent=t(steps[0]);
+  const stepTimer=setInterval(()=>{ i=(i+1)%steps.length; document.getElementById('procStepLbl').textContent=t(steps[i]); }, 650);
+  try{
+    const probe=document.createElement('canvas'); probe.width=person.w; probe.height=person.h;
+    const pimg=new Image();
+    await new Promise((res,rej)=>{ pimg.onload=res; pimg.onerror=rej; pimg.src=person.img; });
+    probe.getContext('2d').drawImage(pimg,0,0,person.w,person.h);
+
+    let pose = await sfDetectPose(probe);
+    lastPoseFallback = !pose;
+    if(!pose) pose = sfFallbackPose(person.w, person.h);
+    lastPose = pose;
+    /* Start from the correction this person has had to make before. If
+       every render comes out a touch large for her photos and she drags
+       it back each time, the app should meet her there. */
+    adjust = sfBrainFitPrior();
+
+    lastResultDataUrl = await sfComposite(person, pose, adjust);
+    lastPersonDataUrl = person.img;
+    lastResultError = null;
+    await new Promise(r=>setTimeout(r, 400));
+  }catch(e){
+    /* Surface the real reason. A generic message plus an empty frame is
+       what made this look like "the result won't open". */
+    lastResultDataUrl = null;
+    lastResultError = t('res_failed') + '\n' + ((e && (e.message||e.name)) || 'unknown');
+    toast(t('res_failed'));
+  }
+  clearInterval(stepTimer);
+  renderResult();
+  go('result');
+  try{
+    document.getElementById('adjScale').value=Math.round(adjust.scale*100);
+    document.getElementById('adjX').value=adjust.dx;
+    document.getElementById('adjY').value=adjust.dy;
+    document.getElementById('adjScaleVal').textContent=Math.round(adjust.scale*100)+'%';
+    document.getElementById('adjXVal').textContent=String(adjust.dx);
+    document.getElementById('adjYVal').textContent=String(adjust.dy);
+    /* Be explicit when the body could not actually be read: the result is
+       then placed on a generic guess, which explains an off fit far better
+       than silently showing a wrong picture. */
+    document.querySelector('.res-label').textContent =
+      lastPoseFallback ? t('res_label_fallback') : t('res_label');
+  }catch(e){}
+}
+function renderResult(){
+  const stage=document.getElementById('resStage'); if(!stage) return;
+  if(lastResultDataUrl){
+    stage.innerHTML = '<img src="'+sfEsc(lastResultDataUrl)+'" alt="">';
+  } else {
+    /* An empty box reads as "the result won't open" and hides the cause.
+       Say what went wrong, in the open, with a way forward. */
+    stage.innerHTML = '<div class="res-fail"><div class="res-fail-ic">⚠️</div><div>'+
+      sfEsc(lastResultError ? lastResultError : t('res_failed'))+'</div></div>';
+  }
+}
+/* The compare screen shipped with a handle, a knob and an ↔ glyph and no
+   code behind any of it: the two images were stacked and the control did
+   nothing at all when dragged. Wired here, pointer and touch alike, with
+   the split also settable by tapping anywhere on the image. */
+var compareSplit = 0.5;
+function setCompareSplit(fr){
+  compareSplit = Math.max(0, Math.min(1, fr));
+  const after=document.getElementById('compareAfterWrap');
+  const handle=document.getElementById('compareHandle');
+  if(!after||!handle) return;
+  /* The overlay is clipped from the LEFT edge in both directions: the
+     photos are laid out in physical pixels, not text, so this must not
+     flip with dir=rtl the way padding-inline would. */
+  after.style.clipPath = 'inset(0 ' + ((1-compareSplit)*100).toFixed(2) + '% 0 0)';
+  handle.style.left = (compareSplit*100).toFixed(2) + '%';
+}
+function compareFromEvent(ev){
+  const wrap=document.getElementById('compareWrap'); if(!wrap) return;
+  const r=wrap.getBoundingClientRect(); if(!r.width) return;
+  const p = (ev.touches && ev.touches[0]) || ev;
+  setCompareSplit((p.clientX - r.left) / r.width);
+}
+var compareDragging=false;
+function compareDown(ev){ compareDragging=true; compareFromEvent(ev); ev.preventDefault(); }
+function compareMove(ev){ if(!compareDragging) return; compareFromEvent(ev); ev.preventDefault(); }
+function compareUp(){ compareDragging=false; }
+function showCompare(){
+  document.getElementById('compareBefore').src = lastPersonDataUrl||'';
+  document.getElementById('compareAfter').src = lastResultDataUrl||'';
+  setCompareSplit(0.5);
+  go('compare');
+}
+function saveResult(){
+  if(!lastResultDataUrl) return;
+  const name=document.getElementById('resNameInput').value.trim() || new Date().toLocaleDateString(SF.lang==='ar'?'ar':'en');
+  if(!OutfitDB.add({ id:'o_'+Date.now(), name, img:lastResultDataUrl, picks:Object.assign({},buildPicks), savedAt:Date.now() })) return;
+  sfBrainLearnFit(adjust);   // saving it is the clearest "this fit is right" there is
+  toast(t('res_save')+' ✓');
+  renderSaved();
+}
+function downloadResult(){
+  if(!lastResultDataUrl) return;
+  sfBrainLearnFit(adjust);
+  const a=document.createElement('a'); a.href=lastResultDataUrl; a.download='labsa-outfit.jpg'; a.click();
+}
+
+/* =========================================================================
+   SAVED OUTFITS
+   ========================================================================= */
+function renderSaved(){
+  const list=document.getElementById('savedList'); if(!list) return;
+  const outfits=OutfitDB.all(); list.innerHTML='';
+  outfits.forEach(o=>{
+    const row=document.createElement('div'); row.className='saved-card';
+    row.innerHTML = '<img class="saved-thumb" src="'+sfEsc(o.img)+'"><div style="flex:1"><div class="saved-name">'+sfEsc(o.name)+'</div>'+
+      '<div class="saved-date">'+sfEsc(new Date(o.savedAt).toLocaleDateString())+'</div></div>'+
+      '<div class="saved-x" data-id="'+sfEsc(o.id)+'">✕</div>';
+    row.querySelector('.saved-thumb').onclick=()=>{ lastResultDataUrl=o.img; buildPicks=Object.assign({},o.picks); renderResult(); go('result'); };
+    row.querySelector('.saved-x').onclick=(ev)=>{ ev.stopPropagation(); OutfitDB.remove(o.id); renderSaved(); };
+    list.appendChild(row);
+  });
+  document.getElementById('savedEmpty').classList.toggle('hidden', outfits.length>0);
+}
+
+/* =========================================================================
+   PROFILE / SETTINGS / PRIVACY
+   ========================================================================= */
+function renderProfile(){
+  document.getElementById('profLangVal').textContent = SF.lang==='ar' ? 'العربية' : 'English';
+  document.getElementById('darkSwitch').classList.toggle('on', SF.dark);
+  const p=ProfileDB.get(); document.getElementById('homeName') && (document.getElementById('homeName').textContent = (p&&p.name)|| (SF.lang==='ar'?'ضيفة':'Guest'));
+}
+function toggleDark(){
+  SF.dark=!SF.dark;
+  document.documentElement.classList.toggle('dark', SF.dark);
+  try{ localStorage.setItem('sf_dark', SF.dark?'1':'0'); }catch(e){}
+  renderProfile();
+}
+function askDeleteAll(){ document.getElementById('confirmWrap').classList.add('on'); }
+function closeConfirm(){ document.getElementById('confirmWrap').classList.remove('on'); }
+function deleteAllData(){
+  ['sf_profile','sf_person','sf_wardrobe','sf_outfits','sf_lang','sf_dark','sf_brain']
+    .forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+  closeConfirm();
+  toast(t('prof_deleted'));
+  /* "Delete everything" has to mean the screen too. Leaving the last
+     render, the detected pose and the learned model in memory meant the
+     previous person's photo was still one tap away right after she was
+     told it had all been erased. */
+  buildPicks={}; lastResultDataUrl=null; lastPersonDataUrl=null; lastResultError=null;
+  lastPose=null; lastPoseFallback=false; detailId=null; wardFilter='';
+  outfitFound=[]; outfitQueue=[]; outfitQueueIdx=0;
+  addCanvas=null; addRemovedData=null; addOriginalCanvas=null; addFeatures=null;
+  sfBoundsCache={};
+  sfBrainReset();
+  SF.dark=false; document.documentElement.classList.toggle('dark', false);
+  renderPersonPhoto(); renderWardrobe(); renderSaved(); renderResult();
+  go('onb');
+}
+
+SFRender.home = renderProfile;
+SFRender.photo = renderPersonPhoto;
+SFRender.wardrobe = renderWardrobe;
+SFRender.build = renderBuild;
+SFRender.saved = renderSaved;
+SFRender.profile = renderProfile;
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+(function boot(){
+  /* Read each preference on its own: one unreadable value must never take
+     the others down with it. */
+  try{
+    const raw=localStorage.getItem('sf_lang');
+    if(raw){
+      let l; try{ l=JSON.parse(raw); }catch(e){ l=raw; }   // tolerate the old bare format
+      if(l==='ar'||l==='en') SF.lang=l;
+    }
+  }catch(e){}
+  try{ if(localStorage.getItem('sf_dark')==='1') SF.dark=true; }catch(e){}
+  document.documentElement.classList.toggle('dark', SF.dark);
+  applyI18n();
+  document.getElementById('langOptAr').classList.toggle('on', SF.lang==='ar');
+  document.getElementById('langOptEn').classList.toggle('on', SF.lang==='en');
+  renderPersonPhoto();
+  document.getElementById('mainNav').classList.add('hidden');
+  if(ProfileDB.get()){ go('home'); } // returning guest skips onboarding
+})();
+
+</script>
+</body>
+</html>
