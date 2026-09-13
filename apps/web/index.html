@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>رابط — Rabith · AI Influencer × Brand Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ════ NAV ════ -->
+<nav>
+<div class="nav-inner">
+  <button class="brand" data-page="home" aria-label="Rabith home">رابط<span>●</span></button>
+  <div class="nav-tabs" role="tablist">
+    <button class="nav-tab active" data-page="home"><span class="cn-tag">主</span><span data-k="n_home">الرئيسية</span></button>
+    <button class="nav-tab" data-page="discover"><span class="cn-tag">星</span><span data-k="n_disc">اكتشف</span></button>
+    <button class="nav-tab" data-page="brands"><span class="cn-tag">品</span><span data-k="n_brands">العلامات</span></button>
+    <button class="nav-tab" data-page="campaigns"><span class="cn-tag">智</span><span data-k="n_camp">الحملات</span></button>
+    <button class="nav-tab" data-page="outreach"><span class="cn-tag">市</span><span data-k="n_out">التواصل</span></button>
+    <button class="nav-tab" data-page="agents"><span class="cn-tag">总</span><span data-k="n_agents">الوكلاء</span></button>
+    <button class="nav-tab" data-page="social"><span class="cn-tag">宣</span><span data-k="n_social">السوشيال</span></button>
+    <button class="nav-tab" data-page="legal"><span class="cn-tag">约</span><span data-k="n_legal">العقود</span></button>
+    <button class="nav-tab" data-page="pricing"><span data-k="n_price">الأسعار</span></button>
+  </div>
+  <div class="nav-right">
+    <span id="mode-chip" class="mode-chip checking" title=""><span class="dot"></span><span class="lbl" data-k="mode_checking">جارٍ الاتصال…</span></span>
+    <button class="lang-btn active" data-lang="ar">عربي</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="id">ID</button>
+  </div>
+</div>
+</nav>
+
+<!-- ════ HOME 主 ════ -->
+<div id="page-home" class="page active">
+  <div class="section" style="background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(124,92,248,.15) 0%,transparent 70%);padding-bottom:36px">
+    <div class="inner" style="text-align:center;max-width:860px">
+      <div class="eyebrow" style="justify-content:center" data-k="hero_eye">منصة التسويق عبر المؤثرين · إندونيسيا</div>
+      <h1 class="display" style="margin-bottom:16px" data-k="hero_h1">ربط العلامات التجارية بصنّاع المحتوى — بفريق من 21 وكيل ذكاء اصطناعي</h1>
+      <p style="font-size:15px;color:var(--muted);max-width:620px;margin:0 auto 26px" data-k="hero_sub">اكتشاف المؤثرين، كشف الاحتيال، مطابقة الحملات، رسائل التواصل، والعقود — كلها في مكان واحد ومؤتمتة عبر n8n.</p>
+      <div class="row" style="justify-content:center">
+        <button class="btn btn-primary" data-page="discover" data-k="hero_cta1">اكتشف المؤثرين ←</button>
+        <button class="btn btn-ghost" data-page="agents" data-k="hero_cta2">جرّب وحدة الوكلاء</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="counter-strip">
+    <div class="inner">
+      <div class="counter-grid" id="home-stats">
+        <div class="counter-item"><div><span class="counter-num" data-count="0">0</span></div><div class="counter-label" data-k="c_creators">مؤثر موثّق</div></div>
+        <div class="counter-item"><div><span class="counter-num" data-count="0">0</span></div><div class="counter-label" data-k="c_brands">علامة تجارية</div></div>
+        <div class="counter-item"><div><span class="counter-num" data-count="0">0</span></div><div class="counter-label" data-k="c_campaigns">حملة</div></div>
+        <div class="counter-item"><div><span class="counter-num" data-count="0">0</span><span class="counter-suffix">%</span></div><div class="counter-label" data-k="c_er">متوسط التفاعل</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-sm" style="padding-top:40px">
+  <div class="inner">
+    <div class="eyebrow" data-k="team_eye">كيف يعمل فريق الذكاء الاصطناعي</div>
+    <h2 class="display-sm" style="margin-bottom:20px" data-k="team_h">منسّق واحد يقود 20 وكيلاً متخصصاً في 5 مجموعات</h2>
+    <div class="team-strip" id="team-strip"></div>
+  </div>
+  </div>
+
+  <div class="section-sm">
+  <div class="inner">
+    <div class="eyebrow" data-k="feat_eye">ماذا تفعل المنصة</div>
+    <div class="g3">
+      <div class="feat-card"><div class="feat-icon">🔍<span class="feat-cn">星</span></div><div class="feat-title" data-k="f1t">اكتشاف المؤثرين</div><div class="feat-desc" data-k="f1d">بحث وفلترة 120+ مؤثر بالمنصة والنيش والفئة والمدينة مع درجة احتيال لكل حساب</div></div>
+      <div class="feat-card"><div class="feat-icon">🛡️<span class="feat-cn">防</span></div><div class="feat-title" data-k="f2t">كشف الاحتيال</div><div class="feat-desc" data-k="f2d">تحليل نسبة المتابَعين، قفزات النمو، التعليقات العامة وأنماط التفاعل المشتراة قبل الدفع</div></div>
+      <div class="feat-card"><div class="feat-icon">🎯<span class="feat-cn">智</span></div><div class="feat-title" data-k="f3t">مطابقة الحملات</div><div class="feat-desc" data-k="f3d">خوارزمية موزونة: النيش، المنصة، الفئة، التفاعل، الثقة والمدينة — مع خطة محسّنة للميزانية</div></div>
+      <div class="feat-card"><div class="feat-icon">✉️<span class="feat-cn">市</span></div><div class="feat-title" data-k="f4t">رسائل التواصل</div><div class="feat-desc" data-k="f4d">قوالب بثلاث لغات، تعبئة تلقائية، تخصيص بالذكاء الاصطناعي، وإرسال عبر n8n مع متابعات</div></div>
+      <div class="feat-card"><div class="feat-icon">🧠<span class="feat-cn">总</span></div><div class="feat-title" data-k="f5t">وحدة الوكلاء</div><div class="feat-desc" data-k="f5d">تحدّث مع المنسّق، شاهد الخطة وخطوات التفويض لكل وكيل متخصص في خط زمني</div></div>
+      <div class="feat-card"><div class="feat-icon">📣<span class="feat-cn">宣</span></div><div class="feat-title" data-k="f6t">إدارة السوشيال</div><div class="feat-desc" data-k="f6d">توليد منشورات لصفحة رابط، جدولتها ونشرها على IG / TikTok / LinkedIn / X</div></div>
+    </div>
+  </div>
+  </div>
+
+  <div class="section-sm" style="background:var(--s1);border-top:1px solid var(--border)">
+  <div class="inner">
+    <div class="eyebrow" style="justify-content:center" data-k="integ_eye">متكامل مع</div>
+    <div class="row" style="justify-content:center">
+      <div class="integ-item">🛍️ Shopee</div><div class="integ-item">🟢 Tokopedia</div><div class="integ-item">🎵 TikTok Shop</div><div class="integ-item">💳 Midtrans</div><div class="integ-item">💰 Xendit</div><div class="integ-item">🛡️ BPJS Ketenagakerjaan</div><div class="integ-item">✍️ PrivyID</div><div class="integ-item">📱 WhatsApp Business</div><div class="integ-item">⚙️ n8n</div>
+    </div>
+  </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div><div class="footer-brand">رابط<span>●</span></div><span data-k="foot_desc">منصة تنسيق المؤثرين والعلامات بالذكاء الاصطناعي — إندونيسيا</span></div>
+      <span>© 2026 Rabith · <span data-k="foot_rights">جميع الحقوق محفوظة.</span> · Made in Indonesia 🇮🇩</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ════ DISCOVER 星 ════ -->
+<div id="page-discover" class="page">
+  <div class="page-header"><div class="inner">
+    <div><div class="eyebrow"><span class="cn">星</span> <span data-k="d_eye">اكتشاف المؤثرين — Xingtu 星图</span></div><h1 class="display-sm" data-k="d_h">اكتشف المؤثرين الموثّقين</h1><p data-k="d_sub">فلترة بالمنصة، النيش، الفئة، المدينة، درجة الاحتيال والتفاعل</p></div>
+    <div class="row"><button class="btn btn-ghost btn-sm" data-action="disc-reset" data-k="d_reset">إعادة ضبط</button></div>
+  </div></div>
+  <div class="section-sm"><div class="inner">
+    <div class="filters" id="disc-filters">
+      <div class="search-wrap"><input type="search" id="f-q" data-ph-k="d_search" placeholder="ابحث بالاسم أو الحساب أو النيش..." autocomplete="off"></div>
+      <select class="sel" id="f-platform"><option value="" data-k="f_platform_all">كل المنصات</option><option value="tiktok">TikTok</option><option value="instagram">Instagram</option><option value="youtube">YouTube</option></select>
+      <select class="sel" id="f-niche"><option value="" data-k="f_niche_all">كل النيشات</option></select>
+      <select class="sel" id="f-tier"><option value="" data-k="f_tier_all">كل الفئات</option><option value="nano">Nano</option><option value="micro">Micro</option><option value="mid">Mid</option><option value="macro">Macro</option><option value="mega">Mega</option></select>
+      <select class="sel" id="f-city"><option value="" data-k="f_city_all">كل المدن</option></select>
+      <label class="range-wrap"><span data-k="f_maxfraud">أقصى احتيال</span><input type="range" id="f-maxfraud" min="0" max="100" value="100" step="5"><b id="f-maxfraud-v">100</b></label>
+      <label class="range-wrap"><span data-k="f_mineng">أدنى تفاعل</span><input type="range" id="f-mineng" min="0" max="15" value="0" step="0.5"><b id="f-mineng-v">0</b>%</label>
+      <select class="sel" id="f-sort"><option value="score" data-k="sort_score">ترتيب: الأفضل</option><option value="followers" data-k="sort_followers">ترتيب: المتابعون</option><option value="engagement" data-k="sort_engagement">ترتيب: التفاعل</option><option value="fraud" data-k="sort_fraud">ترتيب: الأقل احتيالاً</option></select>
+    </div>
+    <div class="count-lbl" id="disc-count"></div>
+    <div class="g4" id="disc-grid"></div>
+    <div style="text-align:center;margin-top:20px"><button class="btn btn-ghost" id="disc-more" data-action="disc-more" data-k="d_more" hidden>عرض المزيد ↓</button></div>
+  </div></div>
+</div>
+
+<!-- ════ BRANDS 品 (CRM) ════ -->
+<div id="page-brands" class="page">
+  <div class="page-header"><div class="inner">
+    <div><div class="eyebrow"><span class="cn">品</span> <span data-k="b_eye">إدارة العلاقات — CRM</span></div><h1 class="display-sm" data-k="b_h">مسار العلامات التجارية</h1><p data-k="b_sub">اسحب البطاقات بين المراحل أو استخدم الأسهم · lead → contacted → replied → pilot → active</p></div>
+    <div class="row"><input class="inp short" id="b-q" type="search" data-ph-k="b_search" placeholder="بحث..."><button class="btn btn-primary btn-sm" data-action="brand-new" data-k="b_new">+ علامة جديدة</button></div>
+  </div></div>
+  <div class="section-sm"><div class="inner">
+    <div class="kanban" id="kanban"></div>
+  </div></div>
+</div>
+
+<!-- ════ CAMPAIGNS 智 ════ -->
+<div id="page-campaigns" class="page">
+  <div class="page-header"><div class="inner">
+    <div><div class="eyebrow"><span class="cn">智</span> <span data-k="cp_eye">الحملات والمطابقة الذكية</span></div><h1 class="display-sm" data-k="cp_h">الحملات</h1><p data-k="cp_sub">أنشئ حملة، شغّل المطابقة بالذكاء الاصطناعي، واحصل على خطة محسّنة للميزانية</p></div>
+    <div class="row"><button class="btn btn-primary btn-sm" data-action="camp-new" data-k="cp_new">+ حملة جديدة</button></div>
+  </div></div>
+  <div class="section-sm"><div class="inner">
+    <div class="g3" id="camp-list" style="margin-bottom:20px"></div>
+    <div id="camp-detail"></div>
+  </div></div>
+</div>
+
+<!-- ════ OUTREACH 市 ════ -->
+<div id="page-outreach" class="page">
+  <div class="page-header"><div class="inner">
+    <div><div class="eyebrow"><span class="cn">市</span> <span data-k="o_eye">التواصل مع العلامات — Outreach</span></div><h1 class="display-sm" data-k="o_h">مولّد رسائل التواصل</h1><p data-k="o_sub">اختر علامة وجهة اتصال وقالباً، عبّئ المتغيرات، خصّص بالذكاء الاصطناعي، ثم أرسل عبر n8n</p></div>
+  </div></div>
+  <div class="section-sm"><div class="inner">
+    <div class="itabs" id="o-tabs">
+      <button class="itab on" data-itab="o-gen"><span class="cn">写</span><span data-k="ot_gen">المولّد</span></button>
+      <button class="itab" data-itab="o-tpl"><span class="cn">模</span><span data-k="ot_tpl">القوالب</span></button>
+      <button class="itab" data-itab="o-seq"><span class="cn">序</span><span data-k="ot_seq">التسلسل</span></button>
+      <button class="itab" data-itab="o-rules"><span class="cn">则</span><span data-k="ot_rules">القواعد الذهبية</span></button>
+    </div>
+    <div id="o-gen" class="ipanel on">
+      <div class="g2" style="align-items:start">
+        <div class="card card-p">
+          <div class="fg"><label data-k="o_brand">العلامة</label><select id="o-brand"></select></div>
+          <div class="fg"><label data-k="o_contact">جهة الاتصال</label><select id="o-contact"></select></div>
+          <div class="fg"><label data-k="o_template">القالب</label><select id="o-template"></select></div>
+          <div class="sub-h"><span class="cn">变</span><span data-k="o_vars">المتغيرات</span></div>
+          <div id="o-vars" class="fg2"></div>
+          <label class="switch" style="margin:6px 0 12px"><input type="checkbox" id="o-personalize"><span data-k="o_personalize">تخصيص بالذكاء الاصطناعي (السطر الأول + الحملة الأخيرة)</span></label>
+          <div class="row">
+            <button class="btn btn-primary btn-sm" data-action="o-generate" data-k="o_generate">توليد المعاينة</button>
+            <button class="btn btn-ghost btn-sm" data-action="o-save" data-k="o_save">حفظ كمسودة</button>
+            <button class="btn btn-teal btn-sm" data-action="o-send" data-k="o_send">إرسال عبر n8n</button>
+          </div>
+        </div>
+        <div>
+          <div class="row between mb-s"><div class="sub-h" style="margin:0"><span class="cn">览</span><span data-k="o_preview">المعاينة</span></div><span id="o-meta" class="tiny muted"></span></div>
+          <div class="preview" id="o-preview"><div class="subj muted" data-k="o_preview_empty">اختر علامة وقالباً ثم اضغط «توليد المعاينة»</div></div>
+          <div class="row mt-s"><button class="btn btn-ghost btn-xs" data-action="o-copy" data-k="copy">نسخ</button></div>
+        </div>
+      </div>
+    </div>
+    <div id="o-tpl" class="ipanel">
+      <div class="filters">
+        <select class="sel" id="t-lang"><option value="" data-k="all_langs">كل اللغات</option><option value="en">EN</option><option value="ar">AR</option><option value="id">ID</option></select>
+        <select class="sel" id="t-channel"><option value="" data-k="all_channels">كل القنوات</option><option value="email">Email</option><option value="linkedin">LinkedIn</option><option value="whatsapp">WhatsApp</option></select>
+      </div>
+      <div class="g3" id="tpl-grid"></div>
+    </div>
+    <div id="o-seq" class="ipanel">
+      <div class="filters"><select class="sel" id="s-status"><option value="" data-k="all_status">كل الحالات</option><option value="draft">draft</option><option value="scheduled">scheduled</option><option value="sent">sent</option><option value="replied">replied</option></select></div>
+      <div class="stack" id="seq-list"></div>
+    </div>
+    <div id="o-rules" class="ipanel"><div class="rules-list" id="rules-list"></div></div>
+  </div></div>
+</div>
+
+<!-- ════ AGENTS 总 ════ -->
+<div id="page-agents" class="page">
+  <div class="page-header"><div class="inner">
+    <div><div class="eyebrow"><span class="cn">总</span> <span data-k="a_eye">وحدة الوكلاء — Agent Console</span></div><h1 class="display-sm" data-k="a_h">تحدّث مع المنسّق</h1><p data-k="a_sub">المنسّق 总 يحلّل الطلب، يختار الوكلاء، يفوّض المهام ويجمع النتائج</p></div>
+    <div class="row"><span class="badge b-purple" id="a-mode"></span></div>
+  </div></div>
+  <div class="section-sm"><div class="inner">
+    <div class="console">
+      <div class="team" id="team"></div>
+      <div>
+        <div class="chat-wrap">
+          <div class="chat-hd"><span class="who"><span class="cn" id="chat-glyph">总</span><span id="chat-who">Orchestrator</span></span><span class="tiny muted" id="chat-ctx"></span><button class="btn btn-ghost btn-xs" style="margin-inline-start:auto" data-action="chat-clear" data-k="chat_clear">مسح</button></div>
+          <div class="chat-log" id="chat-log"></div>
+          <div class="chat-in">
+            <div class="quick-chips" id="quick-chips"></div>
+            <form class="chat-form" id="chat-form"><textarea id="chat-input" rows="1" data-ph-k="chat_ph" placeholder="اكتب طلبك للمنسّق..."></textarea><button class="btn btn-primary" type="submit" id="chat-send" data-k="send">إرسال</button></form>
+          </div>
+        </div>
+        <div class="sub-h"><span class="cn">史</span><span data-k="a_runs">سجل التشغيلات</span></div>
+        <div class="runs" id="runs"></div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ════ SOCIAL 宣 ════ -->
+<div id="page-social" class="page">
+  <div class="page-header"><div class="inner">
+    <div><div class="eyebrow"><span class="cn">宣</span> <span data-k="s_eye">إدارة صفحات رابط</span></div><h1 class="display-sm" data-k="s_h">السوشيال ميديا</h1><p data-k="s_sub">ولّد منشورات بالذكاء الاصطناعي، جدولها، وانشرها عبر n8n</p></div>
+  </div></div>
+  <div class="section-sm"><div class="inner">
+    <div class="g2" style="align-items:start;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)">
+      <div class="card card-p">
+        <div class="sub-h" style="margin-top:0"><span class="cn">写</span><span data-k="s_composer">المحرّر</span></div>
+        <div class="fg3">
+          <div class="fg"><label data-k="platform">المنصة</label><select id="sp-platform"><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="linkedin">LinkedIn</option><option value="x">X</option></select></div>
+          <div class="fg"><label data-k="language">اللغة</label><select id="sp-lang"><option value="id">Bahasa</option><option value="en">English</option><option value="ar">عربي</option></select></div>
+          <div class="fg"><label data-k="tone">النبرة</label><select id="sp-tone"><option value="friendly" data-k="tone_friendly">ودّي</option><option value="expert" data-k="tone_expert">خبير</option><option value="bold" data-k="tone_bold">جريء</option></select></div>
+        </div>
+        <div class="fg"><label data-k="topic">الموضوع</label><input id="sp-topic" data-ph-k="topic_ph" placeholder="مثال: لماذا الـ Nano creators أفضل للـ UMKM"></div>
+        <div class="fg"><label data-k="caption">الكابشن</label><textarea id="sp-caption" rows="5"></textarea></div>
+        <div class="fg"><label data-k="hashtags">الهاشتاقات</label><input id="sp-hashtags" placeholder="#rabith #influencer"></div>
+        <div class="fg2">
+          <div class="fg"><label data-k="schedule_at">موعد النشر</label><input id="sp-when" type="datetime-local"></div>
+          <div class="fg"><label data-k="best_time">أفضل وقت مقترح</label><input id="sp-best" readonly placeholder="—"></div>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary btn-sm" data-action="sp-generate" data-k="s_generate">✨ توليد بالذكاء الاصطناعي</button>
+          <button class="btn btn-ghost btn-sm" data-action="sp-save" data-k="s_save_draft">حفظ مسودة</button>
+          <button class="btn btn-teal btn-sm" data-action="sp-schedule" data-k="s_schedule">جدولة</button>
+        </div>
+      </div>
+      <div>
+        <div class="itabs"><button class="itab on" data-itab="sv-list"><span class="cn">列</span><span data-k="s_list">القائمة</span></button><button class="itab" data-itab="sv-cal"><span class="cn">历</span><span data-k="s_calendar">التقويم</span></button></div>
+        <div id="sv-list" class="ipanel on"><div class="filters"><select class="sel" id="sp-filter"><option value="" data-k="all_status">كل الحالات</option><option value="draft">draft</option><option value="scheduled">scheduled</option><option value="published">published</option><option value="failed">failed</option></select></div><div class="stack" id="post-list"></div></div>
+        <div id="sv-cal" class="ipanel"><div class="cal" id="post-cal"></div></div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ════ LEGAL 约 ════ -->
+<div id="page-legal" class="page">
+  <div class="page-header"><div class="inner"><div><div class="eyebrow"><span class="cn">约</span> <span data-k="lg_eye">العقود القانونية</span></div><h1 class="display-sm" data-k="lg_h">مولّد عقود KUHPerdata</h1><p data-k="lg_sub">KUHPerdata · UU ITE · PP No.71/2019 — يُملأ من بيانات الحملة والمؤثر</p></div></div></div>
+  <div class="section-sm"><div class="inner">
+    <div class="g2" style="align-items:start">
+      <div>
+        <div class="card card-p mb">
+          <div class="fg2">
+            <div class="fg"><label data-k="cp_campaign">الحملة</label><select id="lg-campaign"></select></div>
+            <div class="fg"><label data-k="creator">المؤثر</label><select id="lg-creator"></select></div>
+          </div>
+          <div class="fg3">
+            <div class="fg"><label data-k="deliverable">المخرجات</label><input id="lg-deliv" value="2 TikTok + 1 Reels"></div>
+            <div class="fg"><label data-k="fee_idr">الأجر (IDR)</label><input id="lg-fee" type="number" step="10000" min="0"></div>
+            <div class="fg"><label data-k="cps_idr">CPS / وحدة (IDR)</label><input id="lg-cps" type="number" step="1000" value="15000"></div>
+          </div>
+          <div class="row"><button class="btn btn-primary btn-sm" data-action="lg-generate" data-k="lg_generate">توليد العقد</button><button class="btn btn-ghost btn-sm" data-action="lg-print" data-k="lg_print">طباعة / PDF</button><button class="btn btn-ghost btn-sm" data-action="lg-copy" data-k="copy">نسخ</button><button class="btn btn-teal btn-sm" data-action="lg-sign" data-k="c_sign">✍️ إرسال للتوقيع PrivyID</button></div>
+        </div>
+        <div class="contract" id="contract-out"><div class="empty"><div class="big">📄</div><span data-k="lg_empty">اختر حملة ومؤثراً ثم ولّد العقد</span></div></div>
+      </div>
+      <div>
+        <div class="sec-h" style="margin-bottom:12px"><span class="cn">法</span><span data-k="lg_steps">خطوات العملية</span></div>
+        <div class="steps-list">
+          <div class="step-card"><div class="sn">①</div><div><b data-k="s1t">مطابقة AI</b><span data-k="s1d">اختيار المؤثر بالذكاء الاصطناعي</span></div></div>
+          <div class="step-card"><div class="sn">②</div><div><b data-k="s2t">كشف الاحتيال</b><span data-k="s2d">تحليل المتابعين والتفاعل</span></div></div>
+          <div class="step-card"><div class="sn">③</div><div><b data-k="s3t">صياغة العقد</b><span data-k="s3d">متوافق مع KUHPerdata وUU ITE</span></div></div>
+          <div class="step-card"><div class="sn">④</div><div><b data-k="s4t">توقيع PrivyID</b><span data-k="s4d">توقيع إلكتروني موثّق قانونياً</span></div></div>
+          <div class="step-card"><div class="sn">⑤</div><div><b data-k="s5t">Escrow محمي</b><span data-k="s5d">المدفوعات محفوظة حتى إكمال الحملة</span></div></div>
+          <div class="step-card" style="border-color:rgba(16,212,168,.25)"><div class="sn" style="color:var(--teal)">✓</div><div><b data-k="s6t">الدفع والتقرير</b><span data-k="s6d">إطلاق الدفع + تقرير الأداء</span></div></div>
+        </div>
+        <div class="sub-h"><span class="cn">档</span><span data-k="lg_history">العقود المحفوظة</span></div>
+        <div class="stack" id="contract-list"></div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ════ PRICING ════ -->
+<div id="page-pricing" class="page">
+  <div class="page-header"><div class="inner"><div><div class="eyebrow" data-k="pr_eye">خطط الاشتراك</div><h1 class="display-sm" data-k="pr_h">اختر خطتك</h1><p data-k="pr_sub">لا عقود سنوية — ترقية أو تخفيض في أي وقت</p></div><div class="row"><button class="btn btn-primary btn-sm" data-plan="brand" data-k="pr_brand">للشركات</button><button class="btn btn-ghost btn-sm" data-plan="creator" data-k="pr_creator">لصنّاع المحتوى</button></div></div></div>
+  <div class="section-sm"><div class="inner">
+    <div id="plans-brand" class="g3">
+      <div class="price-card"><div class="small" style="font-weight:700;color:var(--muted)" data-k="pl_free">مجاني</div><div class="price-num">Rp 0</div><div class="price-per" data-k="per_mo">/شهر</div><div class="price-features"><div class="pf" data-k="pp1a">5 عمليات بحث عن مؤثرين</div><div class="pf" data-k="pp1b">حملة نشطة واحدة</div><div class="pf" data-k="pp1c">عقد أساسي</div><div class="pf no" data-k="pp1d">وحدة الوكلاء</div></div><button class="btn btn-ghost btn-block" style="margin-top:20px" data-action="brand-new" data-k="btn_free">ابدأ مجاناً</button></div>
+      <div class="price-card featured" data-label="الأكثر شيوعاً"><div class="small" style="font-weight:700;color:var(--purple2)" data-k="pl_growth">نمو</div><div class="price-num">Rp 499K</div><div class="price-per" data-k="per_mo">/شهر</div><div class="price-features"><div class="pf" data-k="pp2a">بحث غير محدود</div><div class="pf" data-k="pp2b">10 حملات نشطة</div><div class="pf" data-k="pp2c">مطابقة AI كاملة</div><div class="pf" data-k="pp2d">كشف الاحتيال</div><div class="pf" data-k="pp2e">مولّد التواصل + n8n</div></div><button class="btn btn-primary btn-block" style="margin-top:20px" data-action="brand-new" data-k="btn_start">ابدأ الآن</button></div>
+      <div class="price-card"><div class="small" style="font-weight:700;color:var(--muted)" data-k="pl_ent">مؤسسة</div><div class="price-num">Rp 1.2M</div><div class="price-per" data-k="per_mo">/شهر</div><div class="price-features"><div class="pf" data-k="pp3a">كل مزايا خطة النمو</div><div class="pf" data-k="pp3b">حملات غير محدودة</div><div class="pf" data-k="pp3c">21 وكيل ذكاء اصطناعي</div><div class="pf" data-k="pp3d">مدير حساب مخصص</div><div class="pf" data-k="pp3e">تقارير White-Label</div></div><a class="btn btn-ghost btn-block" style="margin-top:20px" href="mailto:hello@rabith.id?subject=Enterprise" data-k="btn_contact">تواصل معنا</a></div>
+    </div>
+    <div id="plans-creator" class="g3" hidden>
+      <div class="price-card"><div class="small" style="font-weight:700;color:var(--muted)" data-k="pl_free">مجاني</div><div class="price-num">Rp 0</div><div class="price-per" data-k="per_mo">/شهر</div><div class="price-features"><div class="pf" data-k="pc1a">ملف شخصي أساسي</div><div class="pf" data-k="pc1b">3 حملات/شهر</div><div class="pf" data-k="pc1c">عقد أساسي</div></div><button class="btn btn-ghost btn-block" style="margin-top:20px" data-page="discover" data-k="btn_join">انضم مجاناً</button></div>
+      <div class="price-card featured" data-label="الأكثر شيوعاً"><div class="small" style="font-weight:700;color:var(--purple2)" data-k="pl_pro">محترف</div><div class="price-num">Rp 99K</div><div class="price-per" data-k="per_mo">/شهر</div><div class="price-features"><div class="pf" data-k="pc2a">حملات غير محدودة</div><div class="pf" data-k="pc2b">تحليل حسابك الشخصي</div><div class="pf" data-k="pc2c">🛡️ BPJS Ketenagakerjaan</div><div class="pf" data-k="pc2d">أولوية في المطابقة</div></div><button class="btn btn-primary btn-block" style="margin-top:20px" data-page="discover" data-k="btn_upgrade">ترقية الآن</button></div>
+      <div class="price-card"><div class="small" style="font-weight:700;color:var(--muted)"><span class="cn" style="color:var(--purple)">众</span> Nano KOC</div><div class="price-num">Rp 49K</div><div class="price-per" data-k="per_mo">/شهر</div><div class="price-features"><div class="pf" data-k="pc3a">للمؤثرين 1K–10K متابع</div><div class="pf" data-k="pc3b">وصول لحملات UMKM</div><div class="pf" data-k="pc3c">🛡️ BPJS Ketenagakerjaan</div></div><button class="btn btn-ghost btn-block" style="margin-top:20px" data-page="discover" data-k="btn_nano">انضم كـ Nano</button></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ════ DRAWER / MODAL / TOAST ════ -->
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+  <div class="drawer-hd"><h3 id="drawer-title"></h3><button class="x-btn" data-action="drawer-close" aria-label="Close">✕</button></div>
+  <div class="drawer-body" id="drawer-body"></div>
+  <div class="drawer-ft" id="drawer-ft"></div>
+</aside>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-box">
+    <div class="modal-hd"><h3 id="modal-title"></h3><button class="x-btn" data-action="modal-close" aria-label="Close">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-ft" id="modal-ft"></div>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="data/fallback.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
