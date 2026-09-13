@@ -1,0 +1,441 @@
+{
+  "name": "Rabith 06 · Agent Heartbeat",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "a911ee7f-e889-4666-a994-b1812baccb82",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/health",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "a3dd6dc7-98e9-4bac-a09f-f297dd0ed0a4",
+      "name": "GET /health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json || {};\nconst ok = r.ok === true;\nconst store = $getWorkflowStaticData('global');\nconst now = Date.now();\nconst prev = store.lastState || 'unknown';\nconst state = ok ? (r.mode === 'claude' ? 'ok' : 'degraded') : 'down';\nconst changed = state !== prev;\nconst cooldownMs = 6 * 60 * 60 * 1000;\nconst alert = state !== 'ok' && (changed || !store.lastAlertAt || now - store.lastAlertAt > cooldownMs);\nconst recovered = state === 'ok' && prev === 'down';\nif (alert || recovered) store.lastAlertAt = now;\nstore.lastState = state;\nstore.lastCheckAt = now;\nconst detail = ok ? ('mode=' + r.mode + ' n8n=' + r.n8n + ' version=' + r.version) : ('error: ' + ((r.error && (r.error.message || r.error)) || 'no response'));\nconst text = recovered ? '✅ Rabith API recovered (' + detail + ')' : (state === 'down' ? '🔴 Rabith API DOWN · ' + detail : '🟠 Rabith API degraded (offline mode, Claude unavailable) · ' + detail);\nreturn [{ json: { ok, state, prev, alert: alert || recovered, text, detail, checkedAt: new Date(now).toISOString() } }];"
+      },
+      "id": "fec3f4d1-687c-450a-ab43-78b196d9a833",
+      "name": "Evaluate health",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "e91b8d57-200f-4bad-abe7-912bfe4226ac",
+              "leftValue": "={{ $json.alert }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "98b9bb0a-1dcf-413a-a6c3-a3fc6c6c0c07",
+      "name": "Needs alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook' }}/rabith-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.FOUNDER_NOTIFY_CHANNEL || 'slack', text: $json.text }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "aea5d0a0-57a4-4bf3-a63c-904d3fb99223",
+      "name": "Notify founder (health)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Delivers through workflow 07 (rabith-notify).",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {},
+      "id": "c16eb3e5-988c-4d35-af1d-fdcbf5861599",
+      "name": "Healthy",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "d5c0a452-d0ab-4880-a7ad-abbcb2bd7871",
+      "name": "Weekly Monday 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/stats",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "fb154274-619a-4dee-aa2c-9ceea44bc20a",
+      "name": "GET /stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        540
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/agent/run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 180000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n    agent: 'analytics',\n    message: 'Weekly business report. Current stats: ' + JSON.stringify($json) + '. Cover: pipeline movement, outreach reply rate, campaigns live, creators added, fraud blocks, and the 3 actions for this week. Write in English with an Indonesian summary at the end.',\n    context: {}\n  }) }}"
+      },
+      "id": "eaa182cc-5abc-41f6-a957-fda236e9cb4a",
+      "name": "Run analytics agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        540
+      ],
+      "retryOnFail": true,
+      "maxTries": 1,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const run = $input.first().json || {};\nconst stats = $('GET /stats').first().json || {};\nconst week = new Date().toISOString().slice(0, 10);\nconst esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst output = esc(run.output || 'Agent returned no output (mode: ' + (run.mode || 'unknown') + ').');\nconst rows = Object.entries(stats).filter(([k, v]) => typeof v !== 'object').map(([k, v]) => '<tr><td style=\"padding:4px 12px 4px 0;color:#666\">' + esc(k) + '</td><td style=\"padding:4px 0\"><b>' + esc(v) + '</b></td></tr>').join('');\nconst pipeline = stats.pipeline ? Object.entries(stats.pipeline).map(([k, v]) => esc(k) + ': <b>' + esc(v) + '</b>').join(' · ') : '';\nconst html = '<div style=\"font-family:Inter,Arial,sans-serif;max-width:680px;color:#111\">'\n  + '<h2 style=\"margin:0 0 4px\">Rabith · Weekly business report</h2><div style=\"color:#666;margin-bottom:16px\">Week of ' + week + ' · run ' + esc(run.id || '') + ' · ' + esc(run.mode || '') + '</div>'\n  + '<table style=\"border-collapse:collapse;margin-bottom:12px\">' + rows + '</table>'\n  + (pipeline ? '<div style=\"margin-bottom:16px\">Pipeline — ' + pipeline + '</div>' : '')\n  + '<pre style=\"white-space:pre-wrap;font-family:inherit;line-height:1.5;background:#f6f6f6;padding:16px;border-radius:8px\">' + output + '</pre></div>';\nreturn [{ json: { subject: 'Rabith weekly report · ' + week, html, text: run.output || '' } }];"
+      },
+      "id": "c956db5c-e717-406c-a08f-f173c5e60e4c",
+      "name": "Compose report email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.FOUNDER_EMAIL }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "ad26581f-4198-4f1d-a511-a0a1315eef22",
+      "name": "Email report to founder",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        540
+      ],
+      "notes": "Credential: Gmail OAuth2 (\"Rabith Gmail\").",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook' }}/rabith-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.FOUNDER_NOTIFY_CHANNEL || 'slack', text: '📊 Weekly report emailed to ' + $env.FOUNDER_EMAIL + '\\n\\n' + String($('Compose report email').item.json.text).slice(0, 1500) }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "f0ee4f8c-07fd-4e60-ae43-007c0bfe74b2",
+      "name": "Notify founder (report)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        540
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Delivers through workflow 07 (rabith-notify).",
+      "notesInFlow": false
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "GET /health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET /health": {
+      "main": [
+        [
+          {
+            "node": "Evaluate health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate health": {
+      "main": [
+        [
+          {
+            "node": "Needs alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs alert?": {
+      "main": [
+        [
+          {
+            "node": "Notify founder (health)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Healthy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Monday 08:00": {
+      "main": [
+        [
+          {
+            "node": "GET /stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET /stats": {
+      "main": [
+        [
+          {
+            "node": "Run analytics agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run analytics agent": {
+      "main": [
+        [
+          {
+            "node": "Compose report email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose report email": {
+      "main": [
+        [
+          {
+            "node": "Email report to founder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email report to founder": {
+      "main": [
+        [
+          {
+            "node": "Notify founder (report)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "rabith"
+  },
+  "tags": [
+    "rabith"
+  ]
+}
