@@ -209,6 +209,48 @@ every piece's outline over the result. That overlay is how the one real
 geometry bug in this pass was found — a signed half-width that turned the
 image-right leg inside out into a bow-tie.
 
+#### Shaped to the body — "as if worn"
+
+Pinning seams to joints puts the garment in the right place at the right
+size, but a garment on a table is a flat shape and a garment on a person is
+not. Three more things make it read as worn:
+
+- **The body's own outline.** `sfBodyShape` hangs an anthropometric model
+  on the keypoints (proportions of stature, expressed through the shoulder
+  and hip spans) and narrows it wherever the person's real silhouette is
+  narrower *and plausible*. The silhouette is cut from the photo by the
+  same segmenter the garments use, told where the body is by the pose —
+  its centre-box assumption is a product-shot assumption, and a full-body
+  photo's centre is mostly wall. The silhouette is the outline of the
+  *clothes* the person has on, so it can widen the model (a jacket) —
+  ignored — or narrow it — used. A row that comes out implausibly thin (a
+  hole in the cut, faded denim eaten by a white wall) is ignored too.
+
+- **Width that follows the body where the garment is fitted.** Every
+  torso and leg mesh row now carries the garment's own width at that
+  level, read off its alpha, set against the body's width there. How
+  loose the garment is on *this* body is decided once, at the chest or
+  the thigh: a fitted piece follows the body's contour all the way down
+  (a polo narrows at the waist), a loose one hangs at its own width, and
+  nothing is ever drawn narrower than the body (`sfFitWidth`).
+
+- **The body's roundness.** A body is a set of tubes, and a tube under
+  frontal light is bright along its middle and falls off toward its
+  sides. Each fitted piece knows its own tube — the rows carry a centre
+  and a half-width — so every pixel's position across it gives a cosine
+  falloff, biased slightly toward the side the room's light is on
+  (measured on the photo at a scale fabric edges cannot sway). A first
+  attempt transferred the photo's *own* shading instead — local over
+  broad luminance — and on a dark jacket over a pale sweater that printed
+  the jacket's edge onto the new shirt as a stain, because a luminance
+  ratio cannot tell a shadow from a change of fabric. That term is kept,
+  at a third of its strength, only for the broad light; the roundness is
+  synthetic and always clean.
+
+The mesh triangles overlap by 1.6px: the anti-aliased clip and the
+anti-aliased image edge never agree exactly, and at less than that a
+hairline of body showed along every diagonal.
+
 #### What it cannot do
 
 The garments are drawn **over** the clothes in the photo, not instead of

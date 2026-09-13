@@ -62,10 +62,16 @@ for(const outfit of OUTFITS){
         g.fillStyle = col; g.font = 'bold 12px sans-serif'; g.fillText(label, pts[0].x + 3, pts[0].y + 12); };
       for(const cat in buildPicks){
         const it = WardrobeDB.get_(buildPicks[cat]); const lm = sfLandmarkCache[it.id];
-        const fit = sfFitGarment(cat, lm, pose.keypoints, { scale: 1, dx: 0, dy: 0 });
+        const shape = await sfPersonShape(PersonDB.get(), pose.keypoints);
+        const fit = sfFitGarment(cat, lm, pose.keypoints, { scale: 1, dx: 0, dy: 0 }, shape);
         if(!fit) continue;
-        if(fit.kind === 'top'){ poly(fit.torsoDst, '#ff00ff', 'torso'); fit.sleeves.forEach((sl, i) => poly(sl.dst, '#00ccff', 'slv' + i)); }
-        else fit.pieces.forEach((p, i) => poly(p.dst, ['#ff00ff', '#00ccff', '#00ff66', '#ffaa00', '#ff4444'][i % 5], 'p' + i));
+        if(fit.kind === 'top'){ fit.torsoBands.forEach((b, i) => poly(b.dst, '#ff00ff', i ? '' : 'torso L' + fit.looseness.toFixed(2))); fit.sleeves.forEach((sl, i) => poly(sl.dst, '#00ccff', '')); }
+        else fit.pieces.forEach((p, i) => poly(p.dst, ['#ff00ff', '#00ccff', '#00ff66', '#ffaa00', '#ff4444'][i % 5], i ? '' : 'L' + fit.looseness.toFixed(2)));
+        // the body model itself, in green
+        if(shape){ g.strokeStyle = '#00ff00'; g.lineWidth = 1.5;
+          const trace = (arr) => { g.beginPath(); arr.forEach((r, i) => i ? g.lineTo(r.cx - r.halfW, r.cy) : g.moveTo(r.cx - r.halfW, r.cy)); g.stroke();
+                                   g.beginPath(); arr.forEach((r, i) => i ? g.lineTo(r.cx + r.halfW, r.cy) : g.moveTo(r.cx + r.halfW, r.cy)); g.stroke(); };
+          trace(shape.torso); if(shape.legL) trace(shape.legL); if(shape.legR) trace(shape.legR); }
       }
       url = dc.toDataURL('image/jpeg', 0.9);
     }

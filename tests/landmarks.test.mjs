@@ -58,6 +58,13 @@ describe('sfGarmentLandmarks — tops', () => {
     assert.ok(Math.abs(lm.shoulderW - 199) <= 10);
     assert.ok(Math.abs(lm.length - 399) <= 10);
   });
+  test('the body-panel profile excludes the sleeves and follows the panel', () => {
+    assert.equal(lm.panel.length, 11);
+    // above the armpits the panel is 200 wide (x 100..300), not 280 with sleeves
+    assert.ok(Math.abs(lm.panel[0].halfW - 100) <= 4, 'top of panel half-width: ' + lm.panel[0].halfW);
+    assert.ok(Math.abs(lm.panel[10].halfW - 100) <= 4, 'hem half-width: ' + lm.panel[10].halfW);
+    assert.ok(lm.panel.every(p => Math.abs(p.cx - 200) <= 3), 'centred');
+  });
   test('a sleeveless top still yields shoulders at its top corners', () => {
     const vest = makeImage(300, 400, (x, y) => (x >= 80 && x < 220 && y >= 30 && y < 380) ? INK : CLEAR);
     const v = sfGarmentLandmarks(vest.data, vest.w, vest.h, 'shirt');
@@ -94,6 +101,12 @@ describe('sfGarmentLandmarks — trousers', () => {
     assert.ok(Math.abs(lm.kneeL.outer.y - 330) <= 6);
     near(lm.kneeL.outer, 80, 330, 8, 'knee L outer');
     near(lm.kneeR.inner, 210, 330, 8, 'knee R inner');
+  });
+  test('each leg has its own width profile from crotch to hem', () => {
+    assert.equal(lm.legProfileL.length, 11);
+    assert.ok(lm.legProfileL.every(p => Math.abs(p.halfW - 55) <= 3), 'left leg is 110 wide throughout');
+    assert.ok(lm.legProfileR.every(p => Math.abs(p.halfW - 55) <= 3), 'right leg is 110 wide throughout');
+    assert.ok(lm.legProfileL[5].cx < lm.crotch.x && lm.legProfileR[5].cx > lm.crotch.x, 'legs on their own sides');
   });
   test('a skirt-like read (no split) still returns a usable waist and hem', () => {
     const tube = makeImage(300, 400, (x, y) => (x >= 60 && x < 240 && y >= 30 && y < 380) ? INK : CLEAR);

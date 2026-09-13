@@ -125,30 +125,38 @@ describe('sfFitTrousers — waist on hips, legs on legs', () => {
   const F = sfBodyFrame(pose);
 
   test('the waistband spans the hips, a little above the joints', () => {
-    const [wl, wr] = fit.pieces[0].dst;
+    const { L: wl, R: wr } = fit.waist;
     const hipDist = Math.hypot(F.R.hip.x - F.L.hip.x, F.R.hip.y - F.L.hip.y);
     assert.ok(Math.abs((wr.x - wl.x) - hipDist * app.SF_WAIST_OVER_HIPS) < 1, 'visible waist width from the hip calibration');
     assert.ok(wl.y < F.L.hip.y && wr.y < F.R.hip.y, 'waistband above the hip joints');
     assert.ok(Math.abs((wl.x + wr.x) / 2 - (F.L.hip.x + F.R.hip.x) / 2) < 1, 'centred on the hips');
   });
   test('full-length trousers end at the ankles, each leg on its own ankle', () => {
-    // hem pieces are the last quad of each leg; their bottom edge centre ~ ankle
-    const legPieces = fit.pieces.slice(1);
-    assert.equal(legPieces.length, 4);
-    const hemOf = p => ({ x: (p.dst[2].x + p.dst[3].x) / 2, y: (p.dst[2].y + p.dst[3].y) / 2 });
-    const hemL = hemOf(legPieces[1]), hemR = hemOf(legPieces[3]);
+    assert.ok(fit.fullLength, 'the synthetic trousers are full length on this body');
+    const hemL = fit.legRows.L[fit.legRows.L.length - 1].centre, hemR = fit.legRows.R[fit.legRows.R.length - 1].centre;
     assert.ok(Math.abs(hemL.x - F.L.ankle.x) < 6 && hemL.y >= F.L.ankle.y - 2, 'left hem at the left ankle');
     assert.ok(Math.abs(hemR.x - F.R.ankle.x) < 6 && hemR.y >= F.R.ankle.y - 2, 'right hem at the right ankle');
   });
-  test('the knee rows pass through the knee joints', () => {
-    const kneeOf = p => ({ x: (p.dst[2].x + p.dst[3].x) / 2, y: (p.dst[2].y + p.dst[3].y) / 2 });
-    near(kneeOf(fit.pieces[1]), F.L.knee, 1, 'left knee');
-    near(kneeOf(fit.pieces[3]), F.R.knee, 1, 'right knee');
+  test('each leg\'s centreline runs through its knee', () => {
+    const distToPolyline = (p, pts) => {
+      let best = Infinity;
+      for(let i = 1; i < pts.length; i++){
+        const a = pts[i-1], b = pts[i], vx = b.x - a.x, vy = b.y - a.y, L2 = vx*vx + vy*vy || 1;
+        const t = Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / L2));
+        best = Math.min(best, Math.hypot(p.x - (a.x + vx*t), p.y - (a.y + vy*t)));
+      }
+      return best;
+    };
+    assert.ok(distToPolyline(F.L.knee, fit.legRows.L.map(r => r.centre)) < 12, 'left knee on the left leg');
+    assert.ok(distToPolyline(F.R.knee, fit.legRows.R.map(r => r.centre)) < 12, 'right knee on the right leg');
   });
   test('the crotch of the garment lands between the thighs', () => {
-    const crotch = fit.pieces[1].dst[1];
+    const crotch = fit.crotch;
     assert.ok(crotch.y > F.L.hip.y && crotch.y < F.L.knee.y, 'below the hips, above the knees');
     assert.ok(Math.abs(crotch.x - (F.L.hip.x + F.R.hip.x) / 2) < 2, 'centred');
+    // and both legs' first rows meet there
+    near(fit.legRows.L[0].dstInner, crotch, 1e-6, 'left leg inner edge at the crotch');
+    near(fit.legRows.R[0].dstInner, crotch, 1e-6, 'right leg inner edge at the crotch');
   });
   test('a cropped trouser keeps its own length instead of reaching the shoe', () => {
     const short = makeImage(400, 300, (x, y) => {
@@ -158,8 +166,26 @@ describe('sfFitTrousers — waist on hips, legs on legs', () => {
     });
     const slm = sfGarmentLandmarks(short.data, short.w, short.h, 'trouser');
     const sfit = sfFitTrousers(slm, pose, null);
-    const hem = sfit.pieces[2].dst[2];
+    assert.ok(!sfit.fullLength);
+    const hem = sfit.legRows.L[sfit.legRows.L.length - 1].centre;
     assert.ok(hem.y < F.L.ankle.y - 40, 'the hem must stop well above the ankle, got ' + hem.y + ' vs ankle ' + F.L.ankle.y);
+  });
+  test('a fitted garment follows the body, a loose one hangs at its own width', () => {
+    // same body; the trousers drawn 1.6x wider on the table must come out
+    // wider on the body, and the narrow pair must not go below the body
+    const wide = makeImage(640, 480, (x, y) => {
+      if(y < 30 || y >= 460) return CLEAR;
+      if(y < 200) return (x >= 40 && x < 600) ? INK : CLEAR;
+      return ((x >= 40 && x < 300) || (x >= 340 && x < 600)) ? INK : CLEAR;
+    });
+    const wlm = sfGarmentLandmarks(wide.data, wide.w, wide.h, 'trouser');
+    const wfit = sfFitTrousers(wlm, pose, null);
+    const thighW = f => { const r = f.legRows.L[1]; return Math.hypot(r.dstOuter.x - r.dstInner.x, r.dstOuter.y - r.dstInner.y); };
+    assert.ok(wfit.looseness > fit.looseness, 'the wide pair reads looser');
+    assert.ok(thighW(wfit) >= thighW(fit), 'and is drawn at least as wide');
+    const shape = app.sfBodyShape(pose, null, 0, 0);
+    const bodyThigh = app.sfSampleAt(shape.legL, 'g', 1/6).halfW * 2;
+    assert.ok(thighW(fit) >= bodyThigh * 0.98, 'never narrower than the body itself');
   });
   test('no leg quad is twisted: every row runs outer->inner the same way', () => {
     // The image-right leg's inner edge is LEFT of its outer edge, which a
