@@ -233,8 +233,18 @@ html[dir="rtl"] .eyebrow{letter-spacing:0}
 .proc-note{font-size:11px;color:var(--mute);text-align:center;max-width:260px}
 
 /* ---- result ---- */
-.res-stage{margin:10px 20px;border-radius:20px;overflow:hidden;background:var(--bone);aspect-ratio:3/4;position:relative}
-.res-stage canvas, .res-stage img{width:100%;height:100%;object-fit:cover;display:block}
+/* The composite is the entire point of the app, and it used to be shown
+   in a fixed 3:4 box with object-fit:cover — a full-body photo is taller
+   than that, so the feet and the top of the head were cropped off and the
+   rest was squeezed into a small frame. The box now follows the image's
+   own shape, shows all of it, and opens full-screen on a tap. */
+.res-stage{margin:10px 20px;border-radius:20px;overflow:hidden;background:var(--bone);position:relative;cursor:zoom-in;min-height:120px}
+.res-stage canvas, .res-stage img{width:100%;height:auto;max-height:64vh;object-fit:contain;display:block;margin:0 auto}
+.res-zoom-hint{position:absolute;bottom:10px;inset-inline-end:10px;background:rgba(27,24,21,.72);color:#fff;font-size:11px;font-weight:600;padding:6px 10px;border-radius:10px;pointer-events:none}
+.full-view{position:fixed;inset:0;background:#000;z-index:500;display:none;align-items:center;justify-content:center;touch-action:pinch-zoom;overflow:auto}
+.full-view.on{display:flex}
+.full-view img{max-width:100%;max-height:100%;object-fit:contain}
+.full-view-x{position:absolute;top:calc(var(--safe-t) + 14px);inset-inline-end:16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer}
 .res-fail{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:22px;text-align:center;font-size:12px;line-height:1.7;color:var(--ink-soft);white-space:pre-wrap}
 .res-fail-ic{font-size:30px}
 .res-label{margin:0 20px;font-size:11px;color:var(--mute);line-height:1.6;text-align:center;padding-top:6px}
@@ -431,6 +441,7 @@ html[dir="rtl"] .eyebrow{letter-spacing:0}
         <div class="photo-tip"><i>✓</i><span data-i18n="photo_tip1">إضاءة أمامية لا خلفية</span></div>
         <div class="photo-tip"><i>✓</i><span data-i18n="photo_tip2">خلفية بسيطة غير مزدحمة</span></div>
         <div class="photo-tip"><i>✓</i><span data-i18n="photo_tip3">الجسم كاملاً داخل الإطار</span></div>
+        <div class="photo-tip"><i>✓</i><span data-i18n="photo_tip4">ملابس قريبة من الجسم — القطع تُرسم فوق ما ترتدينه، لا بدلاً منه</span></div>
       </div>
       <div class="photo-actions">
         <button class="btn btn-pri" style="flex:1" onclick="triggerCapture('personCamInput')" data-i18n="photo_take">التقطي صورة</button>
@@ -499,7 +510,7 @@ html[dir="rtl"] .eyebrow{letter-spacing:0}
     <!-- ============ RESULT ============ -->
     <div class="screen" id="scr-result">
       <div class="ihdr"><div class="iback" onclick="go('build')">‹</div><div class="ihdr-t" data-i18n="res_t">النتيجة</div></div>
-      <div class="res-stage" id="resStage"></div>
+      <div class="res-stage" id="resStage" onclick="openFullView()"></div>
       <div class="res-label" data-i18n="res_label">معاينة مركّبة تلقائياً بحسب وضعية جسمك — وليست صورة واقعية بجودة استوديو.</div>
       <div class="adjust-box">
         <div class="adjust-t" data-i18n="adj_t">لم يضبط المقاس تماماً؟ عدّليه بنفسك</div>
@@ -700,6 +711,7 @@ ar:{
   photo_t:'صورتك', photo_d:'قفي أمام خلفية بسيطة، والجسم كاملاً أو حتى الخصر ظاهر بوضوح، مع إضاءة جيدة من الأمام.',
   photo_take:'التقطي صورة', photo_gallery:'من المعرض', photo_retake:'إعادة الالتقام',
   photo_tip1:'إضاءة أمامية لا خلفية', photo_tip2:'خلفية بسيطة غير مزدحمة', photo_tip3:'الجسم كاملاً داخل الإطار',
+  photo_tip4:'ملابس قريبة من الجسم — القطع تُرسم فوق ما ترتدينه، لا بدلاً منه',
   photo_none:'لم تُلتقط صورة بعد',
 
   ward_t:'خزانتي', ward_count:'قطعة', ward_empty_t:'خزانتك فارغة', ward_empty_d:'صوّري أول قطعة، أو استوردي صورة محفوظة من إنستغرام أو أي تطبيق آخر.',
@@ -742,6 +754,7 @@ ar:{
   seg_unsure:'العزل غير مؤكد لهذه الصورة — راجعي المعاينة، وصحّحي الحساسية إن لزم',
   cat_ai_quick_prefix:'تخمين سريع من شكل القطعة:',
   warn_unsegmented:'⚠️ لم تُزل خلفية هذه القطعة — ستظهر كمستطيل على جسمك. اقصّيها أو حرّكي شريط الحساسية.',
+  res_zoom:'اضغطي للتكبير',
   seg_fallback:'تعذّر تمييز القطعة عن الخلفية بثقة — عُرضت الصورة كاملة، صحّحي الحساسية أو تابعي كما هي',
   seg_none:'لم تُميَّز خلفية واضحة لإزالتها — اسحبي شريط الحساسية يميناً لمحاولة أقوى، أو تابعي بالصورة كاملة',
   cat_ai_prefix:'✨ الذكاء الاصطناعي يقترح:', color_custom:'لون آخر',
@@ -780,6 +793,7 @@ en:{
   photo_t:'Your photo', photo_d:'Stand against a plain background, full body or at least to the waist, with good light facing you.',
   photo_take:'Take a photo', photo_gallery:'From gallery', photo_retake:'Retake',
   photo_tip1:'Light facing you, not behind you', photo_tip2:'A plain, uncluttered background', photo_tip3:'Your whole body inside the frame',
+  photo_tip4:'Fitted clothes — items are drawn over what you wear, not instead of it',
   photo_none:'No photo yet',
 
   ward_t:'My Wardrobe', ward_count:'items', ward_empty_t:'Your wardrobe is empty', ward_empty_d:'Photograph your first item, or import a photo you saved from Instagram or any other app.',
@@ -822,6 +836,7 @@ en:{
   seg_unsure:'This cut-out is uncertain — check the preview and adjust the sensitivity if needed',
   cat_ai_quick_prefix:'Quick guess from the shape:',
   warn_unsegmented:'⚠️ This item\'s background was not removed — it will show as a rectangle on your body. Crop it, or move the sensitivity slider.',
+  res_zoom:'Tap to enlarge',
   seg_fallback:'Could not confidently isolate the item — showing the full photo instead; adjust sensitivity or continue as is',
   seg_none:'No clear background was found to remove — drag the sensitivity slider higher to try harder, or continue with the full photo',
   cat_ai_prefix:'✨ AI suggests:', color_custom:'Custom color',
@@ -1170,7 +1185,7 @@ function sfGradientBarrier(g, percentile){
    from punching holes inside the item. Pure and testable: pixels in,
    pixels out, no DOM.
    ========================================================================= */
-function sfRemoveBg(data, w, h, threshold){
+function sfRemoveBg(data, w, h, threshold, diag){
   threshold = threshold == null ? 28 : threshold;
   const out = new Uint8ClampedArray(data.length);
   out.set(data);
@@ -1228,6 +1243,7 @@ function sfRemoveBg(data, w, h, threshold){
      where it was the only thing left to try. */
   const trustRim = threshold >= 42;
   const bg = [], subj = [];
+  if(diag){ diag.clusters = shares.map(s => ({ rgb: s.cl.c.map(Math.round), border: +s.b.toFixed(3), centre: +s.c.toFixed(3) })); diag.itemFound = itemFound; }
   for(const s of shares){
     const bShare = s.b, cShare = s.c;
     if(bShare <= 0 && cShare <= 0) continue;          // seen in neither sample
@@ -1242,7 +1258,39 @@ function sfRemoveBg(data, w, h, threshold){
       const framesTheRim = bShare >= 0.85 && (itemFound || cShare < 0.85);
       isBg = framesTheRim || bShare > cShare * 1.6 + 0.02;
     }
-    (isBg ? bg : subj).push(s.cl);
+    s.isBg = isBg;
+  }
+  /* ---- backdrop absorption ----
+     A card or wall is never one colour to the camera: a vignette or a
+     lamp on one side splits it into two or three shades, and only the
+     rim-facing shade earns the rim-dominance that marks it as backdrop.
+     Measured on a real product shot from this project: navy trousers on
+     a kraft card came back with the card's dark rim shade rgb(160,130,104)
+     correctly called backdrop, and its lighter shade rgb(169,142,119) —
+     36 apart, the same card between the legs — called "garment", so the
+     gap between the legs stayed filled in. A garment colour does not
+     appear on the rim; a colour that is ON the rim, is within touching
+     distance of a confirmed backdrop shade, and barely appears in the
+     centre is that backdrop under different light. Absorbed iteratively
+     so a three-shade vignette resolves too. Two guards keep a pale
+     garment on a pale card from being pulled in with it: the candidate
+     must be scarce in the centre, AND it must lean to the rim at least
+     as much as to the centre — a garment's own fold shading is centre-
+     heavy even when it happens to match a backdrop shade. */
+  const absorbD2 = 46 * 46;
+  for(let changed = true, guard = 0; changed && guard < 6; guard++){
+    changed = false;
+    for(const s of shares){
+      if(s.isBg || s.b < 0.03 || s.c >= 0.15 || s.b < s.c * 0.8) continue;
+      for(const t of shares){
+        if(!t.isBg) continue;
+        if(sfColorDist2(s.cl.c, t.cl.c) <= absorbD2){ s.isBg = true; changed = true; break; }
+      }
+    }
+  }
+  for(const s of shares){
+    (s.isBg ? bg : subj).push(s.cl);
+    if(diag) diag.clusters[shares.indexOf(s)].isBg = s.isBg;
   }
   /* Nothing rim-owned means the item fills the frame — there is no
      background to remove and inventing one would eat the garment.
@@ -1353,6 +1401,7 @@ function sfRemoveBg(data, w, h, threshold){
   }
 
   let mask = floodBackground(false, null);
+  if(diag){ diag.pass1 = { removed: +removedFraction(mask).toFixed(3), centreKept: +centreKept(mask).toFixed(3), rimCleared: +rimCleared(mask).toFixed(3) }; }
   /* Only reach for edges when colour visibly failed — a rim still largely
      opaque means the backdrop was never recognised as one. When colour
      already worked this second pass never runs and costs nothing. */
@@ -1360,6 +1409,7 @@ function sfRemoveBg(data, w, h, threshold){
     const grad = sfGradientMap(data, w, h);
     const edgeMask = sfDilateEdges(grad, w, h, sfGradientBarrier(grad, 0.9));
     const alt = floodBackground(true, edgeMask);
+    if(diag){ diag.pass2 = { removed: +removedFraction(alt).toFixed(3), centreKept: +centreKept(alt).toFixed(3) }; }
     /* Accept it only if it removed more WITHOUT giving up the garment.
        Without that second half the rule would happily trade the item for
        the backdrop on a photo where the item has no outline at all —
@@ -1374,6 +1424,55 @@ function sfRemoveBg(data, w, h, threshold){
     if(removedFraction(alt) > removedFraction(mask) + 0.03 &&
        centreKept(alt) >= centreKept(mask) * 0.95){
       mask = alt;
+      if(diag) diag.accepted = true;
+    }
+  }
+
+  /* ---- 2b. eat the shadow ----
+     A garment lying on a card casts a shadow onto it, and that shadow
+     is a darker tan — often nearer, in colour, to the garment's own dark
+     details (a zip, the shade inside a collar) than to the card itself.
+     Colour therefore calls it garment and the cut keeps a brown rim all
+     the way round. The shadow is not the garment though, and the photo
+     says so plainly: it continues smoothly out of the card, while the
+     real edge of the fabric is a hard line. So the removed region is
+     allowed to creep inward from its own boundary, one pixel at a time
+     for a few pixels, into pixels that continue their removed neighbour
+     smoothly and do not sit on an outline. The outline stops it at the
+     fabric; the shadow has none and is eaten. Capped in depth so a leak
+     through a genuinely soft edge can cost a few pixels, never a
+     garment. */
+  /* Only refine a cut that actually happened: when colour removed next
+     to nothing, there is no boundary worth creeping from, and nibbling
+     at it would only blur the honest "nothing was removed" signal the
+     caller relies on to tell the person so. */
+  if(removedFraction(mask) >= 0.08){
+    const grad = sfGradientMap(data, w, h);
+    const edge = sfDilateEdges(grad, w, h, sfGradientBarrier(grad, 0.9));
+    const creepTol2 = 40 * 40;
+    let frontier = [];
+    for(let i = 0; i < n; i++){
+      if(!mask[i]) continue;
+      const x = i % w;
+      if((x > 0 && !mask[i-1]) || (x < w-1 && !mask[i+1]) || (i >= w && !mask[i-w]) || (i + w < n && !mask[i+w])) frontier.push(i);
+    }
+    const pc2 = [0, 0, 0], cc = [0, 0, 0];
+    for(let depth = 0; depth < 6 && frontier.length; depth++){
+      const next = [];
+      for(const f of frontier){
+        const x = f % w, y = (f - x) / w;
+        const q = f*4; pc2[0] = data[q]; pc2[1] = data[q+1]; pc2[2] = data[q+2];
+        const tryPix = k => {
+          if(mask[k] || edge[k]) return;
+          const p = k*4; cc[0] = data[p]; cc[1] = data[p+1]; cc[2] = data[p+2];
+          if(sfColorDist2(cc, pc2) <= creepTol2){ mask[k] = 1; next.push(k); }
+        };
+        if(x > 0) tryPix(f-1);
+        if(x < w-1) tryPix(f+1);
+        if(y > 0) tryPix(f-w);
+        if(y < h-1) tryPix(f+w);
+      }
+      frontier = next;
     }
   }
 
@@ -1407,6 +1506,39 @@ function sfRemoveBg(data, w, h, threshold){
     for(let i = 0; i < n; i++){ if(!mask[i] && areas[label[i]] < floor) mask[i] = 1; }
   }
 
+  /* ---- 3b. shed the contaminated skin ----
+     The outermost ring of a cut is often not garment at all but the
+     camera's own blend of garment and backdrop — a rim of tan on a pale
+     blue polo. Feathering that ring only made the halo softer. Peeling
+     it removes the halo at its source; the ring behind it is feathered
+     instead. Only pixels that actually LOOK blended are shed, and the
+     peel repeats while the new edge still looks blended (a soft JPEG
+     edge is two or three pixels of blend, not one), so a crisp hard-edged
+     cut loses nothing and a hazy one loses exactly its haze. A guard
+     keeps a thin strap or drawstring from being peeled away entirely. */
+  {
+    const blend2 = 24 * 24;
+    let total = 0;
+    for(let i = 0; i < n; i++) if(!mask[i]) total++;
+    for(let pass = 0; pass < 3 && total; pass++){
+      const peel = [];
+      for(let y = 0; y < h; y++){
+        for(let x = 0; x < w; x++){
+          const i = y*w + x;
+          if(mask[i]) continue;
+          const onEdge = (x > 0 && mask[i-1]) || (x < w-1 && mask[i+1]) || (y > 0 && mask[i-w]) || (y < h-1 && mask[i+w]);
+          if(!onEdge) continue;
+          const p = i*4;
+          c[0] = data[p]; c[1] = data[p+1]; c[2] = data[p+2];
+          if(sfNearestCluster(subj, c).d2 > blend2) peel.push(i);
+        }
+      }
+      if(!peel.length || peel.length > total * 0.06) break;
+      for(const i of peel) mask[i] = 1;
+      total -= peel.length;
+    }
+  }
+
   /* ---- 4. feather and de-fringe the cut edge ----
      A hard 0/255 alpha is what makes a composited garment look stuck on
      with glue, and every edge pixel it keeps is really a blend of garment
@@ -1432,7 +1564,7 @@ function sfRemoveBg(data, w, h, threshold){
       c[0] = data[p]; c[1] = data[p+1]; c[2] = data[p+2];
       const near = sfNearestCluster(subj, c);
       if(near.i >= 0){
-        const pull = (1 - a) * 0.7, keep = 1 - pull, ref = subj[near.i].c;
+        const pull = (1 - a) * 0.9, keep = 1 - pull, ref = subj[near.i].c;
         out[p]   = Math.round(c[0]*keep + ref[0]*pull);
         out[p+1] = Math.round(c[1]*keep + ref[1]*pull);
         out[p+2] = Math.round(c[2]*keep + ref[2]*pull);
@@ -1757,6 +1889,213 @@ function sfBrainThreshold(){
   return Math.max(8, Math.min(90, Math.round(b.seg.value)));
 }
 
+
+/* =========================================================================
+   GARMENT LANDMARKS — where the garment's own shoulders, sleeves, waist
+   and hems are.
+   -------------------------------------------------------------------------
+   Until now a garment was a rectangle: its tight bounding box was scaled to
+   a body-sized box and drawn. That can never put a shoulder on a shoulder,
+   because a rectangle has no shoulders — its top corners are the sleeve
+   tips of a flat-lay polo, which land nowhere near the acromion, so the
+   whole top came out too small and floated on the chest. The fix is the
+   one a tailor would use: find the seams on the garment, find the joints
+   on the body, and pin one to the other.
+
+   Everything here is read off the alpha mask the segmenter produced. Row
+   by row, the silhouette's left and right edge and its runs are enough:
+   an armpit is the place where the outline jumps inward below the sleeve,
+   a shoulder seam is the top of the outline directly above that, a sleeve
+   tip is the sleeve's farthest point from its shoulder, and the crotch of
+   a pair of trousers is the first row that splits into two legs. Pure —
+   pixels in, named points out — and tested on the real cut-outs.
+   ========================================================================= */
+function sfRowProfile(data, w, h, box){
+  /* per row: left edge, right edge, and the runs of opaque pixels */
+  const rows = [];
+  const minRun = Math.max(2, Math.round(box.w * 0.04));
+  for(let y = box.y; y < box.y + box.h; y++){
+    let left = -1, right = -1, run = 0, runStart = 0;
+    const runs = [];
+    for(let x = box.x; x <= box.x + box.w; x++){
+      const on = x < box.x + box.w && data[(y*w + x)*4 + 3] > 40;
+      if(on){
+        if(left < 0) left = x;
+        right = x;
+        if(!run) runStart = x;
+        run++;
+      } else if(run){
+        if(run >= minRun) runs.push({ x0: runStart, x1: x-1 });
+        run = 0;
+      }
+    }
+    rows.push({ y, left, right, runs, width: left >= 0 ? right - left + 1 : 0 });
+  }
+  return rows;
+}
+/* first opaque row in a column, searched only in a band of rows */
+function sfTopOfColumn(data, w, x, y0, y1){
+  for(let y = y0; y <= y1; y++) if(data[(y*w + x)*4 + 3] > 40) return y;
+  return -1;
+}
+
+function sfTopLandmarks(data, w, h){
+  const box = sfAlphaBounds(data, w, h, 40);
+  if(box.w < 8 || box.h < 8) return null;
+  const rows = sfRowProfile(data, w, h, box);
+  const n = rows.length;
+  const widths = rows.map(r => r.width);
+  const maxW = Math.max(...widths);
+  if(maxW < 8) return null;
+
+  /* ---- the armpits ----
+     Walk down each side and look for the largest inward jump of the
+     outline within the top 65% of the garment; that is where the sleeve's
+     lower edge ends and the body's side begins. The jump is measured over
+     a few rows so a ragged edge cannot fake it. */
+  const step = Math.max(2, Math.round(n * 0.015));
+  /* Nearly the whole height: a long sleeve hanging beside the body only
+     steps inward at its cuff, which can sit just above the hem. Only the
+     last few rows (the hem's own taper) are excluded. */
+  const searchTo = Math.floor(n * 0.95);
+  let bestL = { jump: 0, i: -1 }, bestR = { jump: 0, i: -1 };
+  for(let i = step; i < searchTo; i++){
+    const a = rows[i - step], b = rows[i];
+    if(a.left < 0 || b.left < 0) continue;
+    const jl = b.left - a.left;               // outline moves right => sleeve ends
+    const jr = a.right - b.right;             // outline moves left
+    if(jl > bestL.jump){ bestL = { jump: jl, i }; }
+    if(jr > bestR.jump){ bestR = { jump: jr, i }; }
+  }
+  const sleeved = bestL.jump > box.w * 0.06 && bestR.jump > box.w * 0.06;
+
+  let armpitL, armpitR, shoulderL, shoulderR, sleeveL = null, sleeveR = null;
+  if(sleeved){
+    const rl = rows[bestL.i], rr = rows[bestR.i];
+    armpitL = { x: rl.left, y: rl.y };
+    armpitR = { x: rr.right, y: rr.y };
+    /* the shoulder seam sits on the top contour straight above the armpit */
+    const sx = Math.min(box.x + box.w - 1, armpitL.x + Math.round(box.w * 0.015));
+    const dx = Math.max(box.x, armpitR.x - Math.round(box.w * 0.015));
+    let ty = sfTopOfColumn(data, w, sx, box.y, armpitL.y);
+    shoulderL = { x: sx, y: ty >= 0 ? ty : box.y };
+    ty = sfTopOfColumn(data, w, dx, box.y, armpitR.y);
+    shoulderR = { x: dx, y: ty >= 0 ? ty : box.y };
+    /* sleeve tip: the sleeve's farthest point from its own shoulder. The
+       sleeve is everything outboard of the body's side line. */
+    let far = -1;
+    for(let i = 0; i < n; i++){
+      const r = rows[i]; if(r.left < 0) continue;
+      if(r.left < armpitL.x - box.w * 0.01){
+        const d = Math.hypot(r.left - shoulderL.x, r.y - shoulderL.y);
+        if(d > far){ far = d; sleeveL = { x: r.left, y: r.y }; }
+      }
+    }
+    far = -1;
+    for(let i = 0; i < n; i++){
+      const r = rows[i]; if(r.right < 0) continue;
+      if(r.right > armpitR.x + box.w * 0.01){
+        const d = Math.hypot(r.right - shoulderR.x, r.y - shoulderR.y);
+        if(d > far){ far = d; sleeveR = { x: r.right, y: r.y }; }
+      }
+    }
+  } else {
+    /* sleeveless (a vest, a dress with straps): the shoulders are the top
+       corners of the widest part of the upper fifth */
+    const top = rows.slice(0, Math.max(1, Math.floor(n * 0.2)));
+    const wide = top.reduce((a, r) => (r.width > a.width ? r : a), top[0]);
+    shoulderL = { x: wide.left, y: wide.y }; shoulderR = { x: wide.right, y: wide.y };
+    armpitL = { x: wide.left, y: wide.y + Math.round(box.h * 0.15) };
+    armpitR = { x: wide.right, y: wide.y + Math.round(box.h * 0.15) };
+  }
+
+  /* ---- hem and neck ---- */
+  const hemRows = rows.slice(Math.max(0, n - Math.max(2, Math.round(n * 0.03))));
+  let hemL = box.x + box.w, hemR = box.x;
+  for(const r of hemRows){ if(r.left >= 0){ hemL = Math.min(hemL, r.left); hemR = Math.max(hemR, r.right); } }
+  const hemY = box.y + box.h - 1;
+  const neckX = Math.round((shoulderL.x + shoulderR.x) / 2);
+  const neckY = sfTopOfColumn(data, w, neckX, box.y, box.y + box.h - 1);
+
+  return {
+    kind: 'top', box, sleeved,
+    shoulderL, shoulderR, armpitL, armpitR, sleeveL, sleeveR,
+    neck: { x: neckX, y: neckY >= 0 ? neckY : box.y },
+    hemL: { x: hemL, y: hemY }, hemR: { x: hemR, y: hemY },
+    hemC: { x: Math.round((hemL + hemR) / 2), y: hemY },
+    shoulderW: Math.abs(shoulderR.x - shoulderL.x),
+    length: hemY - Math.min(shoulderL.y, shoulderR.y)
+  };
+}
+
+function sfTrouserLandmarks(data, w, h){
+  const box = sfAlphaBounds(data, w, h, 40);
+  if(box.w < 8 || box.h < 8) return null;
+  const rows = sfRowProfile(data, w, h, box);
+  const n = rows.length;
+  /* the waistband: a little below the very top row, which is often ragged */
+  const wi = Math.min(n - 1, Math.max(0, Math.round(n * 0.02)));
+  const wr = rows[wi];
+  if(wr.left < 0) return null;
+  const waistL = { x: wr.left, y: wr.y }, waistR = { x: wr.right, y: wr.y };
+  /* the crotch: the first row, below the waist, that has two legs — a
+     real gap between two solid runs. Ask for a few consecutive rows so a
+     drawstring or a fold cannot fake it. */
+  let crotch = null;
+  for(let i = wi + 1; i < n - 3; i++){
+    const ok = [0, 1, 2].every(k => rows[i + k].runs.length >= 2);
+    if(ok){
+      const r = rows[i], a = r.runs[0], b = r.runs[r.runs.length - 1];
+      crotch = { x: Math.round((a.x1 + b.x0) / 2), y: r.y };
+      break;
+    }
+  }
+  const hemY = box.y + box.h - 1;
+  const hemRows = rows.slice(Math.max(0, n - Math.max(2, Math.round(n * 0.03))));
+  /* each leg's hem: the outermost run on each side across the last rows */
+  let lo = box.x + box.w, li = -1, ro = box.x, ri = -1;
+  for(const r of hemRows){
+    if(!r.runs.length) continue;
+    const a = r.runs[0], b = r.runs[r.runs.length - 1];
+    lo = Math.min(lo, a.x0); li = Math.max(li, a.x1);
+    ro = Math.max(ro, b.x1); ri = ri < 0 ? b.x0 : Math.min(ri, b.x0);
+  }
+  if(li < 0) return null;
+  const legs = crotch ? 2 : 1;
+  /* legs joined at the hem (a skirt-like read) => one run: split it */
+  if(legs === 1){ const mid = Math.round((lo + ro) / 2); li = mid; ri = mid + 1; }
+  /* knee row: midway between crotch (or waist) and hem, per leg */
+  const kneeY = Math.round(((crotch ? crotch.y : waistL.y) + hemY) / 2);
+  const kr = rows[Math.min(n - 1, kneeY - box.y)];
+  let kneeLo = lo, kneeLi = li, kneeRi = ri, kneeRo = ro;
+  if(kr && kr.runs.length >= 2){
+    kneeLo = kr.runs[0].x0; kneeLi = kr.runs[0].x1;
+    kneeRi = kr.runs[kr.runs.length-1].x0; kneeRo = kr.runs[kr.runs.length-1].x1;
+  } else if(kr && kr.runs.length === 1){
+    const mid = Math.round((kr.runs[0].x0 + kr.runs[0].x1) / 2);
+    kneeLo = kr.runs[0].x0; kneeLi = mid; kneeRi = mid + 1; kneeRo = kr.runs[0].x1;
+  }
+  return {
+    kind: 'trouser', box, legs,
+    waistL, waistR, waistC: { x: Math.round((waistL.x + waistR.x) / 2), y: waistL.y },
+    crotch: crotch || { x: Math.round((waistL.x + waistR.x) / 2), y: Math.round(waistL.y + (hemY - waistL.y) * 0.3) },
+    kneeL: { outer: { x: kneeLo, y: kneeY }, inner: { x: kneeLi, y: kneeY } },
+    kneeR: { outer: { x: kneeRo, y: kneeY }, inner: { x: kneeRi, y: kneeY } },
+    hemL: { outer: { x: lo, y: hemY }, inner: { x: li, y: hemY } },
+    hemR: { outer: { x: ro, y: hemY }, inner: { x: ri, y: hemY } },
+    waistW: waistR.x - waistL.x,
+    length: hemY - waistL.y
+  };
+}
+
+function sfGarmentLandmarks(data, w, h, cat){
+  try{
+    if(cat === 'trouser') return sfTrouserLandmarks(data, w, h);
+    if(cat === 'shirt' || cat === 'jacket' || cat === 'dress') return sfTopLandmarks(data, w, h);
+  }catch(e){}
+  return null;
+}
+
 /* ---- pose-anchored placement math (pure: keypoints in, a rect out) ---- */
 function kp(pose, name){ const p=(pose||[]).find(k=>k.name===name); return p && p.score>0.25 ? p : null; }
 function mid(a,b){ return a&&b ? {x:(a.x+b.x)/2, y:(a.y+b.y)/2} : (a||b||null); }
@@ -1970,6 +2309,352 @@ function sfAnchorFor(cat, pose){
   return null;
 }
 
+
+/* =========================================================================
+   FITTING — pinning the garment's seams to the body's joints.
+   -------------------------------------------------------------------------
+   With landmarks on the garment and keypoints on the body, dressing the
+   photo becomes a matter of mapping points to points:
+
+     shoulder seam  -> shoulder joint       (both sides, exactly)
+     sleeve         -> rotated about the shoulder to lie along the arm,
+                       and again about the elbow when it is long enough
+     hem            -> as far below the shoulders as the garment's own
+                       length says, once scaled by the shoulders
+     waistband      -> across the hips
+     crotch         -> the crotch
+     each leg       -> its own knee and ankle
+
+   The body decides where things go; the garment decides how big they are
+   relative to one another. The one measurement the two share exactly —
+   shoulder seam distance against shoulder joint distance — sets the scale
+   for a top, so a long shirt renders long and a cropped one cropped. For
+   trousers the waistband width against the hips does the same job.
+
+   Each region is drawn as a small mesh of triangles, every triangle with
+   its own affine transform, so a leg can bend at the knee and a sleeve can
+   follow a bent arm without the fabric tearing at the seam. Pure geometry
+   below; the drawing is at the bottom.
+   ========================================================================= */
+function sfVec(a, b){ return { x: b.x - a.x, y: b.y - a.y }; }
+function sfLen(v){ return Math.hypot(v.x, v.y); }
+function sfNorm(v){ const l = sfLen(v) || 1; return { x: v.x / l, y: v.y / l }; }
+function sfAddK(p, v, k){ return { x: p.x + v.x * k, y: p.y + v.y * k }; }
+function sfLerpP(a, b, t){ return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }; }
+function sfRot(v, ang){ const c = Math.cos(ang), s = Math.sin(ang); return { x: v.x*c - v.y*s, y: v.x*s + v.y*c }; }
+/* the perpendicular of u that points down the image */
+function sfPerpDown(u){ const p = { x: -u.y, y: u.x }; return p.y >= 0 ? p : { x: -p.x, y: -p.y }; }
+/* the perpendicular of a direction that points toward negative x (image left) */
+function sfPerpLeft(d){ const p = { x: -d.y, y: d.x }; return p.x <= 0 ? p : { x: -p.x, y: -p.y }; }
+
+/* The affine that carries source triangle (s0,s1,s2) onto (d0,d1,d2), in
+   canvas order [a,b,c,d,e,f]: x' = a·x + c·y + e, y' = b·x + d·y + f. */
+function sfAffineFromTriangles(s0, s1, s2, d0, d1, d2){
+  const det = (s1.x - s0.x) * (s2.y - s0.y) - (s2.x - s0.x) * (s1.y - s0.y);
+  if(Math.abs(det) < 1e-9) return null;
+  const a = ((d1.x - d0.x) * (s2.y - s0.y) - (d2.x - d0.x) * (s1.y - s0.y)) / det;
+  const c = ((d2.x - d0.x) * (s1.x - s0.x) - (d1.x - d0.x) * (s2.x - s0.x)) / det;
+  const b = ((d1.y - d0.y) * (s2.y - s0.y) - (d2.y - d0.y) * (s1.y - s0.y)) / det;
+  const d = ((d2.y - d0.y) * (s1.x - s0.x) - (d1.y - d0.y) * (s2.x - s0.x)) / det;
+  return [a, b, c, d, d0.x - a * s0.x - c * s0.y, d0.y - b * s0.x - d * s0.y];
+}
+
+/* The body, sorted into image-left and image-right sides. MoveNet names
+   joints from the subject's point of view, so "left_shoulder" is on the
+   RIGHT of a photo of someone facing the camera; everything downstream
+   wants sides that agree with the garment's own left and right in the
+   picture, so each joint is paired with its own side's joints by name
+   and the pair is then labelled by where it sits in the image. */
+function sfBodyFrame(pose){
+  const side = pre => ({
+    shoulder: kp(pose, pre + '_shoulder'), elbow: kp(pose, pre + '_elbow'), wrist: kp(pose, pre + '_wrist'),
+    hip: kp(pose, pre + '_hip'), knee: kp(pose, pre + '_knee'), ankle: kp(pose, pre + '_ankle')
+  });
+  const a = side('left'), b = side('right');
+  const ax = (a.shoulder || a.hip || {x: Infinity}).x, bx = (b.shoulder || b.hip || {x: -Infinity}).x;
+  const L = ax <= bx ? a : b, R = ax <= bx ? b : a;
+  return { L, R };
+}
+
+/* Where a top goes. Returns null when the body has no shoulders to pin to. */
+function sfFitTop(lm, pose, adj){
+  const F = sfBodyFrame(pose);
+  const shL = F.L.shoulder, shR = F.R.shoulder;
+  if(!shL || !shR || !lm || lm.shoulderW < 4) return null;
+  const hipL = F.L.hip, hipR = F.R.hip;
+  const u = sfNorm(sfVec(shL, shR));
+  const shMid = sfLerpP(shL, shR, 0.5);
+  const hipMid = (hipL && hipR) ? sfLerpP(hipL, hipR, 0.5) : null;
+  /* the torso runs shoulder-centre to hip-centre; without hips, straight
+     down from the shoulder line */
+  const axis = hipMid ? sfNorm(sfVec(shMid, hipMid)) : sfPerpDown(u);
+  const s = sfLen(sfVec(shL, shR)) / lm.shoulderW * (adj && adj.scale || 1);
+
+  /* ---- torso: a quad from the collar top to the hem ---- */
+  const gShMidX = (lm.shoulderL.x + lm.shoulderR.x) / 2;
+  const gShY = Math.min(lm.shoulderL.y, lm.shoulderR.y);
+  const collarL = (lm.shoulderL.y - lm.box.y) * s, collarR = (lm.shoulderR.y - lm.box.y) * s;
+  /* Worn, a flat-laid body panel wraps around the torso and reads a
+     little narrower than it measures on the table — most visibly at the
+     hem. The shoulders stay pinned; the hem is drawn in slightly. */
+  const WRAP = 0.9;
+  const hemHalf = (lm.hemR.x - lm.hemL.x) / 2 * s * WRAP;
+  const hemShift = (lm.hemC.x - gShMidX) * s * WRAP;
+  const hemC = sfAddK(sfAddK(shMid, axis, (lm.hemC.y - gShY) * s), u, hemShift);
+  const torsoSrc = [ { x: lm.shoulderL.x, y: lm.box.y }, { x: lm.shoulderR.x, y: lm.box.y }, lm.hemR, lm.hemL ];
+  const torsoDst = [ sfAddK(shL, axis, -collarL), sfAddK(shR, axis, -collarR), sfAddK(hemC, u, hemHalf), sfAddK(hemC, u, -hemHalf) ];
+
+  /* ---- sleeves ----
+     A sleeve is sewn to the body along the shoulder and the armhole and
+     hangs free below that. So its INNER edge stays glued to the side of
+     the torso (down to the armpit), while its OUTER edge swings about the
+     shoulder joint to lie along the arm — a sheared quad, not a rigid
+     rotation. The first version rotated the whole sleeve as one piece and
+     a wedge of bare body opened between sleeve and torso the moment the
+     arm was not perfectly vertical. A long sleeve gets a second quad that
+     bends at the elbow and shares its top row with the first, so nothing
+     tears there either. */
+  const sleeves = [];
+  if(lm.sleeved){
+    const torsoEdge = (isLeft, y) => {
+      const f = Math.max(0, Math.min(1, (y - lm.box.y) / Math.max(1, lm.hemL.y - lm.box.y)));
+      return isLeft ? sfLerpP(torsoDst[0], torsoDst[3], f) : sfLerpP(torsoDst[1], torsoDst[2], f);
+    };
+    const one = (gSh, gArm, gTip, bSh, bElbow, bWrist, isLeft) => {
+      if(!gTip) return;
+      const hemMid = sfLerpP(gTip, gArm, 0.5);
+      const gAxis = sfNorm(sfVec(gSh, hemMid));                   // seam -> sleeve-hem centre
+      const gLen = sfLen(sfVec(gSh, hemMid));
+      const hang = sfRot(axis, isLeft ? -0.14 : 0.14);            // no elbow: let the arm hang
+      const bAxis = bElbow ? sfNorm(sfVec(bSh, bElbow)) : hang;
+      const angle = Math.atan2(bAxis.y, bAxis.x) - Math.atan2(gAxis.y, gAxis.x);
+      const ov = lm.shoulderW * 0.04;                              // overlap into the torso
+      const sideX = isLeft ? Math.max(gSh.x, gArm.x) + ov : Math.min(gSh.x, gArm.x) - ov;
+      const outerX = isLeft ? Math.min(gTip.x, lm.box.x) - 2 : Math.max(gTip.x, lm.box.x + lm.box.w - 1) + 2;
+      const yTop = lm.box.y - 2, yBot = Math.max(gTip.y, gArm.y) + 3;
+      /* a hanging long sleeve reports its cuff as the "armpit"; the real
+         armhole is about a third of a shoulder-width down */
+      const upper = bElbow ? sfLen(sfVec(bSh, bElbow)) : Infinity;
+      const isLong = !!(bElbow && bWrist) && gLen * s > upper * 1.05;
+      const armY = isLong ? Math.min(gArm.y, gSh.y + lm.shoulderW * 0.33) : gArm.y;
+      const swing = p => sfAddK(bSh, sfRot(sfVec(gSh, p), angle), s);   // rotate about the shoulder, scaled
+      const rows = [ { y: yTop, glue: true }, { y: armY, glue: true } ];
+      let elbowRow = null;
+      if(isLong){
+        const yE = gSh.y + (upper / s) * gAxis.y;                   // elbow level along the sleeve
+        if(yE > armY + 4 && yE < yBot - 4){ elbowRow = { y: yE, glue: false }; rows.push(elbowRow); }
+        rows.push({ y: yBot, glue: false });
+      } else if(yBot > armY + lm.length * 0.03){
+        rows.push({ y: yBot, glue: false });   // a sleeve hem that dips below the armpit
+      }
+      const pts = rows.map(r => {
+        const inner = { x: sideX, y: r.y }, outer = { x: outerX, y: r.y };
+        return { src: [inner, outer],
+                 dst: [ r.glue ? sfAddK(torsoEdge(isLeft, r.y), u, isLeft ? ov * s : -ov * s) : swing(inner), swing(outer) ] };
+      });
+      /* below the elbow the forearm sets the direction: re-hinge the last
+         row about the elbow row's points */
+      if(elbowRow && bElbow && bWrist){
+        const fAxis = sfNorm(sfVec(bElbow, bWrist));
+        const angle2 = Math.atan2(fAxis.y, fAxis.x) - Math.atan2(gAxis.y, gAxis.x);
+        const ei = rows.indexOf(elbowRow), last = pts.length - 1;
+        for(let c = 0; c < 2; c++){
+          const from = pts[ei].src[c], to = pts[last].src[c];
+          pts[last].dst[c] = sfAddK(pts[ei].dst[c], sfRot(sfVec(from, to), angle2), s);
+        }
+      }
+      for(let i = 0; i + 1 < pts.length; i++){
+        const a = pts[i], b = pts[i + 1];
+        /* quad order [tl, tr, br, bl] with "l" = inner side, so the mesh
+           runs consistently for both sleeves */
+        sleeves.push({ src: [ a.src[0], a.src[1], b.src[1], b.src[0] ], dst: [ a.dst[0], a.dst[1], b.dst[1], b.dst[0] ],
+                       nx: 2, ny: 3, pivotDst: bSh, angle, isLong });
+      }
+    };
+    one(lm.shoulderL, lm.armpitL, lm.sleeveL, shL, F.L.elbow, F.L.wrist, true);
+    one(lm.shoulderR, lm.armpitR, lm.sleeveR, shR, F.R.elbow, F.R.wrist, false);
+  }
+  const fit = { kind: 'top', scale: s, torsoSrc, torsoDst, sleeves, anchor: shMid };
+  return sfApplyAdjust(fit, adj, pose);
+}
+
+/* Where trousers go. Needs hips; knees and ankles make the legs bend.
+
+   Two calibrations. SF_WAIST_OVER_HIPS is the worn waistband's visible
+   width over the hip-joint spacing, measured on the fixture photos (1.47
+   and 1.30). SF_WAIST_WRAP is the flat-lay to worn ratio: a garment on a
+   table shows half its circumference as width, worn it shows roughly the
+   diameter, so the same waistband reads ~0.8 as wide on a body as on the
+   table. Widths are scaled by both; LENGTHS only by the first — fabric
+   wraps sideways, it does not shrink downward. Getting this wrong is why
+   correctly-sized trousers used to fall short of the ankle: their length
+   was being scaled by a width that had already been foreshortened. */
+var SF_WAIST_OVER_HIPS = 1.4;
+var SF_WAIST_WRAP = 0.8;
+function sfFitTrousers(lm, pose, adj){
+  const F = sfBodyFrame(pose);
+  const hipL = F.L.hip, hipR = F.R.hip;
+  if(!hipL || !hipR || !lm || lm.waistW < 4) return null;
+  const uh = sfNorm(sfVec(hipL, hipR));
+  const downh = sfPerpDown(uh);
+  const hipMid = sfLerpP(hipL, hipR, 0.5);
+  const hipDist = sfLen(sfVec(hipL, hipR));
+  const s = hipDist * SF_WAIST_OVER_HIPS / (lm.waistW * SF_WAIST_WRAP) * (adj && adj.scale || 1);
+  const sw = s * SF_WAIST_WRAP;        // for widths
+
+  const legOf = side => {
+    const pts = [side.hip, side.knee, side.ankle].filter(Boolean);
+    let len = 0; for(let i = 1; i < pts.length; i++) len += sfLen(sfVec(pts[i-1], pts[i]));
+    return { pts, len };
+  };
+  const legL = legOf(F.L), legR = legOf(F.R);
+  const legLen = Math.max(legL.len, legR.len) || hipDist * 4;
+  /* the waistband sits a little above the hip joints; the crotch a little
+     below them */
+  const waistC = sfAddK(hipMid, downh, -0.05 * legLen);
+  const kneeMid = (F.L.knee && F.R.knee) ? sfLerpP(F.L.knee, F.R.knee, 0.5) : sfAddK(hipMid, downh, legLen * 0.5);
+  const crotch = sfLerpP(hipMid, kneeMid, 0.28);
+  const waistHalf = lm.waistW / 2 * sw;
+  const dWaistL = sfAddK(waistC, uh, -waistHalf), dWaistR = sfAddK(waistC, uh, waistHalf);
+
+  /* garment rows at the crotch level */
+  const crotchRowL = lm.crotch.x - lm.box.x, crotchRowR = lm.box.x + lm.box.w - lm.crotch.x;
+  /* (the leg widths at the crotch row are taken from the garment's own
+     outline at that height, so a wide-leg cut stays wide) */
+  const gCrotchLeftOuter = { x: lm.box.x, y: lm.crotch.y }, gCrotchRightOuter = { x: lm.box.x + lm.box.w - 1, y: lm.crotch.y };
+  const dThighOutL = sfAddK(crotch, uh, -(lm.crotch.x - gCrotchLeftOuter.x) * sw);
+  const dThighOutR = sfAddK(crotch, uh,  (gCrotchRightOuter.x - lm.crotch.x) * sw);
+
+  const pieces = [];
+  pieces.push({ src: [ lm.waistL, lm.waistR, gCrotchRightOuter, gCrotchLeftOuter ],
+                dst: [ dWaistL, dWaistR, dThighOutR, dThighOutL ], nx: 2, ny: 2 });
+
+  /* Is this a full-length trouser? Then the hem meets the ankle. A garment
+     that is clearly shorter than the leg keeps its own length instead of
+     being stretched down to the shoe. */
+  const gLen = (lm.hemL.outer.y - lm.waistL.y) * s;
+  const fullLength = gLen >= legLen * 0.82;
+
+  const leg = (side, isLeft, gKnee, gHem, gCrotchOuter, dThighOut) => {
+    if(!side.hip) return;
+    const knee = side.knee, ankle = side.ankle;
+    const thighDir = knee ? sfNorm(sfVec(side.hip, knee)) : downh;
+    const shankDir = (knee && ankle) ? sfNorm(sfVec(knee, ankle)) : thighDir;
+    const out = d => (isLeft ? sfPerpLeft(d) : { x: -sfPerpLeft(d).x, y: -sfPerpLeft(d).y });
+    /* absolute: on the image-right leg the inner edge is LEFT of the outer
+       one, and a signed half-width flipped that leg inside out — its knee
+       row ran backwards and the thigh quad twisted into a bow-tie */
+    const halfKnee = Math.abs(gKnee.inner.x - gKnee.outer.x) / 2 * sw;
+    const halfHem = Math.abs(gHem.inner.x - gHem.outer.x) / 2 * sw;
+    let kneeC, hemC;
+    if(fullLength && knee && ankle){
+      kneeC = knee;
+      hemC = sfAddK(ankle, shankDir, legLen * 0.02);
+    } else {
+      /* proportional: walk the garment's own lengths down the leg */
+      const along = (from, dir, dist) => sfAddK(from, dir, dist);
+      const kneeDist = (gKnee.outer.y - lm.crotch.y) * s, hemDist = (gHem.outer.y - lm.crotch.y) * s;
+      const start = sfLerpP(dThighOut, crotch, 0.5);
+      kneeC = along(start, thighDir, kneeDist);
+      hemC = along(start, thighDir, hemDist);
+    }
+    const kOut = out(thighDir), hOut = out(shankDir);
+    const dKneeOut = sfAddK(kneeC, kOut, halfKnee), dKneeIn = sfAddK(kneeC, kOut, -halfKnee);
+    const dHemOut = sfAddK(hemC, hOut, halfHem), dHemIn = sfAddK(hemC, hOut, -halfHem);
+    const gKneeOut = gKnee.outer, gKneeIn = gKnee.inner, gHemOut = gHem.outer, gHemIn = gHem.inner;
+    if(isLeft){
+      pieces.push({ src: [ gCrotchOuter, lm.crotch, gKneeIn, gKneeOut ], dst: [ dThighOut, crotch, dKneeIn, dKneeOut ], nx: 2, ny: 3 });
+      pieces.push({ src: [ gKneeOut, gKneeIn, gHemIn, gHemOut ], dst: [ dKneeOut, dKneeIn, dHemIn, dHemOut ], nx: 2, ny: 3 });
+    } else {
+      pieces.push({ src: [ lm.crotch, gCrotchOuter, gKneeOut, gKneeIn ], dst: [ crotch, dThighOut, dKneeOut, dKneeIn ], nx: 2, ny: 3 });
+      pieces.push({ src: [ gKneeIn, gKneeOut, gHemOut, gHemIn ], dst: [ dKneeIn, dKneeOut, dHemOut, dHemIn ], nx: 2, ny: 3 });
+    }
+  };
+  leg(F.L, true,  lm.kneeL, lm.hemL, gCrotchLeftOuter,  dThighOutL);
+  leg(F.R, false, lm.kneeR, lm.hemR, gCrotchRightOuter, dThighOutR);
+  return sfApplyAdjust({ kind: 'trouser', scale: s, pieces, anchor: waistC }, adj, pose);
+}
+
+/* The manual sliders: scale about the garment's anchor, then shift. The
+   fit is computed with adj.scale already folded into `s`, so only the
+   shift is applied here, in the same units the rect placer used. */
+function sfApplyAdjust(fit, adj, pose){
+  if(!adj || (!adj.dx && !adj.dy)) return fit;
+  const span = Math.max(...pose.map(k => k.x), 1) + Math.max(...pose.map(k => k.y), 1);
+  const unit = span / 200;
+  const sh = p => ({ x: p.x + adj.dx * unit, y: p.y + adj.dy * unit });
+  if(fit.torsoDst) fit.torsoDst = fit.torsoDst.map(sh);
+  if(fit.sleeves) fit.sleeves.forEach(sl => { sl.dst = sl.dst.map(sh); sl.pivotDst = sh(sl.pivotDst); });
+  if(fit.pieces) fit.pieces.forEach(p => { p.dst = p.dst.map(sh); });
+  return fit;
+}
+
+/* ---- drawing ---- */
+function sfDrawTri(ctx, img, s, d, pad){
+  const m = sfAffineFromTriangles(s[0], s[1], s[2], d[0], d[1], d[2]);
+  if(!m) return;
+  const cx = (d[0].x + d[1].x + d[2].x) / 3, cy = (d[0].y + d[1].y + d[2].y) / 3;
+  ctx.save();
+  ctx.beginPath();
+  for(let i = 0; i < 3; i++){
+    const vx = d[i].x - cx, vy = d[i].y - cy, l = Math.hypot(vx, vy) || 1;
+    const q = { x: d[i].x + vx / l * pad, y: d[i].y + vy / l * pad };
+    if(i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y);
+  }
+  ctx.closePath(); ctx.clip();
+  ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+  ctx.drawImage(img, 0, 0);
+  ctx.restore();
+}
+/* a quad [tl,tr,br,bl] -> quad, as an nx-by-ny bilinear mesh of triangles */
+function sfDrawQuadMesh(ctx, img, src, dst, nx, ny){
+  const bil = (q, u, v) => sfLerpP(sfLerpP(q[0], q[1], u), sfLerpP(q[3], q[2], u), v);
+  for(let j = 0; j < ny; j++){
+    for(let i = 0; i < nx; i++){
+      const u0 = i / nx, u1 = (i + 1) / nx, v0 = j / ny, v1 = (j + 1) / ny;
+      const s00 = bil(src, u0, v0), s10 = bil(src, u1, v0), s11 = bil(src, u1, v1), s01 = bil(src, u0, v1);
+      const d00 = bil(dst, u0, v0), d10 = bil(dst, u1, v0), d11 = bil(dst, u1, v1), d01 = bil(dst, u0, v1);
+      sfDrawTri(ctx, img, [s00, s10, s11], [d00, d10, d11], 0.7);
+      sfDrawTri(ctx, img, [s00, s11, s01], [d00, d11, d01], 0.7);
+    }
+  }
+}
+/* rotate + scale about a pivot, clipped by one or two source-space polygons */
+function sfDrawPivoted(ctx, img, piece){
+  ctx.save();
+  ctx.translate(piece.pivotDst.x, piece.pivotDst.y);
+  ctx.rotate(piece.angle);
+  ctx.scale(piece.scale, piece.scale);
+  ctx.translate(-piece.pivotSrc.x, -piece.pivotSrc.y);
+  for(const poly of [piece.clip, piece.clip2]){
+    if(!poly) continue;
+    ctx.beginPath();
+    poly.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+    ctx.closePath(); ctx.clip();
+  }
+  ctx.drawImage(img, 0, 0);
+  ctx.restore();
+}
+function sfDrawFit(ctx, img, fit){
+  if(!fit) return false;
+  if(fit.kind === 'top'){
+    sfDrawQuadMesh(ctx, img, fit.torsoSrc, fit.torsoDst, 3, 4);
+    for(const sl of fit.sleeves) sfDrawQuadMesh(ctx, img, sl.src, sl.dst, sl.nx, sl.ny);
+    return true;
+  }
+  if(fit.kind === 'trouser'){
+    for(const p of fit.pieces) sfDrawQuadMesh(ctx, img, p.src, p.dst, p.nx, p.ny);
+    return true;
+  }
+  return false;
+}
+function sfFitGarment(cat, lm, pose, adj){
+  if(!lm) return null;
+  if(cat === 'trouser' && lm.kind === 'trouser') return sfFitTrousers(lm, pose, adj);
+  if((cat === 'shirt' || cat === 'jacket' || cat === 'dress') && lm.kind === 'top') return sfFitTop(lm, pose, adj);
+  return null;
+}
+
 /* =========================================================================
    POSE MODEL — TensorFlow.js MoveNet, loaded from a public CDN at runtime.
    Runs entirely in the browser; the photo is never sent anywhere. If the
@@ -2013,6 +2698,8 @@ function sfFallbackPose(w,h){
     {name:'left_hip', x:w*0.60, y:h*0.54, score:1}, {name:'right_hip', x:w*0.40, y:h*0.54, score:1},
     {name:'left_knee', x:w*0.58, y:h*0.72, score:1}, {name:'right_knee', x:w*0.42, y:h*0.72, score:1},
     {name:'left_ankle', x:w*0.57, y:h*0.90, score:1}, {name:'right_ankle', x:w*0.43, y:h*0.90, score:1},
+    {name:'left_elbow', x:w*0.70, y:h*0.43, score:1}, {name:'right_elbow', x:w*0.30, y:h*0.43, score:1},
+    {name:'left_wrist', x:w*0.72, y:h*0.56, score:1}, {name:'right_wrist', x:w*0.28, y:h*0.56, score:1},
     {name:'nose', x:w*0.5, y:h*0.12, score:1}, {name:'left_ear', x:w*0.54, y:h*0.13, score:1}, {name:'right_ear', x:w*0.46, y:h*0.13, score:1}
   ];
 }
@@ -2609,7 +3296,7 @@ function openDetail(id){
 function deleteDetailItem(){
   if(!detailId) return;
   WardrobeDB.remove(detailId);
-  delete sfBoundsCache[detailId];
+  delete sfBoundsCache[detailId]; delete sfLandmarkCache[detailId];
   for(const c in buildPicks){ if(buildPicks[c]===detailId) delete buildPicks[c]; }
   detailId=null;
   toast('✓'); go('wardrobe');
@@ -2764,6 +3451,7 @@ function runCommand(){
    ========================================================================= */
 var lastResultDataUrl=null, lastPersonDataUrl=null, lastResultError=null;
 var sfBoundsCache={};   // item id -> tight alpha bounds (stable for a saved item)
+var sfLandmarkCache={}; // item id -> garment landmarks (or null when unreadable)
 /* The pose used for the last render is cached so the adjustment sliders
    can recomposite instantly without re-running pose detection. */
 var lastPose=null, lastPoseFallback=false;
@@ -2827,6 +3515,36 @@ async function sfComposite(person, pose, adj){
        single frame of a slider drag — several hundred thousand pixels
        per garment, per tick, which is exactly why the adjustment sliders
        stuttered. Computed once per item and remembered. */
+    /* Seam-to-joint fit for the garments that have seams to pin. Anything
+       without landmarks (shoes, bags, hats, or a cut-out too ragged to
+       read) falls through to the rectangle placement below. */
+    if(cat === 'shirt' || cat === 'jacket' || cat === 'dress' || cat === 'trouser'){
+      let lm = sfLandmarkCache[it.id];
+      if(lm === undefined){
+        lm = null;
+        try{
+          const gc=document.createElement('canvas'); gc.width=gImg.width; gc.height=gImg.height;
+          const gctx=gc.getContext('2d'); gctx.drawImage(gImg,0,0);
+          lm = sfGarmentLandmarks(gctx.getImageData(0,0,gc.width,gc.height).data, gc.width, gc.height, cat);
+        }catch(e){ lm = null; }
+        sfLandmarkCache[it.id] = lm;
+      }
+      const fit = sfFitGarment(cat, lm, pose, adj);
+      if(fit){
+        /* rendered whole onto a scratch layer first, so the contact shadow
+           falls from the garment's outline and not from every triangle */
+        const layer=document.createElement('canvas'); layer.width=stageCv.width; layer.height=stageCv.height;
+        const lctx=layer.getContext('2d');
+        sfDrawFit(lctx, gImg, fit);
+        ctx.save();
+        ctx.shadowColor='rgba(0,0,0,0.30)';
+        ctx.shadowBlur=Math.max(3, stageCv.width*0.01);
+        ctx.shadowOffsetY=Math.max(1, stageCv.height*0.004);
+        ctx.drawImage(layer,0,0);
+        ctx.restore();
+        continue;
+      }
+    }
     let src = sfBoundsCache[it.id];
     if(!src){
       src = {x:0, y:0, w:gImg.width, h:gImg.height};
@@ -2922,10 +3640,23 @@ async function startTryOn(){
       lastPoseFallback ? t('res_label_fallback') : t('res_label');
   }catch(e){}
 }
+function openFullView(){
+  if(!lastResultDataUrl) return;
+  let v=document.getElementById('fullView');
+  if(!v){
+    v=document.createElement('div'); v.id='fullView'; v.className='full-view';
+    v.innerHTML='<div class="full-view-x" onclick="closeFullView(event)">✕</div><img alt="">';
+    v.onclick=()=>closeFullView();
+    document.body.appendChild(v);
+  }
+  v.querySelector('img').src=lastResultDataUrl;
+  v.classList.add('on');
+}
+function closeFullView(ev){ if(ev) ev.stopPropagation(); const v=document.getElementById('fullView'); if(v) v.classList.remove('on'); }
 function renderResult(){
   const stage=document.getElementById('resStage'); if(!stage) return;
   if(lastResultDataUrl){
-    stage.innerHTML = '<img src="'+sfEsc(lastResultDataUrl)+'" alt="">';
+    stage.innerHTML = '<img src="'+sfEsc(lastResultDataUrl)+'" alt=""><div class="res-zoom-hint">⤢ '+sfEsc(t('res_zoom'))+'</div>';
   } else {
     /* An empty box reads as "the result won't open" and hides the cause.
        Say what went wrong, in the open, with a way forward. */
@@ -3026,7 +3757,7 @@ function deleteAllData(){
   lastPose=null; lastPoseFallback=false; detailId=null; wardFilter='';
   outfitFound=[]; outfitQueue=[]; outfitQueueIdx=0;
   addCanvas=null; addRemovedData=null; addOriginalCanvas=null; addFeatures=null;
-  sfBoundsCache={};
+  sfBoundsCache={}; sfLandmarkCache={};
   sfBrainReset();
   SF.dark=false; document.documentElement.classList.toggle('dark', false);
   renderPersonPhoto(); renderWardrobe(); renderSaved(); renderResult();

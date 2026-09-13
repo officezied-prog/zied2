@@ -1,0 +1,23 @@
+{
+  "_note": "Hand-measured MoveNet-style keypoints on a 50px grid over the resized fixtures. Names follow MoveNet: left_* is the SUBJECT's left, i.e. the RIGHT side of the image. Accuracy about ±8px.",
+  "person-rust-jacket.jpg": { "w": 766, "h": 900, "keypoints": [
+    {"name":"nose","x":355,"y":108,"score":0.9},
+    {"name":"left_ear","x":392,"y":104,"score":0.9},{"name":"right_ear","x":322,"y":104,"score":0.9},
+    {"name":"left_shoulder","x":468,"y":212,"score":0.9},{"name":"right_shoulder","x":295,"y":218,"score":0.9},
+    {"name":"left_elbow","x":500,"y":325,"score":0.8},{"name":"right_elbow","x":280,"y":335,"score":0.8},
+    {"name":"left_wrist","x":462,"y":430,"score":0.7},{"name":"right_wrist","x":315,"y":425,"score":0.7},
+    {"name":"left_hip","x":432,"y":442,"score":0.9},{"name":"right_hip","x":330,"y":442,"score":0.9},
+    {"name":"left_knee","x":447,"y":640,"score":0.9},{"name":"right_knee","x":345,"y":640,"score":0.9},
+    {"name":"left_ankle","x":458,"y":850,"score":0.9},{"name":"right_ankle","x":360,"y":852,"score":0.9}
+  ]},
+  "person-tan-jacket.jpg": { "w": 591, "h": 900, "keypoints": [
+    {"name":"nose","x":238,"y":92,"score":0.9},
+    {"name":"left_ear","x":263,"y":86,"score":0.9},{"name":"right_ear","x":212,"y":86,"score":0.9},
+    {"name":"left_shoulder","x":326,"y":178,"score":0.9},{"name":"right_shoulder","x":152,"y":186,"score":0.9},
+    {"name":"left_elbow","x":346,"y":318,"score":0.8},{"name":"right_elbow","x":96,"y":330,"score":0.8},
+    {"name":"left_wrist","x":344,"y":468,"score":0.7},{"name":"right_wrist","x":160,"y":422,"score":0.7},
+    {"name":"left_hip","x":306,"y":402,"score":0.9},{"name":"right_hip","x":206,"y":402,"score":0.9},
+    {"name":"left_knee","x":302,"y":612,"score":0.9},{"name":"right_knee","x":212,"y":612,"score":0.9},
+    {"name":"left_ankle","x":352,"y":862,"score":0.9},{"name":"right_ankle","x":215,"y":862,"score":0.9}
+  ]}
+}

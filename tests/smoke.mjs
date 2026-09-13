@@ -138,6 +138,19 @@ console.log('detail name      :', await page.evaluate(() => document.querySelect
 // --- result + compare slider ---
 await page.evaluate(() => { renderResult(); go('result'); });
 await page.waitForTimeout(250);
+const stage = await page.evaluate(() => {
+  const img = document.querySelector('#resStage img');
+  const cs = img ? getComputedStyle(img) : null;
+  /* object-fit:contain never crops, whatever box it is given; the old
+     'cover' in a fixed 3:4 box is what cut the feet and head off */
+  return { fit: cs && cs.objectFit, decoded: !!img && img.naturalHeight > 0 };
+});
+console.log('result stage    : object-fit', stage.fit, '| image decoded', stage.decoded, stage.fit === 'contain' && stage.decoded ? '✓' : '✗');
+await page.click('#resStage');
+await page.waitForTimeout(150);
+const full = await page.evaluate(() => { const v = document.getElementById('fullView'); return v && v.classList.contains('on') && !!v.querySelector('img').src; });
+console.log('full-screen view: opens on tap', full ? '✓' : '✗');
+await page.evaluate(() => closeFullView());
 await page.screenshot({ path: path.join(OUT, 'result.png') });
 await page.evaluate(() => showCompare());
 await page.waitForTimeout(200);
@@ -150,4 +163,4 @@ await page.screenshot({ path: path.join(OUT, 'compare.png') });
 
 console.log('\npage errors      :', errors.length ? errors : 'none');
 await browser.close();
-process.exit(errors.length ? 1 : 0);
+process.exit(errors.length || !full || stage.fit !== 'contain' || !stage.decoded ? 1 : 0);

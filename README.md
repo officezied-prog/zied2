@@ -156,29 +156,65 @@ Two smaller things are learned the same way:
 All of it lives in `localStorage` beside the rest of the app. Nothing is
 uploaded, and *delete my data* deletes this too.
 
-### 4. Placing it on the body
+### 4. Putting it on the body — seams on joints
 
-MoveNet keypoints give the anchor for each garment. Notable corrections:
+A garment used to be a rectangle: its bounding box scaled to a body-sized
+box and drawn. A rectangle has no shoulders, so nothing could ever put a
+shoulder on a shoulder — the top corners of a flat-laid polo are its sleeve
+tips, which land nowhere near the joint, and the whole top came out too
+small and floated on the chest. The trousers came out the same way, one
+stretched picture over two legs.
 
-- **Tops follow the shoulder line, bottoms follow the hip line.** Using the
-  shoulders for everything tilted a skirt with a shrug.
-- **Body width is the larger of the shoulder and hip estimates.** A
-  three-quarter pose — very common in a photo someone takes of herself —
-  foreshortens the shoulders, and sizing off them alone pinched every
-  garment.
-- **A waist-up photo can still wear a top.** The onboarding invites "full
-  body, or even just down to the waist", but every torso garment needed a
-  hip keypoint and rendered nothing without one. The hips are now estimated
-  from the shoulders. Anything that genuinely needs the legs still declines
-  — guessing where an unseen knee is would be inventing the result.
-- **Hats are anchored to the ear line, not the nose.** The nose moves when
-  the head turns and carries no orientation, so a tilted head got a level
-  hat floating off to one side.
-- **Shoes are life-sized.** Foot length is about 0.152 of stature and the
-  shank about 0.246, so a foot is ~0.62 of the shank and ~0.66 of the
-  shoulder span. The old code took `min(shoulder×0.46, shank×0.55)`, whose
-  first term is only 0.106 of stature — two thirds of a real foot, and it
-  won every time. Those are bounds now, not the answer.
+The fix is the one a tailor would use: find the seams on the garment, find
+the joints on the body, and pin one to the other.
+
+**Garment landmarks** (`sfGarmentLandmarks`) are read straight off the
+cut-out's alpha mask, row by row. An armpit is the place where the outline
+jumps inward below the sleeve; a shoulder seam is the top of the outline
+directly above it; a sleeve tip is the sleeve's farthest point from its
+shoulder; the crotch of a pair of trousers is the first row that splits into
+two legs; each leg then has its own knee row and hem. On the four real
+garment photos in `tests/fixtures/` every one of these lands where a person
+would put it.
+
+**Fitting** (`sfFitTop`, `sfFitTrousers`) maps them onto MoveNet keypoints:
+
+| garment | body |
+|---|---|
+| shoulder seam, both sides | shoulder joint, exactly |
+| sleeve | inner edge glued to the side of the torso, outer edge swung about the shoulder to lie along the arm; a long sleeve hinges again at the elbow |
+| hem | as far below the shoulders as the garment's own length says |
+| waistband | across the hips, a little above the joints |
+| crotch | the crotch |
+| each leg | its own knee and ankle |
+
+The body decides *where*; the garment decides *how big things are relative
+to one another*. The one measurement the two share exactly — shoulder seam
+distance against shoulder joint distance — sets the scale for a top, so a
+long shirt renders long and a cropped one cropped. For trousers the
+waistband against the hips does the same job, with one correction that
+matters: a garment on a table shows half its circumference as width, worn
+it shows roughly its diameter, so **widths** are scaled by a wrap factor and
+**lengths** are not. Getting that wrong is why correctly-sized trousers
+first fell short of the ankle.
+
+Each region is drawn as a small mesh of triangles, every triangle with its
+own affine transform, so a leg bends at the knee and a sleeve follows a bent
+arm without the fabric tearing at a seam.
+
+`node tests/render-real.mjs` dresses the two fixture people in the four
+fixture garments exactly as the app would (hand-measured keypoints stand in
+for the pose model, which cannot download in a sandbox); `DEBUG=1` draws
+every piece's outline over the result. That overlay is how the one real
+geometry bug in this pass was found — a signed half-width that turned the
+image-right leg inside out into a bow-tie.
+
+#### What it cannot do
+
+The garments are drawn **over** the clothes in the photo, not instead of
+them. A person photographed in an oversized jacket keeps the jacket's
+sleeves and collar around the new top. The photo screen now says so:
+fitted clothes give a far better result.
 
 ---
 
@@ -199,6 +235,9 @@ MoveNet keypoints give the anchor for each garment. Notable corrections:
 | **A garment whose background was never removed was pasted onto the body as a solid rectangle**, with no warning anywhere. | edge-gated second pass cuts most of these; whatever still fails is flagged at save and badged in the wardrobe |
 | **Rendered shoes were about two thirds of life size.** | sized from anthropometric ratios rather than a cap that always won |
 | **The flood-fill stack could overflow its own buffer**, silently dropping pixels — a pixel could be pushed by up to four neighbours into a buffer sized for one entry each. | pixels are claimed when pushed, so each is queued exactly once |
+| **The result was shown cropped in a small fixed 3:4 box** — feet and head cut off a full-body photo. | the box follows the image; tap for full screen |
+| **A vignette split the backdrop into two shades and only the rim-facing one was removed** — the card stayed between the legs of navy trousers. | shades near a confirmed backdrop shade that sit on the rim and barely in the centre are absorbed into it |
+| **A one-pixel halo of backdrop around every cut-out.** | boundary pixels that look blended are shed before feathering |
 
 ---
 
