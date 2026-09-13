@@ -150,6 +150,8 @@ html[dir="rtl"] .eyebrow{letter-spacing:0}
 .w-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:12px 20px 20px}
 .w-card{aspect-ratio:3/4;border-radius:16px;background:var(--bone);position:relative;overflow:hidden;cursor:pointer;border:1px solid var(--line)}
 .w-card img{width:100%;height:100%;object-fit:contain;background:var(--bone)}
+.w-card-warn{position:absolute;top:7px;inset-inline-end:7px;width:20px;height:20px;border-radius:50%;
+  background:var(--warn);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
 .w-card-badge{position:absolute;top:6px;inset-inline-start:6px;background:var(--paper);font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .w-add{aspect-ratio:3/4;border-radius:16px;border:1.8px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--mute)}
 .w-empty{margin:20px;padding:30px 18px;text-align:center;border:1.6px dashed var(--line);border-radius:18px;color:var(--mute);font-size:12px;line-height:1.7}
@@ -739,6 +741,7 @@ ar:{
   err_storage:'تعذّر الحفظ على هذا الجهاز',
   seg_unsure:'العزل غير مؤكد لهذه الصورة — راجعي المعاينة، وصحّحي الحساسية إن لزم',
   cat_ai_quick_prefix:'تخمين سريع من شكل القطعة:',
+  warn_unsegmented:'⚠️ لم تُزل خلفية هذه القطعة — ستظهر كمستطيل على جسمك. اقصّيها أو حرّكي شريط الحساسية.',
   seg_fallback:'تعذّر تمييز القطعة عن الخلفية بثقة — عُرضت الصورة كاملة، صحّحي الحساسية أو تابعي كما هي',
   seg_none:'لم تُميَّز خلفية واضحة لإزالتها — اسحبي شريط الحساسية يميناً لمحاولة أقوى، أو تابعي بالصورة كاملة',
   cat_ai_prefix:'✨ الذكاء الاصطناعي يقترح:', color_custom:'لون آخر',
@@ -818,6 +821,7 @@ en:{
   err_storage:'Could not save on this device',
   seg_unsure:'This cut-out is uncertain — check the preview and adjust the sensitivity if needed',
   cat_ai_quick_prefix:'Quick guess from the shape:',
+  warn_unsegmented:'⚠️ This item\'s background was not removed — it will show as a rectangle on your body. Crop it, or move the sensitivity slider.',
   seg_fallback:'Could not confidently isolate the item — showing the full photo instead; adjust sensitivity or continue as is',
   seg_none:'No clear background was found to remove — drag the sensitivity slider higher to try harder, or continue with the full photo',
   cat_ai_prefix:'✨ AI suggests:', color_custom:'Custom color',
@@ -1059,6 +1063,85 @@ function sfNearestCluster(clusters, c){
 }
 
 /* =========================================================================
+   EDGES — where colour runs out.
+   -------------------------------------------------------------------------
+   Colour ownership solves most photos, but it cannot solve all of them, and
+   the failure is not a tuning problem. Measured off a real result from this
+   app: cream trousers photographed on a kraft card came out at rgb(220,212,199)
+   against rgb(208,202,190) — 31 apart on a scale that runs to 765. The two
+   are the same colour to any clustering method there is, so the card and the
+   trousers landed in ONE cluster, split 38% rim / 32% centre, and every rule
+   that only knows about colour had to guess.
+
+   A person looking at that photo has no trouble at all, because a garment
+   lying on a card still has an OUTLINE — the fabric casts a shadow, the
+   weave catches light differently, the edge is simply visible. In that same
+   photo the boundary is a 54-level drop in brightness, while the card's own
+   lighting drifts by one or two levels per pixel.
+
+   So this measures that: a Sobel gradient over luminance, plus a barrier set
+   from the image's own gradient distribution rather than a fixed number
+   (a soft studio shot and a hard flash shot have nothing in common on an
+   absolute scale). Pure, and unit-testable on synthetic ramps and steps.
+   ========================================================================= */
+function sfGradientMap(data, w, h){
+  const n = w*h;
+  const lum = new Float32Array(n);
+  for(let i = 0, p = 0; i < n; i++, p += 4){
+    lum[i] = 0.299*data[p] + 0.587*data[p+1] + 0.114*data[p+2];
+  }
+  const g = new Float32Array(n);
+  for(let y = 1; y < h-1; y++){
+    for(let x = 1; x < w-1; x++){
+      const i = y*w + x;
+      const gx = -lum[i-w-1] - 2*lum[i-1] - lum[i+w-1] + lum[i-w+1] + 2*lum[i+1] + lum[i+w+1];
+      const gy = -lum[i-w-1] - 2*lum[i-w] - lum[i-w+1] + lum[i+w-1] + 2*lum[i+w] + lum[i+w+1];
+      g[i] = Math.sqrt(gx*gx + gy*gy) * 0.25;   // back into luminance units
+    }
+  }
+  return g;
+}
+/* An outline with one weak point is not a barrier at all: a flood fill
+   needs a single pixel of gap to pour through and take the whole garment
+   with it, and a real garment edge always has weak points — wherever a
+   fold happens to catch the light at exactly the backdrop's brightness.
+   Widening the edge by one pixel seals those pinholes without closing
+   anything that was genuinely open. */
+function sfDilateEdges(grad, w, h, barrier){
+  const edge = new Uint8Array(w*h);
+  for(let i = 0; i < edge.length; i++) if(grad[i] >= barrier) edge[i] = 1;
+  const out = new Uint8Array(w*h);
+  for(let y = 0; y < h; y++){
+    for(let x = 0; x < w; x++){
+      const i = y*w + x;
+      if(edge[i]){ out[i] = 1; continue; }
+      if((x > 0 && edge[i-1]) || (x < w-1 && edge[i+1]) ||
+         (y > 0 && edge[i-w]) || (y < h-1 && edge[i+w])) out[i] = 1;
+    }
+  }
+  return out;
+}
+/* The barrier that counts as "an outline rather than texture", taken as a
+   high percentile of this image's own gradients. Floored, so a perfectly
+   flat studio backdrop cannot drive the barrier to zero and make every
+   pixel an edge. */
+function sfGradientBarrier(g, percentile){
+  percentile = percentile == null ? 0.90 : percentile;
+  const bins = new Int32Array(129);            // 0..128+ luminance units
+  for(let i = 0; i < g.length; i++){
+    const v = g[i];
+    bins[v >= 128 ? 128 : (v | 0)]++;
+  }
+  const target = g.length * percentile;
+  let run = 0;
+  for(let b = 0; b < bins.length; b++){
+    run += bins[b];
+    if(run >= target) return Math.max(14, b);
+  }
+  return 14;
+}
+
+/* =========================================================================
    BACKGROUND REMOVAL
    -------------------------------------------------------------------------
    Earlier versions all asked a one-sided question — "how far is this pixel
@@ -1168,31 +1251,130 @@ function sfRemoveBg(data, w, h, threshold){
      already has a message for a photo that came back untouched. */
   if(!bg.length || !subj.length) return out;
 
-  /* ---- 2. border-connected fill, decided by which side is nearer ---- */
+  /* ---- 2. border-connected fill ----
+     Two strategies, because colour alone provably cannot handle every
+     photo (see the note on edges above).
+
+     `edgeGated` adds one rule to the plain colour test: a pixel that
+     colour cannot call may still be removed if it simply CONTINUES the
+     background region it was reached from and no outline lies between
+     them. That is what cuts a cream garment off a cream card. It is a
+     second pass rather than the default because it can only ever remove
+     more, and the caller below keeps its result only when it is
+     genuinely better. */
   const aggression = Math.max(0.45, Math.min(2.4, threshold / 28));
   const tol2 = Math.pow(52 + threshold * 2.9, 2);     // absolute brake
-  const mask = new Uint8Array(n);                     // 1 = background
+  const localTol2 = 70 * 70;
   const seen = new Uint8Array(n);
   const stack = new Int32Array(n);
-  let sp = 0;
-  for(let x = 0; x < w; x++){ stack[sp++] = x; stack[sp++] = (h-1)*w + x; }
-  for(let y = 0; y < h; y++){ stack[sp++] = y*w; stack[sp++] = y*w + (w-1); }
-  const c = [0, 0, 0];
-  while(sp > 0){
-    const i = stack[--sp];
-    if(seen[i]) continue;
-    seen[i] = 1;
-    const p = i*4;
-    c[0] = data[p]; c[1] = data[p+1]; c[2] = data[p+2];
+  const parent = new Int32Array(n);
+  const c = [0, 0, 0], pc = [0, 0, 0];
+  /* Both passes ask the same question of the same handful of colours
+     hundreds of thousands of times. A photo has far fewer distinct
+     colours than pixels, so the answer is cached against a coarse colour
+     key — this is the difference between a visible pause and none. */
+  const decisionCache = new Map();
+  function colourSaysBackground(r, g, b){
+    const key = ((r>>2)<<12) | ((g>>2)<<6) | (b>>2);
+    const hit = decisionCache.get(key);
+    if(hit !== undefined) return hit;
+    c[0] = r; c[1] = g; c[2] = b;
     const nb = sfNearestCluster(bg, c);
     const ns = sfNearestCluster(subj, c);
-    if(!(nb.d2 <= ns.d2 * aggression * aggression && nb.d2 <= tol2)) continue;
-    mask[i] = 1;
-    const x = i % w, y = (i - x) / w;
-    if(x > 0   && !seen[i-1]) stack[sp++] = i-1;
-    if(x < w-1 && !seen[i+1]) stack[sp++] = i+1;
-    if(y > 0   && !seen[i-w]) stack[sp++] = i-w;
-    if(y < h-1 && !seen[i+w]) stack[sp++] = i+w;
+    const out = nb.d2 <= ns.d2 * aggression * aggression && nb.d2 <= tol2;
+    decisionCache.set(key, out);
+    return out;
+  }
+
+  function floodBackground(edgeGated, edgeMask){
+    const mask = new Uint8Array(n);
+    seen.fill(0);
+    let sp = 0;
+    /* Seeds are held to the colour test alone. Letting the edge rule
+       start a region would hand it the whole photo the moment the item
+       itself runs to the border — a close-up would erase the garment. */
+    const seed = i => { if(!seen[i]){ seen[i] = 1; parent[i] = -1; stack[sp++] = i; } };
+    for(let x = 0; x < w; x++){ seed(x); seed((h-1)*w + x); }
+    for(let y = 0; y < h; y++){ seed(y*w); seed(y*w + (w-1)); }
+    while(sp > 0){
+      const i = stack[--sp];
+      const p = i*4;
+      let remove = colourSaysBackground(data[p], data[p+1], data[p+2]);
+      if(!remove && edgeGated){
+        const par = parent[i];
+        if(par >= 0 && !edgeMask[i]){
+          const q = par*4;
+          pc[0] = data[q]; pc[1] = data[q+1]; pc[2] = data[q+2];
+          c[0] = data[p]; c[1] = data[p+1]; c[2] = data[p+2];
+          if(sfColorDist2(c, pc) <= localTol2) remove = true;
+        }
+      }
+      if(!remove) continue;
+      mask[i] = 1;
+      const x = i % w, y = (i - x) / w;
+      if(x > 0   && !seen[i-1]){ seen[i-1] = 1; parent[i-1] = i; stack[sp++] = i-1; }
+      if(x < w-1 && !seen[i+1]){ seen[i+1] = 1; parent[i+1] = i; stack[sp++] = i+1; }
+      if(y > 0   && !seen[i-w]){ seen[i-w] = 1; parent[i-w] = i; stack[sp++] = i-w; }
+      if(y < h-1 && !seen[i+w]){ seen[i+w] = 1; parent[i+w] = i; stack[sp++] = i+w; }
+    }
+    return mask;
+  }
+
+  /* How well did a cut do? A garment photo has its item in the middle and
+     its backdrop around the rim, so a good cut clears the backdrop and
+     keeps the centre. Both halves are needed: "removed a lot" on its own
+     is satisfied by erasing the garment.
+     Note the rim ring itself is useless as a score here — those are the
+     seed pixels, and seeds are decided by colour in BOTH passes, so the
+     rim can never tell the two apart. */
+  function removedFraction(mask){
+    let r = 0;
+    for(let i = 0; i < n; i++) if(mask[i]) r++;
+    return n ? r/n : 0;
+  }
+  function rimCleared(mask){
+    let cleared = 0, total = 0;
+    for(let x = 0; x < w; x++){
+      for(const y of [0, h-1]){ total++; if(mask[y*w + x]) cleared++; }
+    }
+    for(let y = 0; y < h; y++){
+      for(const x of [0, w-1]){ total++; if(mask[y*w + x]) cleared++; }
+    }
+    return total ? cleared/total : 0;
+  }
+  function centreKept(mask){
+    const x0 = Math.round(w*0.3), x1 = Math.max(x0+1, Math.round(w*0.7));
+    const y0 = Math.round(h*0.3), y1 = Math.max(y0+1, Math.round(h*0.7));
+    let kept = 0, total = 0;
+    for(let y = y0; y < y1; y++){
+      for(let x = x0; x < x1; x++){ total++; if(!mask[y*w + x]) kept++; }
+    }
+    return total ? kept/total : 0;
+  }
+
+  let mask = floodBackground(false, null);
+  /* Only reach for edges when colour visibly failed — a rim still largely
+     opaque means the backdrop was never recognised as one. When colour
+     already worked this second pass never runs and costs nothing. */
+  if(rimCleared(mask) < 0.9){
+    const grad = sfGradientMap(data, w, h);
+    const edgeMask = sfDilateEdges(grad, w, h, sfGradientBarrier(grad, 0.9));
+    const alt = floodBackground(true, edgeMask);
+    /* Accept it only if it removed more WITHOUT giving up the garment.
+       Without that second half the rule would happily trade the item for
+       the backdrop on a photo where the item has no outline at all —
+       which is exactly the photo where no cut is possible and the honest
+       answer is to leave it alone. */
+    /* 0.95 is measured, not chosen: on the trousers-on-a-card photo this
+       whole pass exists for, the edge-gated cut keeps 98.2% of what the
+       cautious cut kept in the centre — it takes only backdrop. On a
+       garment whose edge is genuinely invisible it keeps 80%, because it
+       is eating the item. Anything that costs more than a few percent of
+       the garment is cutting the wrong thing. */
+    if(removedFraction(alt) > removedFraction(mask) + 0.03 &&
+       centreKept(alt) >= centreKept(mask) * 0.95){
+      mask = alt;
+    }
   }
 
   /* ---- 3. drop stray islands ----
@@ -1737,14 +1919,22 @@ function sfAnchorFor(cat, pose){
     /* Sized from the shank (knee to ankle) where it is visible, not from
        the shoulders: it is the measurement closest to the foot, so it
        stays right when the upper body is turned, leaning or partly out of
-       frame. Bounded by the shoulder estimate so a badly-read knee cannot
-       produce a shoe the size of the person. */
+       frame.
+
+       The ratios are anthropometric rather than guessed. Foot length is
+       about 0.152 of stature and the shank about 0.246, so a foot is
+       ~0.62 of the shank; shoulder width is about 0.23 of stature, making
+       a foot ~0.66 of it. The previous code took min(shW*0.46,
+       shank*0.55), and that first term is only 0.106 of stature — barely
+       two thirds of a real foot. It won every time, which is why the
+       shoes came out visibly too small for the body. The bounds are now
+       bounds, not the answer. */
     const shank = Math.max(dist(lk,la), dist(rk,ra)) || dist(kneeMid, ankleMid);
-    const footW = shank ? Math.min(shW*0.46, shank*0.55) : shW*0.42;
-    const footH = footW*0.66;
+    const footW = Math.max(shW*0.50, Math.min(shW*0.85, shank ? shank*0.62 : shW*0.66));
+    const footH = footW*0.55;
     const out=[];
-    if(la) out.push({cx:la.x, cy:la.y+footH*0.42, w:footW, h:footH, angle:0});
-    if(ra) out.push({cx:ra.x, cy:ra.y+footH*0.42, w:footW, h:footH, angle:0, mirror:true});
+    if(la) out.push({cx:la.x, cy:la.y+footH*0.55, w:footW, h:footH, angle:0});
+    if(ra) out.push({cx:ra.x, cy:ra.y+footH*0.55, w:footW, h:footH, angle:0, mirror:true});
     return out.length? out : null;
   }
   if(cat==='hat'){
@@ -2305,7 +2495,15 @@ function saveGarment(){
   const w=addCanvas.width, h=addCanvas.height;
   const out=document.createElement('canvas'); out.width=w; out.height=h;
   out.getContext('2d').putImageData(new ImageData(addRemovedData, w, h), 0, 0);
+  /* If the background never came off, this item will be pasted onto the
+     body as a solid rectangle of whatever it was photographed against —
+     the single most jarring thing the try-on can produce, and until now
+     it happened with no warning at all. Saving is still allowed (the
+     wardrobe is hers), but it is flagged here and marked on the card so
+     it is never a surprise on the result screen. */
+  const stillOpaque = sfOpaqueFraction(addRemovedData) > 0.95;
   const item = {
+    unsegmented: stillOpaque,
     id:'g_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
     img: out.toDataURL('image/png'),
     category: addCat, name: document.getElementById('fName').value.trim() || catLabel(addCat),
@@ -2314,6 +2512,7 @@ function saveGarment(){
     addedAt: Date.now()
   };
   if(!WardrobeDB.add(item)){ return; }   // sfSet already said why; do not claim success
+  if(stillOpaque) toast(t('warn_unsegmented'));
   /* The category she settled on is a labelled example — whether she
      accepted the suggestion or overrode it. This is the only place the
      app ever gets ground truth, so it is the only place worth learning
@@ -2384,7 +2583,8 @@ function renderWardGrid(){
   grid.innerHTML='';
   items.forEach(it=>{
     const card=document.createElement('div'); card.className='w-card';
-    card.innerHTML='<img src="'+sfEsc(it.img)+'" alt="'+sfEsc(it.name)+'"><div class="w-card-badge">'+sfEsc(catLabel(it.category))+'</div>';
+    card.innerHTML='<img src="'+sfEsc(it.img)+'" alt="'+sfEsc(it.name)+'"><div class="w-card-badge">'+sfEsc(catLabel(it.category))+'</div>'
+      + (it.unsegmented ? '<div class="w-card-warn" title="'+sfEsc(t('warn_unsegmented'))+'">⚠</div>' : '');
     card.onclick=()=> openDetail(it.id);
     grid.appendChild(card);
   });

@@ -222,6 +222,73 @@ describe('sfRemoveBg — background removal', () => {
     assert.ok(edge > 0 && edge < 255, 'the boundary pixel is partially transparent, got ' + edge);
   });
 
+  /* ---- the case that produced a visibly wrong try-on ----
+     Colours below are measured off a real result this app produced:
+     cream trousers rgb(220,212,199) on a kraft card rgb(208,202,190),
+     31 apart on a scale that runs to 765, with the contact shadow
+     rgb(155,127,105) where the fabric meets the card. Colour clustering
+     cannot separate the first two and never will; the shadow is the only
+     thing in the photo that says where the garment ends. */
+  function trousersOnCard(withShadow){
+    const W = 390, H = 520;
+    const inset = (u, v) => (v > 0.055 && v < 0.93)
+      ? Math.min(
+          v < 0.32 ? 0.235 - Math.abs(u - 0.5)
+                   : Math.max(0.105 - Math.abs(u - 0.385), 0.105 - Math.abs(u - 0.615)),
+          (v - 0.055) * 2, (0.93 - v) * 2)
+      : -1;
+    const img = makeImage(W, H, (x, y) => {
+      const u = x / W, v = y / H, d = inset(u, v);
+      const k = Math.pow(u, 1.6);   // the card is lit unevenly across the frame
+      if(d < 0) return [210 - 58*k, 204 - 86*k, 192 - 100*k];
+      const fold = Math.round(15 * Math.sin(v * 9));
+      const cloth = [220 - fold, 212 - fold, 199 - fold];
+      if(!withShadow) return cloth;
+      const t = Math.min(1, d / 0.022), sh = [155, 127, 105];
+      return cloth.map((cv, i) => Math.round(sh[i] + (cv - sh[i]) * t));
+    });
+    return { ...img, inset };
+  }
+  function cardVsCloth(out, img){
+    let cardKept = 0, cardN = 0, clothKept = 0, clothN = 0;
+    for(let y = 0; y < img.h; y++){
+      for(let x = 0; x < img.w; x++){
+        const d = img.inset(x / img.w, y / img.h);
+        const a = alphaAt(out, img.w, x, y);
+        if(d < 0){ cardN++; if(a > 128) cardKept++; }
+        else if(d > 0.03){ clothN++; if(a > 128) clothKept++; }   // ignore the shadow band itself
+      }
+    }
+    return { card: cardKept / cardN, cloth: clothKept / clothN };
+  }
+
+  test('cuts a cream garment off a near-identical card (the reported failure)', () => {
+    const img = trousersOnCard(true);
+    const r = cardVsCloth(sfRemoveBg(img.data, img.w, img.h, 28), img);
+    assert.ok(r.cloth > 0.97, 'the trousers must survive whole, got ' + (r.cloth*100).toFixed(0) + '%');
+    assert.ok(r.card < 0.25,
+      'the card must be cut away, got ' + (r.card*100).toFixed(0) + '% still there');
+  });
+
+  test('and refuses to guess when the garment has no edge at all', () => {
+    // Same photo with the contact shadow removed: now genuinely
+    // unsegmentable. Leaving it alone is the correct answer; quietly
+    // eating the garment is not.
+    const img = trousersOnCard(false);
+    const r = cardVsCloth(sfRemoveBg(img.data, img.w, img.h, 28), img);
+    assert.ok(r.cloth > 0.95, 'the garment must not be eaten, got ' + (r.cloth*100).toFixed(0) + '%');
+  });
+
+  test('the edge pass is skipped entirely when colour already worked', () => {
+    // It must not cost anything on the ordinary photos that never needed it.
+    const big = rectOnField(360, 480, { x: 90, y: 60, w: 180, h: 340 }, RED, WHITE);
+    const t0 = Date.now();
+    const out = sfRemoveBg(big.data, big.w, big.h, 28);
+    const ms = Date.now() - t0;
+    assert.ok(keptInside(out, big.w, { x: 90, y: 60, w: 180, h: 340 }) > 0.97);
+    assert.ok(ms < 400, 'a plain photo should stay fast, took ' + ms + 'ms');
+  });
+
   test('never mutates its input buffer', () => {
     const { data, w, h } = rectOnField(60, 60, { x: 15, y: 15, w: 30, h: 30 }, RED, WHITE);
     const copy = Uint8ClampedArray.from(data);
@@ -278,6 +345,38 @@ describe('sfOpaqueFraction / sfAlphaBounds', () => {
   test('a fully transparent image falls back to the whole frame', () => {
     const { data } = makeImage(20, 30, () => [0, 0, 0, 0]);
     assert.deepEqual(plain(sfAlphaBounds(data, 20, 30)), { x: 0, y: 0, w: 20, h: 30 });
+  });
+});
+
+describe('sfGradientMap — finding the outline', () => {
+  test('a smooth lighting ramp is not an edge', () => {
+    const { data, w, h } = makeImage(60, 60, (x) => { const v = 180 + x * 0.8; return [v, v, v]; });
+    const g = app.sfGradientMap(data, w, h);
+    assert.ok(g[30 * w + 30] < 3, 'a gentle ramp read as an edge: ' + g[30 * w + 30]);
+  });
+  test('a step IS an edge, and its strength tracks the step size', () => {
+    const mk = step => {
+      const { data, w, h } = makeImage(60, 60, (x) => (x < 30 ? [120, 120, 120] : [120 + step, 120 + step, 120 + step]));
+      return app.sfGradientMap(data, w, h)[30 * w + 30];
+    };
+    assert.ok(mk(60) > mk(10), 'a bigger step must read stronger');
+    assert.ok(mk(60) > 20, 'a 60-level step must clear a sane barrier');
+  });
+  test('the barrier adapts to the image instead of being a fixed number', () => {
+    const soft = makeImage(60, 60, (x) => { const v = 180 + x * 0.5; return [v, v, v]; });
+    const hard = makeImage(60, 60, (x, y) => ((x + y) % 8 < 4 ? [40, 40, 40] : [230, 230, 230]));
+    const bs = app.sfGradientBarrier(app.sfGradientMap(soft.data, 60, 60), 0.9);
+    const bh = app.sfGradientBarrier(app.sfGradientMap(hard.data, 60, 60), 0.9);
+    assert.ok(bh > bs, `a busy image needs a higher bar (${bs} vs ${bh})`);
+    assert.ok(bs >= 14, 'and a flat image must not drive the bar to zero');
+  });
+  test('dilation seals a one-pixel hole in an outline', () => {
+    const g = new Float32Array(5 * 5);
+    for(let y = 0; y < 5; y++) g[y * 5 + 2] = 100;   // a vertical wall
+    g[2 * 5 + 2] = 0;                                 // with a pinhole
+    const e = app.sfDilateEdges(g, 5, 5, 50);
+    assert.equal(e[2 * 5 + 2], 1, 'the pinhole must be sealed');
+    assert.equal(e[0 * 5 + 0], 0, 'and open ground left open');
   });
 });
 
@@ -417,6 +516,16 @@ describe('sfAnchorFor — pose-anchored placement', () => {
     const badKnee = pose.map(k => /knee/.test(k.name) ? { ...k, y: 10 } : k);
     const wild = sfAnchorFor('shoe', badKnee)[0];
     assert.ok(wild.w <= normal.w * 1.6, 'a misread knee must not produce a giant shoe');
+  });
+
+  test('shoes are life-sized against the body, not two-thirds of it', () => {
+    // Foot length is ~0.152 of stature and shoulder width ~0.23, so a foot
+    // is roughly 0.66 of the shoulder span. The old cap put it at 0.46,
+    // which is why rendered shoes looked visibly too small for the legs.
+    const shoe = sfAnchorFor('shoe', pose)[0];
+    assert.ok(shoe.w > shoulderW * 0.55,
+      `a foot should be well over half the shoulder span, got ${(shoe.w/shoulderW).toFixed(2)}x`);
+    assert.ok(shoe.w < shoulderW * 0.9, 'but not comically large');
   });
 
   test('a missing lower body does not crash or invent anchors', () => {

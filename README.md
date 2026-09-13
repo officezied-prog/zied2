@@ -56,11 +56,48 @@ Two refinements carry most of the accuracy:
   on a pale wall, and a grainy backdrop split across several clusters — and
   they want opposite answers. The default is cautious; pushing the slider
   past the middle switches to the blunt reading, *whatever leans to the rim
-  is backdrop*. Without that second mode the slider was powerless on exactly
-  the photos where it was the last thing left to try.
+  is backdrop*.
 
-Edges are feathered and colour-decontaminated, so a garment composited onto
-a body no longer carries a halo of the wall it was photographed against.
+#### When colour is not enough: edges
+
+Colour ownership handles most photos and cannot handle all of them, and the
+failure is not a tuning problem. Measured off a real result this app
+produced: cream trousers photographed on a kraft card came out at
+`rgb(220,212,199)` against `rgb(208,202,190)` — **31 apart on a scale that
+runs to 765**. No clustering method separates those; card and trousers
+landed in one cluster split 38% rim / 32% centre, and every rule that only
+knows about colour had to guess. It guessed "garment", and the whole card
+was pasted onto the body as a solid rectangle.
+
+A person has no trouble with that photo, because a garment lying on a card
+still has an **outline** — the fabric casts a shadow, the edge is simply
+visible. In that same photo the boundary is a 54-level drop in brightness
+while the card's own lighting drifts by one or two levels per pixel.
+
+So a second pass measures exactly that: a Sobel gradient over luminance,
+with the barrier taken from the image's own gradient distribution rather
+than a fixed number, and dilated by one pixel — an outline with a single
+weak point is not a barrier at all, since a flood fill needs one pixel of
+gap to pour through and take the garment with it. A pixel colour cannot
+call may then be removed if it simply *continues* the background region it
+was reached from and no outline lies between them.
+
+Three things keep that safe:
+
+- Seeds are decided by colour alone, so a garment running to the frame edge
+  can never seed its own erasure.
+- The pass only runs when the rim is still largely opaque — when colour
+  already worked it never runs and costs nothing (48ms vs 256ms on a
+  520×693 photo).
+- Its result is kept only if it removes more **without** giving up the
+  garment. The threshold is measured, not chosen: on the trousers photo the
+  edge-gated cut keeps 98.2% of what the cautious cut kept in the centre —
+  it takes only backdrop. On a garment whose edge is genuinely invisible it
+  keeps 80%, because it is eating the item. The bar sits at 95%.
+
+On the trousers-on-a-card photo this takes the surviving card from 60% down
+to 13% with the trousers completely intact; strip the shadow out of that
+same photo and the cut correctly declines to happen at all.
 
 Measured over 363 randomised synthetic photos:
 
@@ -69,6 +106,11 @@ Measured over 363 randomised synthetic photos:
 | clean cut at the default sensitivity | 76.6% |
 | clean cut reachable by moving the slider | **100%** |
 | garment damaged at the default | **0%** |
+
+And if a cut still fails, the item is flagged: an item saved with its
+background intact is marked in the wardrobe and warned about at save time,
+because pasting it onto a body produces exactly the solid rectangle that
+prompted this work.
 
 ### 2. Recognising what the garment is
 
@@ -132,8 +174,11 @@ MoveNet keypoints give the anchor for each garment. Notable corrections:
 - **Hats are anchored to the ear line, not the nose.** The nose moves when
   the head turns and carries no orientation, so a tilted head got a level
   hat floating off to one side.
-- **Shoes are scaled from the shank**, bounded by the shoulder estimate so a
-  misread knee cannot produce a shoe the size of the person.
+- **Shoes are life-sized.** Foot length is about 0.152 of stature and the
+  shank about 0.246, so a foot is ~0.62 of the shank and ~0.66 of the
+  shoulder span. The old code took `min(shoulder×0.46, shank×0.55)`, whose
+  first term is only 0.106 of stature — two thirds of a real foot, and it
+  won every time. Those are bounds now, not the answer.
 
 ---
 
@@ -151,6 +196,9 @@ MoveNet keypoints give the anchor for each garment. Notable corrections:
 | **The swatch for a red shirt with white cuffs was pink** — a colour nowhere in the garment. | dominant cluster instead of the mean |
 | **The adjustment sliders stuttered.** Every frame of a drag re-decoded each garment PNG and rescanned every pixel for its bounds. | computed once per item and cached |
 | **A cut that erased the garment but kept the wall passed silently** — the whole-image opaque fraction cannot see it. | centre-region quality check, reported to the user |
+| **A garment whose background was never removed was pasted onto the body as a solid rectangle**, with no warning anywhere. | edge-gated second pass cuts most of these; whatever still fails is flagged at save and badged in the wardrobe |
+| **Rendered shoes were about two thirds of life size.** | sized from anthropometric ratios rather than a cap that always won |
+| **The flood-fill stack could overflow its own buffer**, silently dropping pixels — a pixel could be pushed by up to four neighbours into a buffer sized for one entry each. | pixels are claimed when pushed, so each is queued exactly once |
 
 ---
 
