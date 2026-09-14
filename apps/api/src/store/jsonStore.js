@@ -18,6 +18,7 @@ const PREFIX = { creators: "cr", brands: "br", campaigns: "cp", outreach: "or", 
 
 let db = null;
 let writeTimer = null;
+let syncedMtime = 0; // mtime of the file as we last wrote or read it
 
 function emptyDb() {
   const d = { _meta: { version: 1, seededAt: null, counters: {} } };
@@ -25,11 +26,17 @@ function emptyDb() {
   return d;
 }
 
+/** True when another process (the CLI) wrote the file after we last touched it. */
+function externallyChanged() {
+  if (writeTimer) return false; // our own edits are still queued: they win
+  try { return fs.statSync(DB_FILE).mtimeMs > syncedMtime + 1; } catch { return false; }
+}
+
 export function load() {
-  if (db) return db;
+  if (db && !externallyChanged()) return db;
   fs.mkdirSync(DATA_DIR, { recursive: true });
   if (fs.existsSync(DB_FILE)) {
-    try { db = JSON.parse(fs.readFileSync(DB_FILE, "utf8")); } catch { db = null; }
+    try { db = JSON.parse(fs.readFileSync(DB_FILE, "utf8")); syncedMtime = fs.statSync(DB_FILE).mtimeMs; } catch { db = null; }
   }
   if (!db) db = emptyDb();
   for (const c of COLLECTIONS) if (!Array.isArray(db[c])) db[c] = [];
@@ -60,12 +67,13 @@ function flush() {
   const tmp = DB_FILE + ".tmp";
   fs.writeFileSync(tmp, JSON.stringify(db));
   fs.renameSync(tmp, DB_FILE);
+  try { syncedMtime = fs.statSync(DB_FILE).mtimeMs; } catch { /* best effort */ }
 }
 export function save() {
   clearTimeout(writeTimer);
-  writeTimer = setTimeout(flush, 50);
+  writeTimer = setTimeout(() => { writeTimer = null; flush(); }, 50); // cleared so a later external change is noticed
 }
-export function flushSync() { clearTimeout(writeTimer); flush(); }
+export function flushSync() { clearTimeout(writeTimer); writeTimer = null; flush(); }
 
 export const now = () => new Date().toISOString();
 

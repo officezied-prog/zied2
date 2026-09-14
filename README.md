@@ -107,7 +107,15 @@ Three demo accounts are created the first time the server starts on an empty dat
 | `brand@rabith.id` | `rabith-brand` | brand | only its own brand, campaigns and outreach |
 | `creator@rabith.id` | `rabith-creator` | creator | its own profile, the agent console, contracts |
 
-Set `RABITH_ADMIN_PASSWORD` before the first run (or change the passwords from the account drawer) — the startup log warns while the demo passwords are still active. Sessions are bearer tokens valid for 30 days; only their SHA-256 hash is stored.
+Add your own team from the terminal (they are the `admin` accounts — the only ones who see the operations room):
+
+```bash
+npm run user -- add teammate@yourdomain.com --name "Teammate" --role admin   # prints a generated password once
+npm run user -- promote someone@yourdomain.com --role admin                  # a brand signup joins the team
+npm run user -- list | password <email> | suspend | activate | delete
+```
+
+The same thing works from the account panel in the app. Accounts live in your own database, not in this repository. Set `RABITH_ADMIN_PASSWORD` before the first run (or change the passwords from the account drawer) — the startup log warns while the demo passwords are still active. Sessions are bearer tokens valid for 30 days; only their SHA-256 hash is stored.
 
 ## Roadmap (not in this version)
 Postgres/Supabase store · real platform connectors (TikTok/Meta/YouTube APIs via n8n) · PrivyID e-signature · Midtrans/Xendit escrow · BPJS integration · mobile app.

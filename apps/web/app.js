@@ -81,7 +81,7 @@ id: {
 
 /* ── account strings, merged into the dictionary above ── */
 Object.assign(T.ar, {
-  staff_only:"هذه الصفحة للفريق فقط", sign_in:"تسجيل الدخول", sign_up:"حساب جديد", sign_out:"تسجيل الخروج", account:"حسابي",
+  staff_only:"هذه الصفحة للفريق فقط", generate_pw:"توليد", hand_over:"سلّم هذه البيانات لزميلك", hand_over_note:"لن تظهر كلمة المرور مرة أخرى. يستطيع تغييرها من لوحة حسابه بعد أول دخول.", sign_in:"تسجيل الدخول", sign_up:"حساب جديد", sign_out:"تسجيل الخروج", account:"حسابي",
   email:"البريد الإلكتروني", password:"كلمة المرور", full_name:"الاسم الكامل", company_name:"اسم الشركة",
   handle:"حساب التواصل", role:"نوع الحساب", role_admin:"مسؤول المنصة", role_brand:"شركة / علامة تجارية", role_creator:"صانع محتوى",
   role_brand_d:"تبحث عن مؤثرين وتدير حملاتك", role_creator_d:"تستقبل عروض التعاون من العلامات",
@@ -99,7 +99,7 @@ Object.assign(T.ar, {
   bad_credentials:"البريد أو كلمة المرور غير صحيحة", email_taken:"هذا البريد مستخدم بالفعل",
 });
 Object.assign(T.en, {
-  staff_only:"This page is for the team only", sign_in:"Sign in", sign_up:"Create account", sign_out:"Sign out", account:"My account",
+  staff_only:"This page is for the team only", generate_pw:"Generate", hand_over:"Hand these to your teammate", hand_over_note:"The password will not be shown again. They can change it from their account panel after the first sign-in.", sign_in:"Sign in", sign_up:"Create account", sign_out:"Sign out", account:"My account",
   email:"Email", password:"Password", full_name:"Full name", company_name:"Company name",
   handle:"Social handle", role:"Account type", role_admin:"Platform admin", role_brand:"Brand / company", role_creator:"Creator",
   role_brand_d:"Find creators and run your campaigns", role_creator_d:"Receive collaboration offers from brands",
@@ -117,7 +117,7 @@ Object.assign(T.en, {
   bad_credentials:"Wrong email or password", email_taken:"This email is already registered",
 });
 Object.assign(T.id, {
-  staff_only:"Halaman ini khusus tim", sign_in:"Masuk", sign_up:"Daftar", sign_out:"Keluar", account:"Akun saya",
+  staff_only:"Halaman ini khusus tim", generate_pw:"Buat", hand_over:"Serahkan ini ke rekan Anda", hand_over_note:"Kata sandi tidak akan ditampilkan lagi. Mereka bisa menggantinya dari panel akun setelah masuk pertama kali.", sign_in:"Masuk", sign_up:"Daftar", sign_out:"Keluar", account:"Akun saya",
   email:"Email", password:"Kata sandi", full_name:"Nama lengkap", company_name:"Nama perusahaan",
   handle:"Akun sosial", role:"Jenis akun", role_admin:"Admin platform", role_brand:"Brand / perusahaan", role_creator:"Kreator",
   role_brand_d:"Cari kreator dan kelola kampanye Anda", role_creator_d:"Terima tawaran kolaborasi dari brand",
@@ -663,6 +663,12 @@ async function weakHash(pw) {
   let h = 0; for (let i = 0; i < pw.length; i++) h = (h * 31 + pw.charCodeAt(i)) | 0;
   return "fallback:" + h;
 }
+/** Readable, strong, no look-alike characters — matches the terminal tool. */
+function randomPassword(groups = 4, size = 4) {
+  const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+  const pick = () => alphabet[Math.floor((crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32 : Math.random()) * alphabet.length)];
+  return Array.from({ length: groups }, () => Array.from({ length: size }, pick).join("")).join("-");
+}
 function offlineUsers() { try { return JSON.parse(localStorage.getItem(OFFLINE_USERS) || "[]"); } catch { return []; } }
 function saveOfflineUsers(list) { try { localStorage.setItem(OFFLINE_USERS, JSON.stringify(list)); } catch { /* quota */ } }
 async function seedOfflineUsers() {
@@ -832,15 +838,19 @@ document.addEventListener("click", async (e) => {
       try { await AUTH.resetUserPassword(id, nw); closeModal(); toast(t("password_changed"), "ok"); } catch (err) { toast(err.message, "err"); }
       break;
     }
-    case "new-user": openModal(t("add_user"), `<div class="fg2">${field(t("full_name"), `<input id="nu-name">`)}${field(t("email"), `<input id="nu-email" type="email" dir="ltr">`)}${field(t("password"), `<input id="nu-pw" type="password">`)}${field(t("role"), sel("nu-role", [["brand", t("role_brand")], ["creator", t("role_creator")], ["admin", t("role_admin")]], "brand"))}</div>`,
+    case "new-user": openModal(t("add_user"), `<div class="fg2">${field(t("full_name"), `<input id="nu-name" autocomplete="off">`)}${field(t("email"), `<input id="nu-email" type="email" dir="ltr" autocomplete="off">`)}${field(t("password"), `<div class="row" style="flex-wrap:nowrap;gap:6px"><input id="nu-pw" type="text" dir="ltr" autocomplete="off" style="flex:1"><button class="btn btn-ghost btn-xs" type="button" data-auth="gen-pw">${esc(t("generate_pw"))}</button></div>`)}${field(t("role"), sel("nu-role", [["admin", t("role_admin")], ["brand", t("role_brand")], ["creator", t("role_creator")]], "admin"))}</div>`,
       `<button class="btn btn-ghost btn-sm" data-action="modal-close">${esc(t("cancel"))}</button><button class="btn btn-primary btn-sm" data-auth="new-user-confirm">${esc(t("save"))}</button>`); break;
+    case "gen-pw": { const f = $("#nu-pw"); if (f) { f.value = randomPassword(); f.focus(); } break; }
     case "new-user-confirm": {
       const payload = { name: $("#nu-name").value.trim(), email: $("#nu-email").value.trim(), password: $("#nu-pw").value, role: $("#nu-role").value };
       if (!payload.name || !payload.email || payload.password.length < 8) { toast(t("required_fields"), "warn"); break; }
       try {
         if (online()) await api("/auth/users", { method: "POST", body: payload });
         else { const list = offlineUsers(); list.push({ id: uid("us"), ...payload, password: undefined, hash: await weakHash(payload.password), status: "active", lang: LANG, avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(payload.name)}`, createdAt: new Date().toISOString(), lastLoginAt: null }); saveOfflineUsers(list); }
-        closeModal(); toast(t("user_created"), "ok"); renderAdminUsers();
+        toast(t("user_created"), "ok"); renderAdminUsers();
+        const line = `${payload.email}\n${payload.password}`;
+        openModal(t("hand_over"), `<div class="dl"><div><span>${esc(t("email"))}</span><span dir="ltr" class="mono">${esc(payload.email)}</span></div><div><span>${esc(t("password"))}</span><span dir="ltr" class="mono">${esc(payload.password)}</span></div><div><span>${esc(t("role"))}</span><span>${esc(roleLabel(payload.role))}</span></div></div><p class="tiny muted mt-s">${esc(t("hand_over_note"))}</p>`,
+          `<button class="btn btn-ghost btn-sm" data-action="copy-text" data-text="${esc(line)}">${esc(t("copy"))}</button><button class="btn btn-primary btn-sm" data-action="modal-close">${esc(t("close"))}</button>`);
       } catch (err) { toast(err.message, "err"); }
       break;
     }
