@@ -6,6 +6,8 @@ import { api } from "./routes/api.js";
 import * as store from "./store/jsonStore.js";
 import { isOnline, MODEL } from "./integrations/claude.js";
 import * as n8n from "./integrations/n8n.js";
+import { ensureDemoUsers } from "./auth/users.js";
+import { purgeExpired, authRequired } from "./auth/sessions.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIR = process.env.RABITH_WEB_DIR || path.resolve(here, "../../web");
@@ -34,12 +36,19 @@ export function createApp() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   store.load();
+  purgeExpired();
+  const accounts = await ensureDemoUsers();
   const port = Number(process.env.PORT || 8787);
   createApp().listen(port, () => {
     console.log(`Rabith API  → http://localhost:${port}/api   (web: ${WEB_DIR})`);
     console.log(`Brain       → ${isOnline() ? "Claude " + MODEL : "OFFLINE rule-based planner (set ANTHROPIC_API_KEY)"}`);
     console.log(`Hands (n8n) → ${n8n.isConfigured() ? process.env.N8N_WEBHOOK_BASE : "not configured (N8N_WEBHOOK_BASE)"}`);
     console.log(`Config      → ${ENV_FILE || "no .env file found (using shell environment only)"}`);
+    console.log(`Accounts    → sign-in ${authRequired() ? "REQUIRED for every write" : "optional (open demo mode)"}`);
+    if (accounts.created) {
+      console.log(`              seeded ${accounts.created} accounts — admin: ${accounts.adminEmail}`);
+      if (accounts.demo) console.log("              ⚠ demo passwords in use (rabith-admin / rabith-brand / rabith-creator) — set RABITH_ADMIN_PASSWORD and change them");
+    }
   });
   process.on("SIGINT", () => { store.flushSync(); process.exit(0); });
   process.on("SIGTERM", () => { store.flushSync(); process.exit(0); });

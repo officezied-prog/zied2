@@ -78,6 +78,63 @@ id: {
   pr_eye:"Paket",pr_h:"Pilih paket Anda",pr_sub:"Tanpa kontrak tahunan — upgrade atau downgrade kapan saja",pr_brand:"Untuk brand",pr_creator:"Untuk kreator",pl_free:"Gratis",per_mo:"/bulan",pp1a:"5 pencarian kreator",pp1b:"1 kampanye aktif",pp1c:"Kontrak dasar",pp1d:"Konsol agen",btn_free:"Mulai gratis",pl_growth:"Growth",pp2a:"Pencarian tanpa batas",pp2b:"10 kampanye aktif",pp2c:"Pencocokan AI penuh",pp2d:"Deteksi fraud",pp2e:"Generator outreach + n8n",btn_start:"Mulai sekarang",pl_ent:"Enterprise",pp3a:"Semua fitur Growth",pp3b:"Kampanye tanpa batas",pp3c:"21 agen AI",pp3d:"Account manager khusus",pp3e:"Laporan white-label",btn_contact:"Hubungi kami",pc1a:"Profil dasar",pc1b:"3 kampanye/bulan",pc1c:"Kontrak dasar",btn_join:"Gabung gratis",pl_pro:"Pro",pc2a:"Kampanye tanpa batas",pc2b:"Analitik akun Anda",pc2c:"🛡️ BPJS Ketenagakerjaan",pc2d:"Prioritas pencocokan",btn_upgrade:"Upgrade",pc3a:"Untuk kreator 1K–10K",pc3b:"Akses kampanye UMKM",pc3c:"🛡️ BPJS Ketenagakerjaan",btn_nano:"Gabung sebagai Nano",most_popular:"Paling populer",
   api_error:"Kesalahan server",close:"Tutup",yes:"Ya",required:"Wajib diisi",
 }};
+
+/* ── account strings, merged into the dictionary above ── */
+Object.assign(T.ar, {
+  sign_in:"تسجيل الدخول", sign_up:"حساب جديد", sign_out:"تسجيل الخروج", account:"حسابي",
+  email:"البريد الإلكتروني", password:"كلمة المرور", full_name:"الاسم الكامل", company_name:"اسم الشركة",
+  handle:"حساب التواصل", role:"نوع الحساب", role_admin:"مسؤول المنصة", role_brand:"شركة / علامة تجارية", role_creator:"صانع محتوى",
+  role_brand_d:"تبحث عن مؤثرين وتدير حملاتك", role_creator_d:"تستقبل عروض التعاون من العلامات",
+  login_cta:"دخول", register_cta:"إنشاء الحساب", no_account:"ليس لديك حساب؟", have_account:"لديك حساب؟",
+  welcome_back:"أهلاً بعودتك", signed_out:"تم تسجيل الخروج", account_created:"تم إنشاء حسابك",
+  demo_accounts:"حسابات تجريبية للتجربة السريعة:", demo_fill:"املأ بيانات المسؤول",
+  profile:"الملف الشخصي", change_password:"تغيير كلمة المرور", current_password:"كلمة المرور الحالية", new_password:"كلمة المرور الجديدة",
+  password_changed:"تم تغيير كلمة المرور", profile_saved:"تم حفظ الملف", linked_brand:"العلامة المرتبطة", linked_creator:"الملف المرتبط",
+  manage_users:"إدارة المستخدمين", users:"المستخدمون", add_user:"إضافة مستخدم", suspend:"تعليق", activate:"تفعيل",
+  reset_pw:"إعادة تعيين كلمة المرور", delete_user:"حذف الحساب", confirm_delete:"تأكيد حذف الحساب نهائياً؟",
+  user_updated:"تم تحديث المستخدم", user_created:"تم إنشاء المستخدم", user_deleted:"تم حذف المستخدم",
+  member_since:"عضو منذ", last_login:"آخر دخول", active_sessions:"الجلسات النشطة", sign_out_others:"إنهاء الجلسات الأخرى",
+  sessions_revoked:"تم إنهاء الجلسات الأخرى", auth_offline_note:"أنت في الوضع التجريبي: الحساب محفوظ في هذا المتصفح فقط. شغّل الخادم للحسابات الحقيقية.",
+  min_chars:"٨ أحرف على الأقل", required_fields:"أكمل الحقول المطلوبة", suspended:"معلّق",
+  bad_credentials:"البريد أو كلمة المرور غير صحيحة", email_taken:"هذا البريد مستخدم بالفعل",
+});
+Object.assign(T.en, {
+  sign_in:"Sign in", sign_up:"Create account", sign_out:"Sign out", account:"My account",
+  email:"Email", password:"Password", full_name:"Full name", company_name:"Company name",
+  handle:"Social handle", role:"Account type", role_admin:"Platform admin", role_brand:"Brand / company", role_creator:"Creator",
+  role_brand_d:"Find creators and run your campaigns", role_creator_d:"Receive collaboration offers from brands",
+  login_cta:"Sign in", register_cta:"Create account", no_account:"No account yet?", have_account:"Already have an account?",
+  welcome_back:"Welcome back", signed_out:"Signed out", account_created:"Account created",
+  demo_accounts:"Demo accounts for a quick tour:", demo_fill:"Fill admin credentials",
+  profile:"Profile", change_password:"Change password", current_password:"Current password", new_password:"New password",
+  password_changed:"Password changed", profile_saved:"Profile saved", linked_brand:"Linked brand", linked_creator:"Linked profile",
+  manage_users:"Manage users", users:"Users", add_user:"Add user", suspend:"Suspend", activate:"Activate",
+  reset_pw:"Reset password", delete_user:"Delete account", confirm_delete:"Permanently delete this account?",
+  user_updated:"User updated", user_created:"User created", user_deleted:"User deleted",
+  member_since:"Member since", last_login:"Last sign-in", active_sessions:"Active sessions", sign_out_others:"Sign out other devices",
+  sessions_revoked:"Other sessions ended", auth_offline_note:"Demo mode: this account lives in this browser only. Start the server for real accounts.",
+  min_chars:"at least 8 characters", required_fields:"Fill in the required fields", suspended:"suspended",
+  bad_credentials:"Wrong email or password", email_taken:"This email is already registered",
+});
+Object.assign(T.id, {
+  sign_in:"Masuk", sign_up:"Daftar", sign_out:"Keluar", account:"Akun saya",
+  email:"Email", password:"Kata sandi", full_name:"Nama lengkap", company_name:"Nama perusahaan",
+  handle:"Akun sosial", role:"Jenis akun", role_admin:"Admin platform", role_brand:"Brand / perusahaan", role_creator:"Kreator",
+  role_brand_d:"Cari kreator dan kelola kampanye Anda", role_creator_d:"Terima tawaran kolaborasi dari brand",
+  login_cta:"Masuk", register_cta:"Buat akun", no_account:"Belum punya akun?", have_account:"Sudah punya akun?",
+  welcome_back:"Selamat datang kembali", signed_out:"Berhasil keluar", account_created:"Akun dibuat",
+  demo_accounts:"Akun demo untuk mencoba cepat:", demo_fill:"Isi kredensial admin",
+  profile:"Profil", change_password:"Ubah kata sandi", current_password:"Kata sandi saat ini", new_password:"Kata sandi baru",
+  password_changed:"Kata sandi diubah", profile_saved:"Profil disimpan", linked_brand:"Brand terkait", linked_creator:"Profil terkait",
+  manage_users:"Kelola pengguna", users:"Pengguna", add_user:"Tambah pengguna", suspend:"Tangguhkan", activate:"Aktifkan",
+  reset_pw:"Atur ulang kata sandi", delete_user:"Hapus akun", confirm_delete:"Hapus akun ini secara permanen?",
+  user_updated:"Pengguna diperbarui", user_created:"Pengguna dibuat", user_deleted:"Pengguna dihapus",
+  member_since:"Anggota sejak", last_login:"Masuk terakhir", active_sessions:"Sesi aktif", sign_out_others:"Keluarkan perangkat lain",
+  sessions_revoked:"Sesi lain diakhiri", auth_offline_note:"Mode demo: akun ini hanya tersimpan di browser ini. Jalankan server untuk akun sungguhan.",
+  min_chars:"minimal 8 karakter", required_fields:"Lengkapi kolom wajib", suspended:"ditangguhkan",
+  bad_credentials:"Email atau kata sandi salah", email_taken:"Email ini sudah terdaftar",
+});
+
 let LANG = "ar";
 const t = (k, vars) => { let s = (T[LANG] && T[LANG][k]) ?? T.en[k] ?? k; if (vars) for (const v in vars) s = s.replace(`{${v}}`, vars[v]); return s; };
 const L3 = (obj) => (obj && (obj[LANG] || obj.en)) || "";
@@ -162,7 +219,7 @@ function deriveVars(brand, contact, extra = {}) { return { brandName: brand?.nam
 
 /* ══════════════════════════ 4. STATE + DATA LAYER ══════════════════════════ */
 const API = (window.RABITH_API_BASE || (location.protocol === "file:" ? "http://localhost:8787/api" : "/api")).replace(/\/$/, "");
-const S = { mode: "checking", brain: "offline", agents: [], groups: {}, creators: [], brands: [], campaigns: [], outreach: [], posts: [], runs: [], templates: [], rules: [], contracts: [], chat: [], chatAgent: "orchestrator", ctx: {}, disc: { page: 0 }, selCampaign: null, outreachDraft: null };
+const S = { mode: "checking", brain: "offline", user: null, token: null, authRequired: false, agents: [], groups: {}, creators: [], brands: [], campaigns: [], outreach: [], posts: [], runs: [], templates: [], rules: [], contracts: [], chat: [], chatAgent: "orchestrator", ctx: {}, disc: { page: 0 }, selCampaign: null, outreachDraft: null };
 const OFFLINE_AGENTS = [
   ["orchestrator", "总", "core", { ar: "المنسّق الرئيسي", en: "Master Orchestrator", id: "Orkestrator Utama" }, { ar: "العقل المركزي: يحلّل، يفوّض، يجمع ويقدّم إجابة موحّدة.", en: "Central brain: analyses, delegates, reconciles, answers.", id: "Otak pusat: analisis, delegasi, satukan, jawab." }],
   ["discovery", "配", "core", { ar: "الاكتشاف والمطابقة", en: "Discovery & Matching", id: "Penemuan & Pencocokan" }, { ar: "يبحث عن المؤثرين ويطابقهم مع الحملات.", en: "Finds creators and matches them to campaigns.", id: "Mencari & mencocokkan kreator." }],
@@ -189,8 +246,11 @@ const OFFLINE_AGENTS = [
 const GROUP_NAMES = { core: { ar: "الأساسيون", en: "Core", id: "Inti" }, ops: { ar: "العمليات", en: "Operations", id: "Operasional" }, intel: { ar: "الذكاء", en: "Intelligence", id: "Intelijen" }, spec: { ar: "التخصص", en: "Specialized", id: "Spesialis" }, dev: { ar: "التطوير", en: "Development", id: "Pengembangan" } };
 
 async function api(path, opt = {}) {
-  const res = await fetch(API + path, { method: opt.method || "GET", headers: { "content-type": "application/json" }, body: opt.body ? JSON.stringify(opt.body) : undefined });
+  const headers = { "content-type": "application/json" };
+  if (S.token) headers.authorization = `Bearer ${S.token}`;
+  const res = await fetch(API + path, { method: opt.method || "GET", headers, body: opt.body ? JSON.stringify(opt.body) : undefined });
   const j = await res.json().catch(() => ({}));
+  if (res.status === 401 && S.token && !path.startsWith("/auth/")) { clearSession(); }  // the session expired or was revoked elsewhere
   if (!res.ok) throw new Error(j.error?.message || `${t("api_error")} ${res.status}`);
   return j;
 }
@@ -542,6 +602,234 @@ function generateContract(save = true) {
 function lsSaveContracts() { try { const d = lsLoad(); d.contracts = S.contracts; localStorage.setItem(LS, JSON.stringify(d)); } catch { /* ignore */ } }
 function renderContractList() { $("#contract-list").innerHTML = S.contracts.length ? S.contracts.map((c) => `<div class="seq-item"><div><div class="ss">${esc(c.no)} — ${esc(c.brand)} × ${esc(c.creator)}</div><div class="sm">${fmtDT(c.createdAt)} · ${esc(c.deliv)} · ${fmtIDR(c.fee)} <span class="badge ${c.status === "sent" ? "b-blue" : "b-gray"}">${esc(c.status)}</span></div></div></div>`).join("") : `<div class="empty">${t("no_contracts")}</div>`; }
 
+/* ══════════════════════════ 13.5 ACCOUNTS / AUTH ══════════════════════════ */
+const TOKEN_KEY = "rabith.token", OFFLINE_USERS = "rabith.users";
+const ROLE_PAGES = { // which tabs each role may see; admin and anonymous demo see everything
+  admin: null,
+  brand: ["home", "discover", "campaigns", "agents", "social", "legal", "pricing"],
+  creator: ["home", "agents", "legal", "pricing"],
+};
+const roleLabel = (r) => t("role_" + r) || r;
+
+function saveToken(tok) { S.token = tok || null; try { tok ? localStorage.setItem(TOKEN_KEY, tok) : localStorage.removeItem(TOKEN_KEY); } catch { /* private mode */ } }
+function clearSession() { S.user = null; saveToken(null); refreshAuthUI(); }
+
+function refreshAuthUI() {
+  const chip = $("#user-chip"), btn = $("#auth-btn");
+  if (S.user) {
+    btn.hidden = true; chip.hidden = false;
+    $("#user-name").textContent = S.user.name;
+    $("#user-role").textContent = roleLabel(S.user.role);
+    const av = $("#user-avatar");
+    if (S.user.avatar) { av.src = S.user.avatar; av.hidden = false; } else av.hidden = true;
+  } else { btn.hidden = false; chip.hidden = true; }
+  applyRoleUI();
+}
+function applyRoleUI() {
+  const allowed = S.user ? ROLE_PAGES[S.user.role] : null;
+  $$(".nav-tab").forEach((b) => { b.hidden = Boolean(allowed && !allowed.includes(b.dataset.page)); });
+  if (allowed) { const cur = (location.hash || "#home").slice(1); if (!allowed.includes(cur)) goPage("home"); }
+}
+
+/* ── offline accounts: this browser only, clearly labelled as demo ── */
+async function weakHash(pw) {
+  try {
+    if (window.crypto?.subtle) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("rabith:" + pw));
+      return [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, "0")).join("");
+    }
+  } catch { /* falls through */ }
+  let h = 0; for (let i = 0; i < pw.length; i++) h = (h * 31 + pw.charCodeAt(i)) | 0;
+  return "fallback:" + h;
+}
+function offlineUsers() { try { return JSON.parse(localStorage.getItem(OFFLINE_USERS) || "[]"); } catch { return []; } }
+function saveOfflineUsers(list) { try { localStorage.setItem(OFFLINE_USERS, JSON.stringify(list)); } catch { /* quota */ } }
+async function seedOfflineUsers() {
+  if (offlineUsers().length) return;
+  const demo = [
+    { email: "admin@rabith.id", pw: "rabith-admin", name: "Rabith Admin", role: "admin", lang: "ar" },
+    { email: "brand@rabith.id", pw: "rabith-brand", name: "Rania Halim", role: "brand", lang: "en" },
+    { email: "creator@rabith.id", pw: "rabith-creator", name: "Ayu Anggraini", role: "creator", lang: "id" },
+  ];
+  const list = [];
+  for (const d of demo) list.push({ id: uid("us"), email: d.email, name: d.name, role: d.role, lang: d.lang, status: "active", brandId: null, creatorId: null, avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(d.name)}`, createdAt: new Date().toISOString(), lastLoginAt: null, hash: await weakHash(d.pw) });
+  saveOfflineUsers(list);
+}
+const pubUser = (u) => u && { id: u.id, email: u.email, name: u.name, role: u.role, status: u.status, brandId: u.brandId, creatorId: u.creatorId, lang: u.lang, avatar: u.avatar, createdAt: u.createdAt, lastLoginAt: u.lastLoginAt };
+
+const AUTH = {
+  async login(email, password) {
+    email = String(email).trim().toLowerCase();
+    if (online()) { const r = await api("/auth/login", { method: "POST", body: { email, password } }); saveToken(r.token); S.user = r.user; return r.user; }
+    await seedOfflineUsers();
+    const list = offlineUsers(); const u = list.find((x) => x.email === email);
+    if (!u || u.hash !== (await weakHash(password))) throw new Error(t("bad_credentials"));
+    if (u.status !== "active") throw new Error(t("suspended"));
+    u.lastLoginAt = new Date().toISOString(); saveOfflineUsers(list);
+    S.user = pubUser(u); saveToken("offline:" + u.id); return S.user;
+  },
+  async register(payload) {
+    if (online()) { const r = await api("/auth/register", { method: "POST", body: payload }); saveToken(r.token); S.user = r.user; return r.user; }
+    await seedOfflineUsers();
+    const list = offlineUsers(); const email = String(payload.email).trim().toLowerCase();
+    if (list.some((x) => x.email === email)) throw new Error(t("email_taken"));
+    const u = { id: uid("us"), email, name: payload.name, role: payload.role, lang: payload.lang || LANG, status: "active", brandId: null, creatorId: null, avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(payload.name)}`, createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(), hash: await weakHash(payload.password) };
+    if (payload.role === "brand") { const b = await D.saveBrand({ name: payload.company || payload.name, type: "brand", country: "ID", pipeline: "lead", source: "signup", contacts: [{ name: payload.name, role: "Account owner", email }] }); u.brandId = b.id; }
+    list.push(u); saveOfflineUsers(list); S.user = pubUser(u); saveToken("offline:" + u.id); return S.user;
+  },
+  async logout() { if (online() && S.token) await api("/auth/logout", { method: "POST" }).catch(() => {}); clearSession(); },
+  async me() {
+    if (!S.token) return null;
+    if (online()) { const r = await api("/auth/me").catch(() => null); S.user = r?.user || null; if (!S.user) saveToken(null); return S.user; }
+    const id = String(S.token).replace("offline:", ""); const u = offlineUsers().find((x) => x.id === id);
+    S.user = pubUser(u) || null; if (!S.user) saveToken(null); return S.user;
+  },
+  async updateProfile(patch) {
+    if (online()) { const r = await api("/auth/me", { method: "PATCH", body: patch }); S.user = r.user; return r.user; }
+    const list = offlineUsers(); const u = list.find((x) => x.id === S.user.id); Object.assign(u, patch); saveOfflineUsers(list); S.user = pubUser(u); return S.user;
+  },
+  async changePassword(currentPassword, newPassword) {
+    if (online()) { const r = await api("/auth/password", { method: "POST", body: { currentPassword, newPassword } }); saveToken(r.token); S.user = r.user; return r.user; }
+    const list = offlineUsers(); const u = list.find((x) => x.id === S.user.id);
+    if (u.hash !== (await weakHash(currentPassword))) throw new Error(t("bad_credentials"));
+    u.hash = await weakHash(newPassword); saveOfflineUsers(list); return S.user;
+  },
+  async users() { if (online()) return (await api("/auth/users")).items; return offlineUsers().map(pubUser); },
+  async patchUser(id, patch) {
+    if (online()) return (await api("/auth/users/" + id, { method: "PATCH", body: patch })).user;
+    const list = offlineUsers(); const u = list.find((x) => x.id === id); Object.assign(u, patch); saveOfflineUsers(list); return pubUser(u);
+  },
+  async deleteUser(id) { if (online()) return api("/auth/users/" + id, { method: "DELETE" }); saveOfflineUsers(offlineUsers().filter((x) => x.id !== id)); return { ok: true }; },
+  async resetUserPassword(id, newPassword) {
+    if (online()) return api(`/auth/users/${id}/password`, { method: "POST", body: { newPassword } });
+    const list = offlineUsers(); const u = list.find((x) => x.id === id); u.hash = await weakHash(newPassword); saveOfflineUsers(list); return { ok: true };
+  },
+};
+
+/* ── sign in / sign up modal ── */
+let authTab = "login", authRole = "brand";
+function openAuthModal(tab = "login") { authTab = tab; renderAuthModal(); }
+function renderAuthModal(error = "") {
+  const isLogin = authTab === "login";
+  const body = `<div class="auth-tabs">
+      <button class="${isLogin ? "on" : ""}" data-auth="tab" data-tab="login">${esc(t("sign_in"))}</button>
+      <button class="${!isLogin ? "on" : ""}" data-auth="tab" data-tab="register">${esc(t("sign_up"))}</button>
+    </div>
+    ${error ? `<div class="auth-err">⚠ ${esc(error)}</div>` : ""}
+    ${isLogin ? "" : `<div class="role-pick">
+      <button class="${authRole === "brand" ? "on" : ""}" data-auth="role" data-role="brand"><span class="rt">🏢 ${esc(t("role_brand"))}</span><span class="rd">${esc(t("role_brand_d"))}</span></button>
+      <button class="${authRole === "creator" ? "on" : ""}" data-auth="role" data-role="creator"><span class="rt">🎬 ${esc(t("role_creator"))}</span><span class="rd">${esc(t("role_creator_d"))}</span></button>
+    </div>`}
+    <form id="auth-form" autocomplete="on">
+      ${isLogin ? "" : field(t("full_name"), `<input id="a-name" autocomplete="name" required>`)}
+      ${isLogin ? "" : (authRole === "brand" ? field(t("company_name"), `<input id="a-company" autocomplete="organization">`) : field(t("handle"), `<input id="a-handle" placeholder="@handle" dir="ltr">`))}
+      ${field(t("email"), `<input id="a-email" type="email" autocomplete="email" dir="ltr" required>`)}
+      ${field(t("password") + (isLogin ? "" : ` — ${t("min_chars")}`), `<input id="a-password" type="password" autocomplete="${isLogin ? "current-password" : "new-password"}" required>`)}
+    </form>
+    ${isLogin && S.mode === "online" ? `<div class="auth-note">${esc(t("demo_accounts"))}<br><code>admin@rabith.id / rabith-admin</code> <code>brand@rabith.id / rabith-brand</code> <code>creator@rabith.id / rabith-creator</code><br><button class="btn btn-ghost btn-xs" style="margin-top:8px" data-auth="demo">${esc(t("demo_fill"))}</button></div>` : ""}
+    ${S.mode === "offline" ? `<div class="auth-note">⚠ ${esc(t("auth_offline_note"))}</div>` : ""}`;
+  const ft = `<button class="btn btn-ghost btn-sm" data-action="modal-close">${esc(t("cancel"))}</button><button class="btn btn-primary btn-sm" data-auth="submit" id="auth-submit">${esc(isLogin ? t("login_cta") : t("register_cta"))}</button>`;
+  openModal(isLogin ? t("sign_in") : t("sign_up"), body, ft);
+  const form = $("#auth-form");
+  if (form) form.addEventListener("submit", (e) => { e.preventDefault(); submitAuth(); });
+}
+async function submitAuth() {
+  const isLogin = authTab === "login";
+  const email = $("#a-email").value.trim(), password = $("#a-password").value;
+  if (!email || !password) return renderAuthModal(t("required_fields"));
+  const name = isLogin ? "" : $("#a-name").value.trim();
+  if (!isLogin && !name) return renderAuthModal(t("required_fields"));
+  const btn = $("#auth-submit"); btn.disabled = true; btn.innerHTML = `<span class="typing"><i></i><i></i><i></i></span>`;
+  try {
+    if (isLogin) await AUTH.login(email, password);
+    else await AUTH.register({ email, password, name, role: authRole, company: $("#a-company")?.value.trim(), handle: $("#a-handle")?.value.trim(), lang: LANG });
+    closeModal(); refreshAuthUI();
+    toast(`${isLogin ? t("welcome_back") : t("account_created")} — ${S.user.name}`, "ok");
+    if (S.user.lang && S.user.lang !== LANG) setLang(S.user.lang); else { const cur = (location.hash || "#home").slice(1); goPage(PAGES[cur] ? cur : "home"); }
+  } catch (e) { renderAuthModal(e.message); }
+}
+
+/* ── account drawer ── */
+async function openAccountDrawer() {
+  const u = S.user; if (!u) return openAuthModal("login");
+  const brand = u.brandId ? S.brands.find((b) => b.id === u.brandId) : null;
+  const creator = u.creatorId ? S.creators.find((c) => c.id === u.creatorId) : null;
+  const body = `<div class="profile-hd"><div class="av"><img src="${esc(u.avatar || "")}" alt="" onerror="this.remove()"></div>
+      <div><h4>${esc(u.name)}</h4><span class="hd">${esc(u.email)}</span><div class="mt-s"><span class="badge b-purple">${esc(roleLabel(u.role))}</span> ${u.status !== "active" ? `<span class="badge b-red">${esc(t("suspended"))}</span>` : ""}</div></div></div>
+    <div class="dl"><div><span>${t("member_since")}</span><span>${fmtDate(u.createdAt)}</span></div><div><span>${t("last_login")}</span><span>${fmtDT(u.lastLoginAt)}</span></div>
+      ${brand ? `<div><span>${t("linked_brand")}</span><span>${esc(brand.name)}</span></div>` : ""}${creator ? `<div><span>${t("linked_creator")}</span><span dir="ltr">${esc(creator.handle)}</span></div>` : ""}</div>
+    <div class="sub-h"><span class="cn">档</span>${t("profile")}</div>
+    <div class="fg2">${field(t("full_name"), `<input id="p-name" value="${esc(u.name)}">`)}${field(t("language"), sel("p-lang", [["ar", "عربي"], ["en", "English"], ["id", "Bahasa"]], u.lang || LANG))}</div>
+    <button class="btn btn-ghost btn-sm" data-auth="save-profile">${esc(t("save"))}</button>
+    <div class="sub-h"><span class="cn">锁</span>${t("change_password")}</div>
+    <div class="fg2">${field(t("current_password"), `<input id="p-cur" type="password" autocomplete="current-password">`)}${field(t("new_password"), `<input id="p-new" type="password" autocomplete="new-password">`)}</div>
+    <button class="btn btn-ghost btn-sm" data-auth="change-password">${esc(t("change_password"))}</button>
+    ${u.role === "admin" ? `<div class="sub-h"><span class="cn">众</span>${t("manage_users")}</div><div class="row mb-s"><button class="btn btn-primary btn-xs" data-auth="new-user">＋ ${esc(t("add_user"))}</button></div><div class="stack" id="admin-users"><div class="skel" style="min-height:80px"></div></div>` : ""}`;
+  openDrawer(t("account"), body, `<button class="btn btn-ghost btn-sm" data-auth="logout">${esc(t("sign_out"))}</button><button class="btn btn-ghost btn-sm" data-auth="sign-out-others">${esc(t("sign_out_others"))}</button>`);
+  if (u.role === "admin") renderAdminUsers();
+}
+async function renderAdminUsers() {
+  const box = $("#admin-users"); if (!box) return;
+  try {
+    const users = await AUTH.users();
+    box.innerHTML = users.map((x) => `<div class="user-row${x.status !== "active" ? " suspended" : ""}">
+      <div><div class="ue">${esc(x.name)} <span class="badge ${x.role === "admin" ? "b-purple" : x.role === "brand" ? "b-blue" : "b-teal"}">${esc(roleLabel(x.role))}</span></div><div class="um">${esc(x.email)}</div></div>
+      <div class="ua">${x.id === S.user.id ? `<span class="badge b-gray">${esc(t("account"))}</span>` : `
+        <select class="sel" data-auth="user-role" data-id="${x.id}" style="padding:4px 8px;font-size:11px">${["admin", "brand", "creator"].map((r) => `<option value="${r}"${r === x.role ? " selected" : ""}>${esc(roleLabel(r))}</option>`).join("")}</select>
+        <button class="btn btn-ghost btn-xs" data-auth="user-suspend" data-id="${x.id}" data-status="${x.status === "active" ? "suspended" : "active"}">${esc(x.status === "active" ? t("suspend") : t("activate"))}</button>
+        <button class="btn btn-ghost btn-xs" data-auth="user-password" data-id="${x.id}">${esc(t("reset_pw"))}</button>
+        <button class="btn btn-danger btn-xs" data-auth="user-delete" data-id="${x.id}">✕</button>`}</div></div>`).join("");
+  } catch (e) { box.innerHTML = `<div class="auth-err">${esc(e.message)}</div>`; }
+}
+
+/* ── account events ── */
+document.addEventListener("click", async (e) => {
+  const el = e.target.closest("[data-auth]"); if (!el) return;
+  const what = el.dataset.auth, id = el.dataset.id;
+  switch (what) {
+    case "open": openAuthModal("login"); break;
+    case "account": openAccountDrawer(); break;
+    case "tab": authTab = el.dataset.tab; renderAuthModal(); break;
+    case "role": authRole = el.dataset.role; renderAuthModal(); break;
+    case "submit": submitAuth(); break;
+    case "demo": $("#a-email").value = "admin@rabith.id"; $("#a-password").value = "rabith-admin"; break;
+    case "logout": await AUTH.logout(); closeDrawer(); toast(t("signed_out"), "ok"); goPage("home"); break;
+    case "save-profile": try { await AUTH.updateProfile({ name: $("#p-name").value.trim(), lang: $("#p-lang").value }); toast(t("profile_saved"), "ok"); refreshAuthUI(); if ($("#p-lang").value !== LANG) setLang($("#p-lang").value); } catch (err) { toast(err.message, "err"); } break;
+    case "change-password": {
+      const cur = $("#p-cur").value, nw = $("#p-new").value;
+      if (!cur || nw.length < 8) { toast(t("min_chars"), "warn"); break; }
+      try { await AUTH.changePassword(cur, nw); $("#p-cur").value = ""; $("#p-new").value = ""; toast(t("password_changed"), "ok"); } catch (err) { toast(err.message, "err"); }
+      break;
+    }
+    case "sign-out-others": try { if (online()) await api("/auth/sessions", { method: "DELETE" }); toast(t("sessions_revoked"), "ok"); } catch (err) { toast(err.message, "err"); } break;
+    case "user-suspend": try { await AUTH.patchUser(id, { status: el.dataset.status }); toast(t("user_updated"), "ok"); renderAdminUsers(); } catch (err) { toast(err.message, "err"); } break;
+    case "user-delete": openModal(t("delete_user"), `<p style="font-size:13px">${esc(t("confirm_delete"))}</p>`, `<button class="btn btn-ghost btn-sm" data-action="modal-close">${esc(t("cancel"))}</button><button class="btn btn-danger btn-sm" data-auth="user-delete-confirm" data-id="${id}">${esc(t("delete_user"))}</button>`); break;
+    case "user-delete-confirm": try { await AUTH.deleteUser(id); closeModal(); toast(t("user_deleted"), "ok"); renderAdminUsers(); } catch (err) { toast(err.message, "err"); } break;
+    case "user-password": openModal(t("reset_pw"), field(t("new_password"), `<input id="rp-new" type="password" autocomplete="new-password">`), `<button class="btn btn-ghost btn-sm" data-action="modal-close">${esc(t("cancel"))}</button><button class="btn btn-primary btn-sm" data-auth="user-password-confirm" data-id="${id}">${esc(t("save"))}</button>`); break;
+    case "user-password-confirm": {
+      const nw = $("#rp-new").value; if (nw.length < 8) { toast(t("min_chars"), "warn"); break; }
+      try { await AUTH.resetUserPassword(id, nw); closeModal(); toast(t("password_changed"), "ok"); } catch (err) { toast(err.message, "err"); }
+      break;
+    }
+    case "new-user": openModal(t("add_user"), `<div class="fg2">${field(t("full_name"), `<input id="nu-name">`)}${field(t("email"), `<input id="nu-email" type="email" dir="ltr">`)}${field(t("password"), `<input id="nu-pw" type="password">`)}${field(t("role"), sel("nu-role", [["brand", t("role_brand")], ["creator", t("role_creator")], ["admin", t("role_admin")]], "brand"))}</div>`,
+      `<button class="btn btn-ghost btn-sm" data-action="modal-close">${esc(t("cancel"))}</button><button class="btn btn-primary btn-sm" data-auth="new-user-confirm">${esc(t("save"))}</button>`); break;
+    case "new-user-confirm": {
+      const payload = { name: $("#nu-name").value.trim(), email: $("#nu-email").value.trim(), password: $("#nu-pw").value, role: $("#nu-role").value };
+      if (!payload.name || !payload.email || payload.password.length < 8) { toast(t("required_fields"), "warn"); break; }
+      try {
+        if (online()) await api("/auth/users", { method: "POST", body: payload });
+        else { const list = offlineUsers(); list.push({ id: uid("us"), ...payload, password: undefined, hash: await weakHash(payload.password), status: "active", lang: LANG, avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(payload.name)}`, createdAt: new Date().toISOString(), lastLoginAt: null }); saveOfflineUsers(list); }
+        closeModal(); toast(t("user_created"), "ok"); renderAdminUsers();
+      } catch (err) { toast(err.message, "err"); }
+      break;
+    }
+  }
+});
+document.addEventListener("change", async (e) => {
+  const el = e.target.closest('[data-auth="user-role"]'); if (!el) return;
+  try { await AUTH.patchUser(el.dataset.id, { role: el.value }); toast(t("user_updated"), "ok"); renderAdminUsers(); } catch (err) { toast(err.message, "err"); renderAdminUsers(); }
+});
+
 /* ══════════════════════════ 14. ROUTER / LANG / MODE ══════════════════════════ */
 const PAGES = { home: renderHome, discover: () => renderDiscover(true), brands: renderBrands, campaigns: renderCampaigns, outreach: () => { fillOutreachSelects(); renderTemplates(); renderSequence(); renderRules(); }, agents: () => { renderTeam(); renderChat(); renderRuns(); }, social: renderSocial, legal: fillLegalSelects, pricing: () => {} };
 function goPage(id) {
@@ -555,16 +843,20 @@ function setLang(l) {
   $$("[data-ph-k]").forEach((el) => { const k = el.dataset.phK; if (T[l][k]) el.placeholder = T[l][k]; });
   $$(".price-card.featured").forEach((c) => c.setAttribute("data-label", t("most_popular")));
   try { localStorage.setItem("rabith.lang", l); } catch { /* ignore */ }
-  setModeChip(); const cur = (location.hash || "#home").slice(1); if (PAGES[cur]) PAGES[cur]();
+  setModeChip(); refreshAuthUI(); const cur = (location.hash || "#home").slice(1); if (PAGES[cur]) PAGES[cur]();
 }
 function setModeChip() { const el = $("#mode-chip"); el.className = "mode-chip " + (S.mode === "checking" ? "checking" : S.mode === "online" ? "online" : "offline"); el.querySelector(".lbl").textContent = S.mode === "checking" ? t("mode_checking") : S.mode === "online" ? (S.brain === "claude" ? t("mode_online") : t("mode_online_off")) : t("mode_offline"); el.title = S.mode === "online" ? API : "localStorage"; }
 async function boot() {
-  try { const h = await Promise.race([D.health(), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 2500))]); if (!h.ok) throw new Error("bad health"); S.mode = "online"; S.brain = h.mode; }
+  try { const h = await Promise.race([D.health(), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 2500))]); if (!h.ok) throw new Error("bad health"); S.mode = "online"; S.brain = h.mode; S.authRequired = Boolean(h.auth?.required); }
   catch { S.mode = "offline"; S.brain = "offline"; }
   if (online()) {
     try { const [cr, br, ag, tp, cp] = await Promise.all([api("/creators?limit=200"), D.brands(), D.agents(), D.templates(), D.campaigns()]); S.creators = cr.items; S.brands = br.items; S.campaigns = cp.items; await Promise.all([D.outreach(), D.posts(), D.runs()]).catch(() => {}); const saved = lsLoad(); S.contracts = saved.contracts || []; }
     catch (e) { toast(e.message, "err"); S.mode = "offline"; loadSeedOffline(); }
   } else loadSeedOffline();
+  try { S.token = localStorage.getItem(TOKEN_KEY); } catch { S.token = null; }
+  if (S.token) await AUTH.me().catch(() => clearSession());
+  if (!online()) await seedOfflineUsers();
+  refreshAuthUI();
   setModeChip(); fillDiscFilters();
   const hash = (location.hash || "#home").slice(1); goPage(PAGES[hash] ? hash : "home");
 }
@@ -639,5 +931,5 @@ window.addEventListener("hashchange", () => { const h = location.hash.slice(1); 
 let savedLang = "ar"; try { savedLang = localStorage.getItem("rabith.lang") || "ar"; } catch { /* ignore */ }
 setLang(savedLang);
 boot();
-window.Rabith = { S, D, goPage, setLang, askAgent, computeFraud, scoreCreator };
+window.Rabith = { S, D, AUTH, goPage, setLang, askAgent, computeFraud, scoreCreator };
 })();

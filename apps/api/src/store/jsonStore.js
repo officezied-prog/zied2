@@ -1,6 +1,6 @@
 /**
  * Minimal JSON document store with atomic writes.
- * Collections: creators, brands, campaigns, outreach, runs, posts.
+ * Collections: creators, brands, campaigns, outreach, runs, posts, users, sessions.
  * Swap for Postgres/Supabase later — the API layer only uses this interface.
  */
 import fs from "node:fs";
@@ -13,8 +13,8 @@ const DATA_DIR = process.env.RABITH_DATA_DIR || path.resolve(here, "../../data")
 const DB_FILE = path.join(DATA_DIR, "db.json");
 const SEED_FILE = path.resolve(here, "../seed/seed.json");
 
-const COLLECTIONS = ["creators", "brands", "campaigns", "outreach", "runs", "posts"];
-const PREFIX = { creators: "cr", brands: "br", campaigns: "cp", outreach: "or", runs: "run", posts: "sp" };
+const COLLECTIONS = ["creators", "brands", "campaigns", "outreach", "runs", "posts", "users", "sessions"];
+const PREFIX = { creators: "cr", brands: "br", campaigns: "cp", outreach: "or", runs: "run", posts: "sp", users: "us", sessions: "se" };
 
 let db = null;
 let writeTimer = null;
@@ -44,6 +44,9 @@ export function seed({ force = false } = {}) {
   db.creators = s.creators.map((c) => ({ ...c, ...computeFraud(c), createdAt: now() }));
   db.brands = s.brands.map((b) => ({ ...b, createdAt: now() }));
   db.campaigns = []; db.outreach = []; db.runs = []; db.posts = [];
+  // users and sessions are deliberately preserved: re-seeding demo data must not delete accounts.
+  if (!Array.isArray(db.users)) db.users = [];
+  if (!Array.isArray(db.sessions)) db.sessions = [];
   db._meta.seededAt = now();
   db._meta.counters = { creators: db.creators.length, brands: db.brands.length };
   flush();

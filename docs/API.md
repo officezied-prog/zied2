@@ -3,6 +3,7 @@
 Base URL: `http://localhost:8787/api` (configurable via `PORT`).
 All responses are JSON. Errors: `{ "error": { "code": string, "message": string } }`.
 Auth between services: header `x-rabith-secret: $RABITH_WEBHOOK_SECRET` (required on `/webhooks/*` only).
+User auth: header `Authorization: Bearer <token>` from `/auth/login` or `/auth/register`. Sign-in is optional unless `RABITH_AUTH_REQUIRED=1`, which makes every non-GET call outside `/auth/*` and `/webhooks/*` return 401 without a session.
 
 ## Entities
 
@@ -45,6 +46,16 @@ Auth between services: header `x-rabith-secret: $RABITH_WEBHOOK_SECRET` (require
   "plan": { "selected": ["cr_0001"], "totalCostIDR": 0, "expectedReach": 0 }
 }
 ```
+### User
+```json
+{
+  "id": "us_0001", "email": "owner@brand.id", "name": "…", "role": "admin|brand|creator",
+  "status": "active|suspended", "brandId": "br_0001", "creatorId": null,
+  "lang": "ar", "avatar": "https://…", "createdAt": "…", "lastLoginAt": "…"
+}
+```
+`passwordHash` (scrypt) and session token hashes (SHA-256) are stored but never returned. Roles: `admin` = Rabith staff, `brand` = a company account scoped to its own brand record, `creator` = an influencer account linked to a creator profile when the handle matches.
+
 ### Outreach
 ```json
 { "id": "or_1", "brandId": "br_0001", "contactId": "ct_1", "templateId": "beauty_en", "lang": "en",
@@ -67,7 +78,20 @@ Auth between services: header `x-rabith-secret: $RABITH_WEBHOOK_SECRET` (require
 
 | Method | Path | Body / Query | Returns |
 |---|---|---|---|
-| GET | `/health` | | `{ ok, mode: "claude"\|"offline", n8n: bool, version }` |
+| POST | `/auth/register` | `{ email, password, name, role: "brand"\|"creator", company?, handle?, lang? }` | `{ token, expiresAt, user }` — a brand signup also creates its CRM brand row (`pipeline: lead`, `source: signup`) |
+| POST | `/auth/login` | `{ email, password }` | `{ token, expiresAt, user }` · 401 on bad credentials, 429 after 8 failures in 15 min |
+| POST | `/auth/logout` | | `{ ok }` (revokes the caller's session) |
+| GET | `/auth/me` | | `{ user }` · 401 without a valid token |
+| PATCH | `/auth/me` | `{ name?, lang?, avatar? }` | `{ user }` |
+| POST | `/auth/password` | `{ currentPassword, newPassword }` | `{ token, user }` — every other session is revoked |
+| GET | `/auth/sessions` | | `{ items }` (own devices) |
+| DELETE | `/auth/sessions` | | `{ ok, revoked }` (all but the current) |
+| GET | `/auth/users` | `q, role` · **admin** | `{ items, total }` |
+| POST | `/auth/users` | User + password · **admin** | `{ user }` (admins may create admins) |
+| PATCH | `/auth/users/:id` | `{ role?, status?, name?, brandId?, creatorId? }` · **admin** | `{ user }` — suspending revokes live sessions; self-demotion/suspension/deletion is refused |
+| DELETE | `/auth/users/:id` | **admin** | `{ ok }` |
+| POST | `/auth/users/:id/password` | `{ newPassword }` · **admin** | `{ ok, user }` |
+| GET | `/health` | | `{ ok, mode, n8n, auth: { required, user }, version }` |
 | GET | `/creators` | `q, platform, niche, tier, city, minFollowers, maxFollowers, maxFraud, minEngagement, sort=score\|followers\|engagement\|fraud, limit, offset` | `{ items: Creator[], total }` |
 | GET | `/creators/:id` | | `Creator` |
 | POST | `/creators` | Creator (partial) | `Creator` (fraudScore computed) |
@@ -98,7 +122,10 @@ Auth between services: header `x-rabith-secret: $RABITH_WEBHOOK_SECRET` (require
 | GET | `/stats` | | `{ creators, brands, campaigns, outreach, runs, pipeline: {lead:n,…} }` |
 | POST | `/webhooks/n8n` | `{ event, data }` (+ secret header) | `{ ok, handled: event }` |
 
-### n8n events
+#### Scoping by role
+A `brand` account only ever sees its own data: `GET /brands`, `/campaigns` and `/outreach` are filtered to its `brandId`, reading or patching another brand returns 403, and `POST /campaigns` forces `brandId` to its own. Records created while signed in carry `createdBy`. `admin` and anonymous demo callers see everything.
+
+## n8n events
 
 Outbound (API → n8n, `POST $N8N_WEBHOOK_BASE/<path>`, header `x-rabith-secret`):
 

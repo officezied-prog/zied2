@@ -7,6 +7,7 @@
    - `store/` JSON document store with atomic writes (swap for Postgres later; the API only uses `all/get/insert/update/upsert/remove`).
    - `algorithms/` pure, tested functions: fraud scoring, matching + budget plan, outreach templating.
    - `agents/` the 21-agent team. `registry.js` = who they are; `tools.js` = what they can do; `orchestrator.js` = how they run.
+   - `auth/` accounts and sessions: scrypt hashes, bearer tokens (only the SHA-256 is stored), roles, per-role data scoping.
    - `integrations/` Claude (model, effort, fallbacks), n8n (outbound), vision.
 3. **Hands** — n8n workflows (`n8n/workflows`). Every side-effect with the outside world (email, WhatsApp, LinkedIn, Instagram/TikTok publishing, scraping, notifications) lives here, so channel credentials never touch the API and every send is auditable in n8n executions.
 
@@ -31,6 +32,7 @@ n8n → POST /api/webhooks/n8n {event:'outreach.sent'|'outreach.replied'} → pi
 - **Explainability.** Fraud scores carry flags and signals; match scores carry an 8-factor breakdown; agent runs carry every tool call with inputs/outputs.
 - **Prompt caching.** Agent system prompts are stable and marked `cache_control`; volatile context (brand/campaign JSON, date) comes after.
 - **Parallel tools.** All `tool_use` blocks in one assistant turn are executed concurrently and returned in a single user message.
+- **Least privilege.** A brand account can only read and write its own brand, campaigns and outreach; user management is admin-only; suspending a user kills their live sessions; changing a password signs every other device out.
 - **Safety.** `fallbacks: "default"` + `stop_reason === "refusal"` handled; secrets only via env; UU PDP: minimal personal data in agent outputs.
 
 ## Data model

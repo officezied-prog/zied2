@@ -63,6 +63,8 @@ docker compose up --build       # API on :8787, n8n on :5678 (import n8n/workflo
 | `apps/api/src/agents/tools.js` | Tool schemas (Claude tool-use) + executors over the store, algorithms and n8n. |
 | `apps/api/src/agents/orchestrator.js` | Plan → Act → Reflect loop with parallel tool calls and delegation; offline planner. |
 | `apps/api/src/integrations/` | `claude.js` (model, effort, server-side refusal fallbacks), `n8n.js` (outbound webhooks), `vision.js` (image analysis: brand safety, product detection, quality, authenticity). |
+| `apps/api/src/auth/` | Accounts: scrypt password hashing, persisted bearer sessions, roles (`admin` / `brand` / `creator`), brute-force lockout. |
+| `apps/api/src/routes/auth.js` | Sign-up, sign-in, profile, password change, admin user management. |
 | `apps/api/src/routes/api.js` | REST API — contract in `docs/API.md`. |
 | `n8n/workflows/` | Importable workflows: outreach sequencer, inbound lead, social publisher, creator discovery, nightly fraud audit, heartbeat/weekly report, notify. |
 | `docs/` | `API.md`, `ARCHITECTURE.md`, `AGENTS.md`, `N8N.md`. |
@@ -84,11 +86,25 @@ The orchestrator receives a request (from the web app, from n8n, or from you), p
 
 | Variable | Purpose |
 |---|---|
+| `RABITH_AUTH_REQUIRED` | `0` (open demo) or `1` to require a signed-in user for every write. |
+| `RABITH_ADMIN_EMAIL` / `RABITH_ADMIN_PASSWORD` | First admin account, created once on an empty database. |
 | `ANTHROPIC_API_KEY` | Enables Claude. Model defaults to `claude-opus-5` (`CLAUDE_MODEL`), effort `high` (`CLAUDE_EFFORT`). Server-side refusal fallbacks are on. |
 | `N8N_WEBHOOK_BASE` | e.g. `http://localhost:5678/webhook`. |
 | `RABITH_WEBHOOK_SECRET` | Shared secret header `x-rabith-secret` in both directions. |
 | `RABITH_FOUNDER_NAME`, `RABITH_FOUNDER_PHONE` | Signature in outreach messages. |
 | `RABITH_DATA_DIR` | Where `db.json` lives (default `apps/api/data`). |
 
+## Accounts
+
+Three demo accounts are created the first time the server starts on an empty database:
+
+| Email | Password | Role | Sees |
+|---|---|---|---|
+| `admin@rabith.id` | `rabith-admin` | admin | everything, plus user management |
+| `brand@rabith.id` | `rabith-brand` | brand | only its own brand, campaigns and outreach |
+| `creator@rabith.id` | `rabith-creator` | creator | its own profile, the agent console, contracts |
+
+Set `RABITH_ADMIN_PASSWORD` before the first run (or change the passwords from the account drawer) — the startup log warns while the demo passwords are still active. Sessions are bearer tokens valid for 30 days; only their SHA-256 hash is stored.
+
 ## Roadmap (not in this version)
-Postgres/Supabase store · auth & roles · real platform connectors (TikTok/Meta/YouTube APIs via n8n) · PrivyID e-signature · Midtrans/Xendit escrow · BPJS integration · mobile app.
+Postgres/Supabase store · real platform connectors (TikTok/Meta/YouTube APIs via n8n) · PrivyID e-signature · Midtrans/Xendit escrow · BPJS integration · mobile app.

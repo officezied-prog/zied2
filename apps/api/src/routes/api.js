@@ -9,13 +9,35 @@ import { runAgent } from "../agents/orchestrator.js";
 import { createMessage, isOnline, textOf, MODEL } from "../integrations/claude.js";
 import * as n8n from "../integrations/n8n.js";
 import * as vision from "../integrations/vision.js";
+import { auth } from "./auth.js";
+import { attachUser, authRequired, requireAuth } from "../auth/sessions.js";
+import { ensureDemoUsers, publicUser } from "../auth/users.js";
 
 export const api = Router();
 const err = (res, status, code, message) => res.status(status).json({ error: { code, message } });
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
+/* ── identity: every request may carry a session; accounts live under /api/auth ── */
+api.use(attachUser);
+api.use("/auth", auth);
+
+/**
+ * Write protection. Off by default so the demo works with no account at all;
+ * set RABITH_AUTH_REQUIRED=1 to make every mutating call require a signed-in user.
+ * Webhooks are exempt: they authenticate with the shared n8n secret instead.
+ */
+api.use((req, res, next) => {
+  if (req.method === "GET" || req.method === "OPTIONS") return next();
+  if (!authRequired() || req.path.startsWith("/webhooks/")) return next();
+  return requireAuth(req, res, next);
+});
+
+/** Brand accounts only ever see their own brand's data; admins and anonymous demo users see everything. */
+const scopeBrandId = (req) => (req.user?.role === "brand" ? req.user.brandId : null);
+const stamp = (req, doc) => (req.user ? { ...doc, createdBy: req.user.id } : doc);
+
 /* ── health / stats ── */
-api.get("/health", wrap(async (_req, res) => res.json({ ok: true, mode: isOnline() ? "claude" : "offline", model: isOnline() ? MODEL : null, n8n: n8n.isConfigured(), n8nReachable: await n8n.ping(), version: "1.0.0", time: new Date().toISOString() })));
+api.get("/health", wrap(async (req, res) => res.json({ ok: true, mode: isOnline() ? "claude" : "offline", model: isOnline() ? MODEL : null, n8n: n8n.isConfigured(), n8nReachable: await n8n.ping(), auth: { required: authRequired(), user: publicUser(req.user) }, version: "1.0.0", time: new Date().toISOString() })));
 api.get("/stats", (_req, res) => res.json(stats()));
 api.get("/n8n/events", (_req, res) => res.json({ items: n8n.events.slice(0, 50) }));
 
@@ -40,28 +62,30 @@ api.post("/creators/:id/audit", (req, res) => {
 /* ── brands ── */
 api.get("/brands", (req, res) => {
   let items = store.all("brands"); const q = req.query;
+  const mine = scopeBrandId(req); if (mine) items = items.filter((b) => b.id === mine);
   const s = (q.q || "").toLowerCase(); if (s) items = items.filter((b) => (b.name + " " + b.industry + " " + (b.notes || "")).toLowerCase().includes(s));
   for (const k of ["type", "pipeline", "industry", "country", "size"]) if (q[k]) items = items.filter((b) => b[k] === q[k]);
   res.json({ items, total: items.length });
 });
-api.get("/brands/:id", (req, res) => { const b = store.get("brands", req.params.id); return b ? res.json(b) : err(res, 404, "not_found", "brand not found"); });
+api.get("/brands/:id", (req, res) => { const mine = scopeBrandId(req); if (mine && req.params.id !== mine) return err(res, 403, "forbidden", "not your brand"); const b = store.get("brands", req.params.id); return b ? res.json(b) : err(res, 404, "not_found", "brand not found"); });
 api.post("/brands", (req, res) => {
   const b = req.body || {}; if (!b.name) return err(res, 400, "validation", "name is required");
   const doc = { type: "brand", industry: "", size: "smb", country: "ID", contacts: [], products: [], pipeline: "lead", source: "manual", budgetIDR: 0, ...b };
   doc.contacts = (doc.contacts || []).map((c, i) => ({ id: c.id || `ct_${Date.now().toString(36)}${i}`, lang: c.lang || (doc.country === "ID" ? "id" : "en"), ...c }));
-  res.status(201).json(store.insert("brands", doc));
+  res.status(201).json(store.insert("brands", stamp(req, doc)));
 });
-api.patch("/brands/:id", (req, res) => { const b = store.update("brands", req.params.id, req.body || {}); return b ? res.json(b) : err(res, 404, "not_found", "brand not found"); });
-api.delete("/brands/:id", (req, res) => res.json({ ok: store.remove("brands", req.params.id) }));
+api.patch("/brands/:id", (req, res) => { const mine = scopeBrandId(req); if (mine && req.params.id !== mine) return err(res, 403, "forbidden", "not your brand"); const b = store.update("brands", req.params.id, req.body || {}); return b ? res.json(b) : err(res, 404, "not_found", "brand not found"); });
+api.delete("/brands/:id", requireRoleIfAuth("admin"), (req, res) => res.json({ ok: store.remove("brands", req.params.id) }));
 
 /* ── campaigns ── */
-api.get("/campaigns", (req, res) => { let items = store.all("campaigns"); if (req.query.brandId) items = items.filter((c) => c.brandId === req.query.brandId); if (req.query.status) items = items.filter((c) => c.status === req.query.status); res.json({ items, total: items.length }); });
-api.get("/campaigns/:id", (req, res) => { const c = store.get("campaigns", req.params.id); return c ? res.json(c) : err(res, 404, "not_found", "campaign not found"); });
+api.get("/campaigns", (req, res) => { let items = store.all("campaigns"); const mine = scopeBrandId(req); if (mine) items = items.filter((c) => c.brandId === mine); if (req.query.brandId) items = items.filter((c) => c.brandId === req.query.brandId); if (req.query.status) items = items.filter((c) => c.status === req.query.status); res.json({ items, total: items.length }); });
+api.get("/campaigns/:id", (req, res) => { const c = store.get("campaigns", req.params.id); if (!c) return err(res, 404, "not_found", "campaign not found"); const mine = scopeBrandId(req); if (mine && c.brandId !== mine) return err(res, 403, "forbidden", "not your campaign"); res.json(c); });
 api.post("/campaigns", (req, res) => {
-  const b = req.body || {}; if (!b.name) return err(res, 400, "validation", "name is required");
+  const b = { ...(req.body || {}) }; if (!b.name) return err(res, 400, "validation", "name is required");
+  const mine = scopeBrandId(req); if (mine) b.brandId = mine; // a brand account can only create its own campaigns
   if (b.brandId && !store.get("brands", b.brandId)) return err(res, 400, "validation", "unknown brandId");
   const doc = { objective: "awareness", budgetIDR: 0, kpi: { type: "reach", target: 0 }, platforms: [], niches: [], tiers: [], cities: [], languages: [], status: "draft", matches: [], plan: null, ...b };
-  res.status(201).json(store.insert("campaigns", doc));
+  res.status(201).json(store.insert("campaigns", stamp(req, doc)));
 });
 api.patch("/campaigns/:id", (req, res) => { const c = store.update("campaigns", req.params.id, req.body || {}); return c ? res.json(c) : err(res, 404, "not_found", "campaign not found"); });
 api.post("/campaigns/:id/match", (req, res) => {
@@ -92,10 +116,10 @@ api.post("/outreach/generate", wrap(async (req, res) => {
   }
   res.json(out);
 }));
-api.get("/outreach", (req, res) => { let items = store.all("outreach"); if (req.query.brandId) items = items.filter((o) => o.brandId === req.query.brandId); if (req.query.status) items = items.filter((o) => o.status === req.query.status); res.json({ items: items.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1)), total: items.length }); });
+api.get("/outreach", (req, res) => { let items = store.all("outreach"); const mine = scopeBrandId(req); if (mine) items = items.filter((o) => o.brandId === mine); if (req.query.brandId) items = items.filter((o) => o.brandId === req.query.brandId); if (req.query.status) items = items.filter((o) => o.status === req.query.status); res.json({ items: items.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1)), total: items.length }); });
 api.post("/outreach", (req, res) => {
   const b = req.body || {}; if (!b.brandId || !b.body) return err(res, 400, "validation", "brandId and body are required");
-  res.status(201).json(store.insert("outreach", { status: "draft", channel: "email", lang: "en", sequenceStep: 0, subject: "", ...b }));
+  res.status(201).json(store.insert("outreach", stamp(req, { status: "draft", channel: "email", lang: "en", sequenceStep: 0, subject: "", ...b })));
 });
 api.post("/outreach/:id/send", wrap(async (req, res) => {
   const o = store.get("outreach", req.params.id); if (!o) return err(res, 404, "not_found", "outreach not found");
@@ -114,7 +138,7 @@ api.get("/agents", (_req, res) => res.json({ items: publicList(), groups: GROUPS
 api.post("/agent/run", wrap(async (req, res) => {
   const { agent = "orchestrator", message, context = {} } = req.body || {};
   if (!message || typeof message !== "string") return err(res, 400, "validation", "message is required");
-  const run = await runAgent({ agent, message, context });
+  const run = await runAgent({ agent, message, context: { ...context, ...(req.user ? { userId: req.user.id, userRole: req.user.role, brandId: context.brandId || req.user.brandId || undefined } : {}) } });
   res.json(run);
 }));
 api.get("/agent/runs", (req, res) => { const items = [...store.all("runs")].filter((r) => !r.parentRunId || req.query.all).reverse().slice(0, Number(req.query.limit || 30)); res.json({ items }); });
@@ -122,7 +146,7 @@ api.get("/agent/runs/:id", (req, res) => { const r = store.get("runs", req.param
 
 /* ── social ── */
 api.get("/social/posts", (req, res) => { let items = store.all("posts"); if (req.query.status) items = items.filter((p) => p.status === req.query.status); if (req.query.platform) items = items.filter((p) => p.platform === req.query.platform); if (req.query.due) { const now = new Date().toISOString(); items = items.filter((p) => p.status === "scheduled" && p.scheduledAt && p.scheduledAt <= now); } res.json({ items: items.sort((a, b) => (a.scheduledAt || "") < (b.scheduledAt || "") ? -1 : 1), total: items.length }); });
-api.post("/social/posts", (req, res) => { const b = req.body || {}; if (!b.platform || !b.caption) return err(res, 400, "validation", "platform and caption are required"); res.status(201).json(store.insert("posts", { account: "@rabith.id", status: b.scheduledAt ? "scheduled" : "draft", hashtags: [], lang: "id", agent: "human", ...b })); });
+api.post("/social/posts", (req, res) => { const b = req.body || {}; if (!b.platform || !b.caption) return err(res, 400, "validation", "platform and caption are required"); res.status(201).json(store.insert("posts", stamp(req, { account: "@rabith.id", status: b.scheduledAt ? "scheduled" : "draft", hashtags: [], lang: "id", agent: "human", ...b }))); });
 api.patch("/social/posts/:id", (req, res) => { const p = store.update("posts", req.params.id, req.body || {}); return p ? res.json(p) : err(res, 404, "not_found", "post not found"); });
 api.post("/social/posts/:id/publish", wrap(async (req, res) => {
   const p = store.get("posts", req.params.id); if (!p) return err(res, 404, "not_found", "post not found");
@@ -189,4 +213,12 @@ api.post("/webhooks/n8n", wrap(async (req, res) => {
 }));
 
 /* ── admin ── */
-api.post("/admin/reset", (req, res) => { if (process.env.NODE_ENV === "production") return err(res, 403, "forbidden", "disabled in production"); store.reset(); res.json({ ok: true, ...stats() }); });
+api.post("/admin/reset", requireRoleIfAuth("admin"), (req, res) => { if (process.env.NODE_ENV === "production") return err(res, 403, "forbidden", "disabled in production"); store.reset(); ensureDemoUsers(); res.json({ ok: true, ...stats() }); });
+
+/** Admin-only once anyone is signed in; open in the anonymous demo so the offline tour still works. */
+function requireRoleIfAuth(...roles) {
+  return (req, res, next) => {
+    if (!req.user) return authRequired() ? err(res, 401, "unauthorized", "sign in to continue") : next();
+    return roles.includes(req.user.role) ? next() : err(res, 403, "forbidden", `requires role: ${roles.join(" or ")}`);
+  };
+}
