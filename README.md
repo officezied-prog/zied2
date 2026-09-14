@@ -30,10 +30,13 @@ Brand / Company / Creator / Admin
 └──────────────────────────────┘        └─────────────────────────┘
 ```
 
+📘 **دليل التشغيل بالعربية خطوة بخطوة: [`docs/QUICKSTART-AR.md`](docs/QUICKSTART-AR.md)**
+
 ## Quick start
 
 ```bash
 cp .env.example .env            # add ANTHROPIC_API_KEY to enable the Claude brain (optional)
+                                # the server reads this file automatically; shell vars win over it
 npm install
 npm run dev                     # API + web app on http://localhost:8787
 npm test                        # 27 tests: fraud, matching, outreach, HTTP API

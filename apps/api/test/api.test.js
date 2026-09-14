@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 
 process.env.RABITH_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "rabith-test-"));
+process.env.RABITH_SKIP_ENV_FILE = "1"; // never pick up a developer's real .env during tests
 delete process.env.ANTHROPIC_API_KEY; delete process.env.N8N_WEBHOOK_BASE; process.env.RABITH_WEBHOOK_SECRET = "s3cret";
 const { createApp } = await import("../src/server.js");
 

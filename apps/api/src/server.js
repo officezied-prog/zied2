@@ -1,3 +1,4 @@
+import { ENV_FILE } from "./env.js";   // must stay first: fills process.env before other modules read it
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,6 +39,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.log(`Rabith API  → http://localhost:${port}/api   (web: ${WEB_DIR})`);
     console.log(`Brain       → ${isOnline() ? "Claude " + MODEL : "OFFLINE rule-based planner (set ANTHROPIC_API_KEY)"}`);
     console.log(`Hands (n8n) → ${n8n.isConfigured() ? process.env.N8N_WEBHOOK_BASE : "not configured (N8N_WEBHOOK_BASE)"}`);
+    console.log(`Config      → ${ENV_FILE || "no .env file found (using shell environment only)"}`);
   });
   process.on("SIGINT", () => { store.flushSync(); process.exit(0); });
   process.on("SIGTERM", () => { store.flushSync(); process.exit(0); });
