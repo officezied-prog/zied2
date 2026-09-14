@@ -11,7 +11,8 @@
     "start": "npm run start --workspace apps/api",
     "test": "npm test --workspace apps/api",
     "seed": "npm run seed --workspace apps/api",
-    "user": "npm run user --workspace apps/api --"
+    "user": "npm run user --workspace apps/api --",
+    "preflight": "npm run --silent preflight --workspace apps/api"
   },
   "engines": {
     "node": ">=20"

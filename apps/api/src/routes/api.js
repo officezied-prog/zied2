@@ -12,6 +12,7 @@ import * as vision from "../integrations/vision.js";
 import { auth } from "./auth.js";
 import { attachUser, authRequired, requireAuth } from "../auth/sessions.js";
 import { ensureDemoUsers, publicUser } from "../auth/users.js";
+import { agentLimiter } from "../security.js";
 
 export const api = Router();
 const err = (res, status, code, message) => res.status(status).json({ error: { code, message } });
@@ -39,7 +40,7 @@ const scopeBrandId = (req) => (req.user?.role === "brand" ? req.user.brandId : n
 const stamp = (req, doc) => (req.user ? { ...doc, createdBy: req.user.id } : doc);
 
 /* ── health / stats ── */
-api.get("/health", wrap(async (req, res) => res.json({ ok: true, mode: isOnline() ? "claude" : "offline", model: isOnline() ? MODEL : null, n8n: n8n.isConfigured(), n8nReachable: await n8n.ping(), auth: { required: authRequired(), user: publicUser(req.user) }, version: "1.0.0", time: new Date().toISOString() })));
+api.get("/health", wrap(async (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || "development", mode: isOnline() ? "claude" : "offline", model: isOnline() ? MODEL : null, n8n: n8n.isConfigured(), n8nReachable: await n8n.ping(), auth: { required: authRequired(), user: publicUser(req.user) }, version: "1.0.0", time: new Date().toISOString() })));
 api.get("/stats", (_req, res) => res.json(stats()));
 api.get("/n8n/events", (_req, res) => res.json({ items: n8n.events.slice(0, 50) }));
 
@@ -146,7 +147,7 @@ function staffOnly(req, res, next) {
 }
 
 api.get("/agents", staffOnly, (_req, res) => res.json({ items: publicList(), groups: GROUPS, mode: isOnline() ? "claude" : "offline", config: agentsSummary() }));
-api.post("/agent/run", staffOnly, wrap(async (req, res) => {
+api.post("/agent/run", staffOnly, agentLimiter, wrap(async (req, res) => {
   const { agent = "orchestrator", message, context = {} } = req.body || {};
   if (!message || typeof message !== "string") return err(res, 400, "validation", "message is required");
   const run = await runAgent({ agent, message, context: { ...context, ...(req.user ? { userId: req.user.id, userRole: req.user.role, brandId: context.brandId || req.user.brandId || undefined } : {}) } });

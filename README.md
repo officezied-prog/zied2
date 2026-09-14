@@ -30,7 +30,7 @@ Brand / Company / Creator / Admin
 └──────────────────────────────┘        └─────────────────────────┘
 ```
 
-📘 **دليل التشغيل بالعربية خطوة بخطوة: [`docs/QUICKSTART-AR.md`](docs/QUICKSTART-AR.md)**
+📘 **بالعربية:** [التشغيل خطوة بخطوة](docs/QUICKSTART-AR.md) · [بناء الوكلاء](docs/AGENTS-AR.md) · [خطة الإطلاق](docs/LAUNCH-AR.md)
 
 ## Quick start
 
@@ -39,7 +39,8 @@ cp .env.example .env            # add ANTHROPIC_API_KEY to enable the Claude bra
                                 # the server reads this file automatically; shell vars win over it
 npm install
 npm run dev                     # API + web app on http://localhost:8787
-npm test                        # 27 tests: fraud, matching, outreach, HTTP API
+npm test                        # 61 tests: fraud, matching, outreach, accounts, hardening, HTTP API
+npm run preflight               # launch readiness: what still blocks going live
 # Browser end-to-end (needs Playwright): cd apps/web && node test/e2e.mjs online|offline
 ```
 
@@ -116,6 +117,10 @@ npm run user -- list | password <email> | suspend | activate | delete
 ```
 
 The same thing works from the account panel in the app. Accounts live in your own database, not in this repository. Set `RABITH_ADMIN_PASSWORD` before the first run (or change the passwords from the account drawer) — the startup log warns while the demo passwords are still active. Sessions are bearer tokens valid for 30 days; only their SHA-256 hash is stored.
+
+## Going live
+
+`npm run preflight` reads your real configuration and database and reports every blocker with the command that fixes it: demo passwords still valid, sign-in still open, sample data still in the table, no Claude key, no automation engine, no payment or e-signature integration. Hardening that is already in place: security headers, an origin allowlist in production, request throttling (600/min per IP, 60 agent runs/hour per user), rotating database snapshots every 6 hours, and scrypt-hashed credentials. The full plan, in Arabic: [`docs/LAUNCH-AR.md`](docs/LAUNCH-AR.md).
 
 ## Roadmap (not in this version)
 Postgres/Supabase store · real platform connectors (TikTok/Meta/YouTube APIs via n8n) · PrivyID e-signature · Midtrans/Xendit escrow · BPJS integration · mobile app.
