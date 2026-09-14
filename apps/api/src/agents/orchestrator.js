@@ -94,7 +94,7 @@ async function runClaude(def, run, message, context, depth) {
   return finalText || "(no answer)";
 }
 
-function trim(o) { const s = JSON.stringify(o); return s.length > 4000 ? JSON.parse(s.slice(0, 4000).replace(/[^}\]]*$/, "") + (s.startsWith("[") ? "]" : "}")) ?? { truncated: true } : o; }
+function trim(o) { const s = JSON.stringify(o) || ""; return s.length > 4000 ? { truncated: true, bytes: s.length, preview: s.slice(0, 1500) } : o; }
 
 /* ───────────── Offline mode (rule-based planner) ───────────── */
 const KW = {
