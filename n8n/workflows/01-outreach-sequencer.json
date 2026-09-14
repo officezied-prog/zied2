@@ -1,0 +1,1418 @@
+{
+  "name": "Rabith 01 · Outreach Sequencer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rabith-outreach-send",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "4b3cab09-dfb5-45b5-a933-221558ce816d",
+      "name": "Webhook rabith-outreach-send",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        180
+      ],
+      "webhookId": "b10d075c-36b6-431f-ab23-8708ffed78b7",
+      "notes": "Called by API POST /outreach/:id/send → { outreach, brand, contact }",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "7c045c64-ee75-4d32-af7e-f0a8251a57cf",
+              "leftValue": "={{ $json.headers['x-rabith-secret'] }}",
+              "rightValue": "={{ $env.RABITH_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "eab3946b-fd02-4c47-ae03-e764af01a034",
+      "name": "Verify secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        240,
+        180
+      ],
+      "notes": "Rejects calls that do not carry the shared secret header x-rabith-secret.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: { code: 'unauthorized', message: 'bad x-rabith-secret' } }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "41f03452-0559-48e8-a014-906f18c767cc",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, accepted: $json.body.outreach.id, step: $json.body.outreach.sequenceStep || 0 }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "4283dd78-0cc1-451c-a101-5eff3879e68c",
+      "name": "Respond 202",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Flatten the API payload { outreach, brand, contact } into one context object.\n// Everything downstream references $('Normalize').item.json.* so channel nodes can return anything.\nconst b = $input.first().json.body || {};\nconst o = b.outreach || {};\nconst brand = b.brand || {};\nconst contacts = Array.isArray(brand.contacts) ? brand.contacts : [];\nconst contact = b.contact || contacts.find(c => c.id === o.contactId) || contacts[0] || {};\nconst lang = ['en', 'ar', 'id'].includes(o.lang) ? o.lang : (['en', 'ar', 'id'].includes(contact.lang) ? contact.lang : 'en');\nconst channel = ['email', 'linkedin', 'whatsapp'].includes(o.channel) ? o.channel : 'email';\nconst step = Number(o.sequenceStep || 0);\nconst alreadySent = o.status === 'sent' && !!o.sentAt; // idempotency: never send twice\nconst contactName = contact.name || '';\nconst firstName = contactName.split(' ')[0] || (lang === 'id' ? 'Kak' : lang === 'ar' ? 'حضرتكم' : 'there');\nconst phone = String(contact.whatsapp || contact.phone || brand.whatsapp || '').replace(/[^0-9]/g, '');\nif (!o.id) throw new Error('outreach.id missing in payload');\nreturn [{ json: {\n  outreachId: o.id,\n  brandId: o.brandId || brand.id || null,\n  contactId: o.contactId || contact.id || null,\n  templateId: o.templateId || null,\n  lang, channel,\n  route: alreadySent ? 'skip' : channel,\n  step,\n  subject: o.subject || '',\n  body: o.body || '',\n  to: contact.email || null,\n  phone,\n  linkedin: contact.linkedin || null,\n  brandName: brand.name || '',\n  contactName, firstName,\n  alreadySent,\n  receivedAt: new Date().toISOString(),\n} }];"
+      },
+      "id": "7769dc19-56fe-4f02-a9cc-f4f4611a5c25",
+      "name": "Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "210f0191-798b-4d0c-a2aa-268de5653cd1",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "email",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "email"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "3415ae81-ac02-433e-a635-e02927797e56",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "whatsapp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "126a28d9-18d3-426a-a169-13314b2679b7",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "linkedin",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "linkedin"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "f6f28317-087a-4062-ac8c-f33dcaac5112",
+      "name": "Route by channel",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "e22aba54-2094-447f-a37b-e9d265291eb3",
+      "name": "Send email (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        0
+      ],
+      "notes": "Credential: Gmail OAuth2 (\"Rabith Gmail\").",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.phone, type: 'text', text: { preview_url: false, body: $json.body } }) }}"
+      },
+      "id": "852f6cec-4dcc-4750-a351-357b94acf227",
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        180
+      ],
+      "notes": "WhatsApp Business Cloud API. Credential: Header Auth \"WhatsApp Cloud API\" (Authorization: Bearer <token>).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "445b8372-25bf-411a-a24f-d47fd363b120",
+              "name": "note",
+              "value": "=LinkedIn is sent by hand (no public messaging API). Open {{ $json.linkedin || 'the contact profile' }} and send:\n\n{{ $json.body }}",
+              "type": "string"
+            },
+            {
+              "id": "7a78e7a0-1415-4500-a500-1745d26c702a",
+              "name": "manual",
+              "value": "={{ true }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "efd85159-cda6-462c-a922-ef23c4007639",
+      "name": "LinkedIn manual task",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n    event: 'outreach.sent',\n    data: {\n      outreachId: $('Normalize').item.json.outreachId,\n      sentAt: $now.toISO(),\n      channel: $('Normalize').item.json.channel,\n      sequenceStep: $('Normalize').item.json.step,\n      providerMessageId: $json.id || (($json.messages || [{}])[0] || {}).id || null,\n      note: $json.note || null,\n      manual: $json.manual === true\n    }\n  }) }}"
+      },
+      "id": "2f7df7cc-eb0d-43b6-a9ef-8c761cbbd7b9",
+      "name": "Report outreach.sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        180
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Idempotency key = outreachId. The API marks the outreach as sent.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook' }}/rabith-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.FOUNDER_NOTIFY_CHANNEL || 'slack', text: '📨 LinkedIn manual task for ' + $('Normalize').item.json.brandName + ' (' + $('Normalize').item.json.contactName + ')\\n' + $json.note }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "35445cdb-5aa4-46d7-a16f-c09fb4b376bc",
+      "name": "Notify LinkedIn task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        360
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Delivers through workflow 07 (rabith-notify).",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "1db4f343-0d21-4e18-a786-495c98e2a4bb",
+                    "leftValue": "={{ $('Normalize').item.json.step }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "step 0"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "58ceeb69-4614-41b4-ad41-fb6a6d0dd199",
+                    "leftValue": "={{ $('Normalize').item.json.step }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "step 1"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "1612237b-b8f4-4150-afe6-1b1dce9a4b72",
+      "name": "Sequence step router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1680,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 4,
+        "unit": "days"
+      },
+      "id": "cc0dc21b-f363-4914-a079-9f9b2b45824f",
+      "name": "Wait 4 days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        0
+      ],
+      "webhookId": "771f1c1a-e0ba-49ab-a629-29834343b5af"
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 8,
+        "unit": "days"
+      },
+      "id": "d10efb75-9353-456e-a216-3aac26590947",
+      "name": "Wait 8 days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        180
+      ],
+      "webhookId": "19b39488-6de3-4547-a3bd-5214e8dbea4f"
+    },
+    {
+      "parameters": {},
+      "id": "489988ba-221e-44d7-af77-dc6cebe89b80",
+      "name": "Sequence complete (max 2 follow-ups)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        360
+      ],
+      "notes": "Golden rule: two follow-ups maximum. Step ≥ 2 stops here.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/brands/{{ $('Normalize').item.json.brandId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "2cc6d51d-effa-4a3f-a7bf-de168bd9ed9d",
+      "name": "Fetch brand",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        180
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/outreach?brandId={{ $('Normalize').item.json.brandId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "c599402b-5240-4419-a842-abde188fd1f3",
+      "name": "Fetch outreach list",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        180
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Decide whether the sequence continues. Stops on: reply, bounce, pipeline moved, or a follow-up already existing (idempotency).\nconst c = $('Normalize').first().json;\nconst brand = $('Fetch brand').first().json || {};\nconst list = (($('Fetch outreach list').first().json || {}).items) || [];\nconst stopPipelines = ['replied', 'pilot', 'active', 'churned'];\nconst mine = list.find(x => x.id === c.outreachId) || {};\nconst repliedSameContact = list.find(x => x.contactId === c.contactId && x.status === 'replied');\nconst nextStep = c.step + 1;\nconst followupExists = list.find(x => x.contactId === c.contactId && Number(x.sequenceStep) === nextStep);\nlet reason = null;\nif (mine.status === 'replied' || repliedSameContact) reason = 'replied';\nelse if (mine.status === 'bounced') reason = 'bounced';\nelse if (stopPipelines.includes(brand.pipeline)) reason = 'pipeline:' + brand.pipeline;\nelse if (followupExists) reason = 'followup_exists:' + followupExists.id;\nelse if (nextStep > 2) reason = 'max_followups';\n// Templates that exist in the seed: followup1_{en,ar,id}, followup2_en. Fall back to English.\nconst available = { 1: ['en', 'ar', 'id'], 2: ['en'] };\nconst tl = (available[nextStep] || []).includes(c.lang) ? c.lang : 'en';\nreturn [{ json: { ...c, stop: !!reason, reason, nextStep, followupTemplateId: 'followup' + nextStep + '_' + tl, followupLang: tl, brandPipeline: brand.pipeline || null } }];"
+      },
+      "id": "d332e462-b1c6-48c0-aa69-626ed9628c07",
+      "name": "Reply check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "5016abc5-50e9-4157-a1fa-1c2c434ef0e6",
+              "leftValue": "={{ $json.stop }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6f07d73a-a146-40a4-a791-9bcefbf25b0e",
+      "name": "Stop sequence?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6235d972-2197-4164-ae0c-53f64d4b26d8",
+      "name": "Stopped (reply / bounce / pipeline)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        0
+      ],
+      "notes": "No further follow-up. Reason is in $json.reason.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/outreach/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n    brandId: $json.brandId,\n    contactId: $json.contactId,\n    templateId: $json.followupTemplateId,\n    lang: $json.followupLang,\n    vars: { firstName: $json.firstName, brandName: $json.brandName },\n    personalize: true\n  }) }}"
+      },
+      "id": "e1432dbd-17d7-4b51-ab53-377c5f80c4e1",
+      "name": "Generate follow-up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3120,
+        360
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Claude personalises the follow-up (followup1_<lang> after 4d, followup2_<lang> after 8 more days).",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/outreach",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n    brandId: $('Reply check').item.json.brandId,\n    contactId: $('Reply check').item.json.contactId,\n    templateId: $json.templateId || $('Reply check').item.json.followupTemplateId,\n    lang: $json.lang || $('Reply check').item.json.followupLang,\n    channel: $('Reply check').item.json.channel,\n    subject: $json.subject,\n    body: $json.body,\n    sequenceStep: $('Reply check').item.json.nextStep,\n    status: 'draft'\n  }) }}"
+      },
+      "id": "8cd74ea3-7b25-4c89-a5da-5c1225e64172",
+      "name": "Create follow-up draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3360,
+        360
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/outreach/{{ $json.id }}/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $('Reply check').item.json.channel }) }}"
+      },
+      "id": "4d6babe5-0451-4bf9-ae4f-a460c3a9b744",
+      "name": "Send follow-up via API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3600,
+        360
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "The API forwards this back to rabith-outreach-send → a NEW execution of this workflow handles step 1 (wait 8d) or step 2 (stop).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 15,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "simple": true,
+        "filters": {
+          "readStatus": "unread",
+          "q": "in:inbox -category:promotions -category:social"
+        },
+        "options": {}
+      },
+      "id": "3fe120af-9738-471f-a6ff-b7bd27e23dba",
+      "name": "Gmail reply trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        720
+      ],
+      "notes": "Polls the founder inbox every 15 min. Credential: Gmail OAuth2 (\"Rabith Gmail\").",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gmail trigger (simplified) → { senderEmail, text, channel }\nreturn $input.all().map(it => {\n  const j = it.json || {};\n  const fromRaw = j.From || j.from || ((j.headers || {}).from) || '';\n  const m = String(typeof fromRaw === 'object' ? (fromRaw.value || [{}])[0].address || '' : fromRaw).match(/[^<\\s\"']+@[^>\\s\"']+/);\n  return { json: { channel: 'email', senderEmail: m ? m[0].toLowerCase() : null, senderPhone: null, subject: j.Subject || j.subject || '', text: String(j.snippet || j.text || j.textPlain || '').slice(0, 2000), messageId: j.id || null, receivedAt: new Date().toISOString() } };\n}).filter(it => it.json.senderEmail);"
+      },
+      "id": "42b9e4b4-166d-42ad-a95a-9be613322040",
+      "name": "Normalize email reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rabith-whatsapp-inbound",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "457b2acf-0aa0-45e5-a690-b0dc6387b569",
+      "name": "Webhook WhatsApp inbound (POST)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        900
+      ],
+      "webhookId": "b44b6cea-125a-47b3-ac2f-c668aac1f663",
+      "notes": "PUBLIC: Meta → n8n. Register https://<n8n>/webhook/rabith-whatsapp-inbound in the WhatsApp app dashboard.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "rabith-whatsapp-inbound",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "58a3684e-2823-4cdf-a242-80ee2b10db85",
+      "name": "Webhook WhatsApp verify (GET)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1080
+      ],
+      "webhookId": "50fd5248-f21d-43a5-a49d-af4cfc5d700f",
+      "notes": "Meta subscription handshake: echoes hub.challenge when hub.verify_token matches $env.WHATSAPP_VERIFY_TOKEN.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "25c6c1d3-72f1-4a96-a066-d00e9aec7256",
+              "leftValue": "={{ $json.query['hub.verify_token'] }}",
+              "rightValue": "={{ $env.WHATSAPP_VERIFY_TOKEN }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6c786b93-10fc-454f-a5a5-fbd52d8f3d49",
+      "name": "Verify token ok?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        240,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "c50d4a09-2e38-4be3-af4e-bef3bf59a367",
+      "name": "Respond challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "forbidden",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "id": "b482e497-407d-4216-acee-b34a894722c8",
+      "name": "Respond 403",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        1260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Meta Cloud API inbound → { senderPhone, text }. Statuses (delivered/read) are ignored.\nconst out = [];\nfor (const it of $input.all()) {\n  const entries = ((it.json.body || {}).entry) || [];\n  for (const e of entries) for (const ch of (e.changes || [])) {\n    const v = ch.value || {};\n    for (const m of (v.messages || [])) {\n      const text = m.type === 'text' ? (m.text || {}).body : (m.type === 'button' ? (m.button || {}).text : (m.type === 'interactive' ? JSON.stringify(m.interactive) : '[' + m.type + ']'));\n      out.push({ json: { channel: 'whatsapp', senderEmail: null, senderPhone: String(m.from || '').replace(/[^0-9]/g, ''), subject: '', text: String(text || '').slice(0, 2000), messageId: m.id || null, receivedAt: new Date().toISOString() } });\n    }\n  }\n}\nreturn out;"
+      },
+      "id": "b0bca5a6-8504-4352-a1a0-2f2104727bf5",
+      "name": "Normalize WhatsApp reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/outreach?status=sent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "878f3541-7234-4ce0-aab2-d9189fb9661e",
+      "name": "List sent outreach",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        720
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/brands",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "1eec9a31-2908-47ad-aba6-83a06c424a24",
+      "name": "List brands",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        720
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Join inbound replies with sent outreach via brand.contacts (email / whatsapp). Unknown senders are dropped.\nconst replies = [];\nfor (const name of ['Normalize email reply', 'Normalize WhatsApp reply']) { try { for (const it of $(name).all()) replies.push(it.json); } catch (e) { /* branch did not run */ } }\nconst sent = (($('List sent outreach').first().json || {}).items) || [];\nconst brands = (($('List brands').first().json || {}).items) || [];\nconst byEmail = new Map(), byPhone = new Map();\nfor (const b of brands) for (const c of (b.contacts || [])) {\n  if (c.email) byEmail.set(String(c.email).toLowerCase(), { brandId: b.id, contactId: c.id });\n  const ph = String(c.whatsapp || c.phone || '').replace(/[^0-9]/g, '');\n  if (ph) byPhone.set(ph, { brandId: b.id, contactId: c.id });\n}\nconst out = [];\nfor (const r of replies) {\n  const hit = r.senderEmail ? byEmail.get(r.senderEmail) : (r.senderPhone ? byPhone.get(r.senderPhone) : null);\n  if (!hit) continue;\n  const mine = sent.filter(o => o.contactId === hit.contactId).sort((a, b) => Number(b.sequenceStep || 0) - Number(a.sequenceStep || 0));\n  if (!mine.length) continue;\n  out.push({ json: { outreachId: mine[0].id, brandId: hit.brandId, contactId: hit.contactId, channel: r.channel, text: r.text, messageId: r.messageId, receivedAt: r.receivedAt } });\n}\nreturn out;"
+      },
+      "id": "46cfd96e-2118-4953-a123-f8804842a528",
+      "name": "Match reply to outreach",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: 'outreach.replied', data: { outreachId: $json.outreachId, text: $json.text, channel: $json.channel, messageId: $json.messageId, receivedAt: $json.receivedAt } }) }}"
+      },
+      "id": "3b980e01-3d3d-4364-ac32-729133f1cca6",
+      "name": "Report outreach.replied",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        720
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "API marks replied, moves brand → replied and runs the negotiation agent. Idempotency key = outreachId + messageId.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook' }}/rabith-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.FOUNDER_NOTIFY_CHANNEL || 'slack', text: '💬 Reply on outreach ' + $('Match reply to outreach').item.json.outreachId + ' via ' + $('Match reply to outreach').item.json.channel + ':\\n' + String($('Match reply to outreach').item.json.text).slice(0, 800) }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "97bdccac-d5b0-4d7e-a249-7b808494ffcf",
+      "name": "Notify reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        720
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Delivers through workflow 07 (rabith-notify).",
+      "notesInFlow": false
+    }
+  ],
+  "connections": {
+    "Webhook rabith-outreach-send": {
+      "main": [
+        [
+          {
+            "node": "Verify secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify secret": {
+      "main": [
+        [
+          {
+            "node": "Respond 202",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 202": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Route by channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by channel": {
+      "main": [
+        [
+          {
+            "node": "Send email (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LinkedIn manual task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sequence step router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Report outreach.sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Report outreach.sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn manual task": {
+      "main": [
+        [
+          {
+            "node": "Report outreach.sent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify LinkedIn task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report outreach.sent": {
+      "main": [
+        [
+          {
+            "node": "Sequence step router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sequence step router": {
+      "main": [
+        [
+          {
+            "node": "Wait 4 days",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 8 days",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sequence complete (max 2 follow-ups)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 4 days": {
+      "main": [
+        [
+          {
+            "node": "Fetch brand",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 8 days": {
+      "main": [
+        [
+          {
+            "node": "Fetch brand",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch brand": {
+      "main": [
+        [
+          {
+            "node": "Fetch outreach list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch outreach list": {
+      "main": [
+        [
+          {
+            "node": "Reply check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply check": {
+      "main": [
+        [
+          {
+            "node": "Stop sequence?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop sequence?": {
+      "main": [
+        [
+          {
+            "node": "Stopped (reply / bounce / pipeline)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate follow-up": {
+      "main": [
+        [
+          {
+            "node": "Create follow-up draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create follow-up draft": {
+      "main": [
+        [
+          {
+            "node": "Send follow-up via API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail reply trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize email reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize email reply": {
+      "main": [
+        [
+          {
+            "node": "List sent outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook WhatsApp inbound (POST)": {
+      "main": [
+        [
+          {
+            "node": "Normalize WhatsApp reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize WhatsApp reply": {
+      "main": [
+        [
+          {
+            "node": "List sent outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List sent outreach": {
+      "main": [
+        [
+          {
+            "node": "List brands",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List brands": {
+      "main": [
+        [
+          {
+            "node": "Match reply to outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match reply to outreach": {
+      "main": [
+        [
+          {
+            "node": "Report outreach.replied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report outreach.replied": {
+      "main": [
+        [
+          {
+            "node": "Notify reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook WhatsApp verify (GET)": {
+      "main": [
+        [
+          {
+            "node": "Verify token ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify token ok?": {
+      "main": [
+        [
+          {
+            "node": "Respond challenge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 403",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "rabith"
+  },
+  "tags": [
+    "rabith"
+  ]
+}

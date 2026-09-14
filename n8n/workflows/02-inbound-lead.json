@@ -1,0 +1,382 @@
+{
+  "name": "Rabith 02 · Inbound Lead",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rabith-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0855c5ca-25c6-4310-a365-f306e2a76cc3",
+      "name": "Webhook rabith-lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "70039c7e-2951-4f70-a272-6c7a0789ba87",
+      "notes": "PUBLIC intake: website form / Typeform / Tally. No secret header (validated + rate-limited by content instead).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Accepts: plain JSON form, Typeform (form_response.answers) or Tally (data.fields). Emits a Brand partial (API.md).\nconst raw = $input.first().json;\nconst body = raw.body || {};\nlet f = { ...(raw.query || {}), ...body };\nif (body.form_response && Array.isArray(body.form_response.answers)) {\n  f = {};\n  for (const a of body.form_response.answers) {\n    const key = (a.field && (a.field.ref || a.field.id)) || 'field';\n    f[key] = a.text ?? a.email ?? a.phone_number ?? a.url ?? a.number ?? (a.choice && a.choice.label) ?? (a.choices && a.choices.labels && a.choices.labels.join(', ')) ?? null;\n  }\n}\nif (body.data && Array.isArray(body.data.fields)) {\n  f = {};\n  for (const x of body.data.fields) f[x.key || x.label] = x.value;\n}\nconst pick = (...keys) => { for (const k of keys) { if (f[k] !== undefined && f[k] !== null && String(f[k]).trim() !== '') return String(f[k]).trim(); } return ''; };\nconst honeypot = pick('website_url_confirm', '_hp', 'fax');\nconst name = pick('brandName', 'brand', 'company', 'companyName', 'name_of_company', 'organisation');\nconst contactName = pick('contactName', 'name', 'fullName', 'full_name', 'firstName');\nconst email = pick('email', 'work_email', 'contact_email').toLowerCase();\nconst website = pick('website', 'url', 'site');\nconst lang = (pick('lang', 'language') || 'id').slice(0, 2).toLowerCase();\nconst budgetRaw = pick('budgetIDR', 'budget', 'monthly_budget');\nconst budgetIDR = Number(String(budgetRaw).replace(/[^0-9]/g, '')) || null;\nconst validEmail = /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email);\nconst valid = !honeypot && !!name && validEmail;\nconst typeGuess = /agency|agensi|وكالة/i.test(pick('type', 'companyType') + ' ' + name) ? 'agency' : 'brand';\nconst brand = {\n  name, type: pick('type', 'companyType') || typeGuess,\n  industry: pick('industry', 'category', 'vertical') || 'other',\n  size: pick('size', 'companySize') || 'smb',\n  country: (pick('country') || 'ID').toUpperCase().slice(0, 2),\n  website,\n  contacts: [{ name: contactName || name, role: pick('role', 'jobTitle', 'title') || 'Contact', email, linkedin: pick('linkedin', 'linkedin_url') || null, whatsapp: pick('whatsapp', 'phone') || null, lang: ['en', 'ar', 'id'].includes(lang) ? lang : 'id' }],\n  products: pick('products', 'product').split(/[,;]/).map(s => s.trim()).filter(Boolean),\n  targetAudience: pick('targetAudience', 'audience', 'goal', 'message', 'notes'),\n  budgetIDR,\n  pipeline: 'lead',\n  source: 'n8n',\n  notes: 'Inbound via ' + (body.form_response ? 'typeform' : body.data ? 'tally' : 'web form') + ' at ' + new Date().toISOString(),\n};\n// UU PDP data minimisation: only keep the fields above; the raw form is not forwarded.\nreturn [{ json: { valid, reason: valid ? null : (honeypot ? 'honeypot' : !name ? 'missing_company' : 'invalid_email'), brand } }];"
+      },
+      "id": "dcd60dbb-5d84-4b36-a718-41e5a6b44105",
+      "name": "Normalize lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "9ef580d0-e867-40bc-a97c-2d4e5c2b805c",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1c350b5e-6bfb-44a3-a1b0-78471909d01a",
+      "name": "Valid lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: { code: 'invalid_lead', message: $json.reason } }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "8f3ac099-a990-464f-a6ae-5f3cdef1f830",
+      "name": "Respond 400",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, message: 'Terima kasih! Tim Rabith akan menghubungi Anda.' }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "bdf1352a-4924-4957-af10-802ee191cd37",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: 'lead.new', data: $('Normalize lead').item.json.brand }) }}"
+      },
+      "id": "a79e8a32-3292-42b4-a74f-a5e7afd5992a",
+      "name": "Report lead.new",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "API upserts the brand with pipeline=lead.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/brands?q={{ encodeURIComponent($('Normalize lead').item.json.brand.name) }}&pipeline=lead",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "d19356d3-5c64-463c-aa7f-f64cd1e97e21",
+      "name": "Find brand id",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const wanted = $('Normalize lead').first().json.brand;\nconst items = (($input.first().json || {}).items) || [];\nconst norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');\nconst exact = items.find(b => norm(b.name) === norm(wanted.name));\nconst brand = exact || items[0] || null;\nreturn [{ json: { brandId: brand ? brand.id : null, brandName: wanted.name, contactEmail: wanted.contacts[0].email, lang: wanted.contacts[0].lang, budgetIDR: wanted.budgetIDR, industry: wanted.industry } }];"
+      },
+      "id": "dbd6f497-fa00-49a0-a3e1-ab9cffff46a1",
+      "name": "Pick brand",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/agent/run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 180000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n    agent: 'orchestrator',\n    message: 'Qualify this lead and draft the first outreach. Lead: ' + $json.brandName + ' (' + $json.industry + ', budget IDR ' + ($json.budgetIDR || 'unknown') + '). Return: qualification (hot/warm/cold), recommended template id, and the draft.',\n    context: { brandId: $json.brandId, lang: $json.lang }\n  }) }}"
+      },
+      "id": "fa6a27c1-c4d8-48c0-a2ff-912ff5afbe6b",
+      "name": "Run orchestrator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 1,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook' }}/rabith-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.FOUNDER_NOTIFY_CHANNEL || 'slack', text: '🆕 New lead: ' + $('Pick brand').item.json.brandName + ' (' + $('Pick brand').item.json.industry + ')\\nBrand id: ' + ($('Pick brand').item.json.brandId || 'n/a') + ' · run ' + ($json.id || 'n/a') + ' · mode ' + ($json.mode || 'n/a') + '\\n\\n' + String($json.output || '').slice(0, 2500) }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "6a13add5-e32d-46af-aae5-ba08914d5a67",
+      "name": "Notify founder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Delivers through workflow 07 (rabith-notify).",
+      "notesInFlow": false
+    }
+  ],
+  "connections": {
+    "Webhook rabith-lead": {
+      "main": [
+        [
+          {
+            "node": "Normalize lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize lead": {
+      "main": [
+        [
+          {
+            "node": "Valid lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid lead?": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 200": {
+      "main": [
+        [
+          {
+            "node": "Report lead.new",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report lead.new": {
+      "main": [
+        [
+          {
+            "node": "Find brand id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find brand id": {
+      "main": [
+        [
+          {
+            "node": "Pick brand",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick brand": {
+      "main": [
+        [
+          {
+            "node": "Run orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Notify founder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "rabith"
+  },
+  "tags": [
+    "rabith"
+  ]
+}

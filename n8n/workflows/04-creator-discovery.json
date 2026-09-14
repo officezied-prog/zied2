@@ -1,0 +1,481 @@
+{
+  "name": "Rabith 04 · Creator Discovery",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rabith-discovery-scan",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b7d26a1c-e5bd-4d10-a766-3c660abe21d9",
+      "name": "Webhook rabith-discovery-scan",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "90911145-86b9-495c-a552-8a898237420b",
+      "notes": "Called by API → { query, platform, niche }",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "b905f66a-72a3-43fa-a387-757a322208ed",
+              "leftValue": "={{ $json.headers['x-rabith-secret'] }}",
+              "rightValue": "={{ $env.RABITH_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8967223a-2a76-4a27-a445-4a0712c3408f",
+      "name": "Verify secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "notes": "Rejects calls that do not carry the shared secret header x-rabith-secret.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: { code: 'unauthorized', message: 'bad x-rabith-secret' } }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "6f1bfc9a-b47e-4b7f-ae69-86ab2a3cb7ba",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, accepted: $json.body }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "221f13ff-d4af-4a2b-a359-8146de426e6d",
+      "name": "Respond 202",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "3ea5d7c5-ee02-4a33-aa3c-3a0e62898207",
+      "name": "Weekly Monday 06:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        360
+      ],
+      "notes": "Weekly full scan of every niche × platform.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// One item per (niche × platform). Webhook → single combo; schedule → full matrix.\nconst src = $input.first().json;\nconst body = src.body;\nconst fromWebhook = !!body && typeof body === 'object' && Object.keys(body).length > 0;\nconst PLATFORMS = ['tiktok', 'instagram', 'youtube'];\nconst NICHES = ($env.DISCOVERY_NICHES || 'beauty,skincare,fmcg,food,fashion,parenting,tech,fitness').split(',').map(s => s.trim()).filter(Boolean);\nconst limit = Number($env.DISCOVERY_LIMIT_PER_COMBO || 50);\nconst out = [];\nif (fromWebhook) {\n  const platforms = body.platform ? [body.platform] : PLATFORMS;\n  const niches = body.niche ? [body.niche] : NICHES.slice(0, 3);\n  for (const platform of platforms) for (const niche of niches) out.push({ query: body.query || (niche + ' indonesia'), platform, niche, limit, source: 'webhook' });\n} else {\n  for (const platform of PLATFORMS) for (const niche of NICHES) out.push({ query: niche + ' indonesia', platform, niche, limit, source: 'schedule' });\n}\nreturn out.map(json => ({ json }));"
+      },
+      "id": "01dc9557-c62e-4f40-a3c8-5e2a1ee513a3",
+      "name": "Build scan matrix",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "6c7b54ee-83d5-4b29-ace3-107026640149",
+      "name": "Loop combos",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        960,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/{{ $env.APIFY_ACTOR_ID || 'apify~instagram-search-scraper' }}/run-sync-get-dataset-items?token={{ $env.APIFY_TOKEN }}&timeout=120",
+        "options": {
+          "timeout": 150000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ search: $json.query, searchType: 'user', platform: $json.platform, niche: $json.niche, resultsLimit: $json.limit, country: 'ID' }) }}"
+      },
+      "id": "473de522-f790-4d09-a1ba-b18d10fce72c",
+      "name": "Enrichment source (Apify)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        360
+      ],
+      "notes": "PLACEHOLDER enrichment source. Swap for Modash (https://api.modash.io/v1/{platform}/search), HypeAuditor or your own scraper. Token comes from $env.APIFY_TOKEN.",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Maps raw scraper rows → Creator (docs/API.md). Emits batches of 25 for POST /webhooks/n8n creator.discovered.\nconst combo = $('Build scan matrix').all()[$('Loop combos').context.currentRunIndex].json;\nconst rows = $input.all().map(i => i.json).filter(r => r && typeof r === 'object' && !r.error);\nconst num = v => { const n = Number(String(v ?? '').replace(/[^0-9.]/g, '')); return Number.isFinite(n) ? n : 0; };\nconst first = (...vals) => vals.find(v => v !== undefined && v !== null && v !== '');\nconst stats = r => r.stats || r.statistics || {};\nconst creators = [];\nconst seen = new Set();\nfor (const r of rows) {\n  const rawHandle = first(r.username, r.handle, r.uniqueId, r.screen_name, r.id, '');\n  const handle = '@' + String(rawHandle).replace(/^@/, '').trim();\n  if (handle.length < 2 || seen.has(handle)) continue;\n  seen.add(handle);\n  const followers = num(first(r.followersCount, r.followers, r.follower_count, r.subscriberCount, stats(r).followerCount));\n  if (followers < 1000) continue; // below nano tier — skip\n  const avgLikes = num(first(r.avgLikes, r.averageLikes, stats(r).heartCount && stats(r).videoCount ? stats(r).heartCount / stats(r).videoCount : null));\n  const avgComments = num(first(r.avgComments, r.averageComments));\n  const avgViews = num(first(r.avgViews, r.averageViews, stats(r).playCount));\n  const er = r.engagementRate !== undefined ? num(r.engagementRate) : (followers ? +(((avgLikes + avgComments) / followers) * 100).toFixed(2) : 0);\n  const email = String(first(r.businessEmail, r.public_email, r.email, '') || '').toLowerCase();\n  const wa = String(first(r.whatsapp, r.businessPhone, r.public_phone_number, '') || '').replace(/[^0-9]/g, '');\n  creators.push({\n    handle,\n    name: String(first(r.fullName, r.full_name, r.nickname, r.name, handle)).slice(0, 80),\n    platform: combo.platform,\n    followers,\n    following: num(first(r.followsCount, r.following, r.followingCount, stats(r).followingCount)),\n    posts: num(first(r.postsCount, r.posts, r.videoCount, stats(r).videoCount)),\n    engagementRate: er, avgViews, avgLikes, avgComments,\n    niche: [combo.niche],\n    city: String(first(r.city, r.location, '') || '').slice(0, 40),\n    languages: ['id'],\n    bio: String(first(r.biography, r.bio, r.signature, '') || '').slice(0, 300),\n    avatar: first(r.profilePicUrl, r.avatar, r.avatarLarger, r.profile_pic_url, null),\n    verified: !!first(r.verified, r.isVerified, false),\n    // UU PDP: only public business contact details, nothing scraped from DMs / private fields.\n    contact: { email: email || null, whatsapp: wa ? '+' + wa : null },\n    source: 'discovery',\n    discoveredAt: new Date().toISOString(),\n    discoveryQuery: combo.query,\n  });\n}\nconst chunks = [];\nfor (let i = 0; i < creators.length; i += 25) chunks.push(creators.slice(i, i + 25));\nif (!chunks.length) return [{ json: { platform: combo.platform, niche: combo.niche, batchIndex: 0, batchCount: 0, count: 0, batch: [] } }];\nreturn chunks.map((batch, i) => ({ json: { platform: combo.platform, niche: combo.niche, batchIndex: i, batchCount: chunks.length, count: batch.length, batch } }));"
+      },
+      "id": "ee2fc273-aea5-409b-a397-0114b0a10bdd",
+      "name": "Map to Creator schema",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "07fdefed-27a9-4cf2-a134-9b1ca605d798",
+              "leftValue": "={{ $json.count > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5db8f063-10e8-4953-a577-db6bb614163a",
+      "name": "Has creators?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: 'creator.discovered', data: $json.batch }) }}"
+      },
+      "id": "4a00b822-b50b-4b20-a540-44fabc692158",
+      "name": "Report creator.discovered",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        180
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Batches of ≤25 creators. API upserts by handle+platform and computes fraudScore.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {},
+      "id": "3b08506b-74a7-4b78-a974-4aa0c8ffe5d5",
+      "name": "Empty batch",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate every loop run of \"Map to Creator schema\".\nconst rows = [];\nfor (let run = 0; run < 500; run++) {\n  let items;\n  try { items = $('Map to Creator schema').all(0, run); } catch (e) { break; }\n  if (!items || !items.length) break;\n  for (const it of items) rows.push(it.json);\n}\nconst byCombo = {};\nlet total = 0;\nfor (const r of rows) { const k = r.platform + '/' + r.niche; byCombo[k] = (byCombo[k] || 0) + (r.count || 0); total += r.count || 0; }\nconst lines = Object.entries(byCombo).sort((a, b) => b[1] - a[1]).map(([k, v]) => '• ' + k + ': ' + v);\nconst source = ($('Build scan matrix').first().json || {}).source || 'schedule';\nreturn [{ json: { total, combos: Object.keys(byCombo).length, source, text: '🔎 Discovery scan (' + source + ') finished: ' + total + ' creators across ' + Object.keys(byCombo).length + ' niche×platform combos\\n' + lines.join('\\n') } }];"
+      },
+      "id": "568db84e-dec9-46a9-ae3d-5e0e62220ff4",
+      "name": "Summarize scan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook' }}/rabith-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.FOUNDER_NOTIFY_CHANNEL || 'slack', text: $json.text }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "71f713da-6845-4898-a11e-00a2b3d75b6e",
+      "name": "Notify summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Delivers through workflow 07 (rabith-notify).",
+      "notesInFlow": false
+    }
+  ],
+  "connections": {
+    "Webhook rabith-discovery-scan": {
+      "main": [
+        [
+          {
+            "node": "Verify secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify secret": {
+      "main": [
+        [
+          {
+            "node": "Respond 202",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 202": {
+      "main": [
+        [
+          {
+            "node": "Build scan matrix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Monday 06:00": {
+      "main": [
+        [
+          {
+            "node": "Build scan matrix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build scan matrix": {
+      "main": [
+        [
+          {
+            "node": "Loop combos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop combos": {
+      "main": [
+        [
+          {
+            "node": "Summarize scan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enrichment source (Apify)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrichment source (Apify)": {
+      "main": [
+        [
+          {
+            "node": "Map to Creator schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map to Creator schema": {
+      "main": [
+        [
+          {
+            "node": "Has creators?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has creators?": {
+      "main": [
+        [
+          {
+            "node": "Report creator.discovered",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Empty batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report creator.discovered": {
+      "main": [
+        [
+          {
+            "node": "Loop combos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empty batch": {
+      "main": [
+        [
+          {
+            "node": "Loop combos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize scan": {
+      "main": [
+        [
+          {
+            "node": "Notify summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "rabith"
+  },
+  "tags": [
+    "rabith"
+  ]
+}

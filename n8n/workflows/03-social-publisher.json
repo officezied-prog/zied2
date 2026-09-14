@@ -1,0 +1,878 @@
+{
+  "name": "Rabith 03 · Social Publisher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rabith-social-publish",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1fc56106-38af-472b-a860-d87751744f7d",
+      "name": "Webhook rabith-social-publish",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        360
+      ],
+      "webhookId": "12f5a2c7-4210-400e-a296-8a7bf09012f1",
+      "notes": "Called by API POST /social/posts/:id/publish → { post }",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "a1ad84a8-d87e-4508-aba1-e5de5702222b",
+              "leftValue": "={{ $json.headers['x-rabith-secret'] }}",
+              "rightValue": "={{ $env.RABITH_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4336bdf7-05cc-4326-a2af-278469135e91",
+      "name": "Verify secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ],
+      "notes": "Rejects calls that do not carry the shared secret header x-rabith-secret.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: { code: 'unauthorized', message: 'bad x-rabith-secret' } }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "ee72959b-b850-40e6-ab53-74e0adffbc20",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, accepted: $json.body.post.id }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "8d3eff9b-3ce4-4492-a017-513a3fbcfb4c",
+      "name": "Respond 202",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = ($input.first().json.body || {}).post || {};\nif (!p.id) throw new Error('post.id missing');\nconst hashtags = Array.isArray(p.hashtags) ? p.hashtags.map(h => h.startsWith('#') ? h : '#' + h) : [];\nconst caption = String(p.caption || '').trim();\nconst isVideo = /\\.(mp4|mov|m4v)(\\?|$)/i.test(String(p.mediaUrl || ''));\nconst platform = ['instagram', 'tiktok', 'linkedin', 'x'].includes(p.platform) ? p.platform : 'unsupported';\nconst text = platform === 'x' ? (caption + ' ' + hashtags.slice(0, 3).join(' ')).trim().slice(0, 280) : (caption + '\\n\\n' + hashtags.join(' ')).trim();\nreturn [{ json: { postId: p.id, platform, account: p.account || '@rabith.id', caption, hashtags, text, mediaUrl: p.mediaUrl || null, isVideo, lang: p.lang || 'id', scheduledAt: p.scheduledAt || null } }];"
+      },
+      "id": "072429f0-11ef-47a1-a91b-a17482a4e4e4",
+      "name": "Normalize post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "10b0179f-dbe8-4063-a3a4-c502447c4e57",
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "instagram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "instagram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "ec8889c6-6db4-4516-a76e-f1ead4fad68b",
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "tiktok",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "tiktok"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "b540d9d7-23bf-46ca-a4bb-b60b2d8b035a",
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "linkedin",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "linkedin"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "id": "4c250a1b-24ee-41ef-a466-bfb64e33044c",
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "x",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "x"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "82b43e2b-a3b2-42d6-a47e-9dc81ca3c4c9",
+      "name": "Route by platform",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        960,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/{{ $env.IG_USER_ID }}/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.isVideo\n      ? { media_type: 'REELS', video_url: $json.mediaUrl, caption: $json.text }\n      : { image_url: $json.mediaUrl, caption: $json.text }) }}"
+      },
+      "id": "2e0eb7bf-eaa8-4592-ae74-dd21c82eea06",
+      "name": "IG create container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ],
+      "notes": "Meta Graph API (Instagram Content Publishing). Credential: Header Auth \"Meta Graph\" (Authorization: Bearer <page token>). Requires an image/video URL that Meta can fetch.",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v20.0/{{ $env.IG_USER_ID }}/media_publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ creation_id: $json.id }) }}"
+      },
+      "id": "2aac0a9d-fb30-4059-ae1b-dce7635ffa86",
+      "name": "IG publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ],
+      "notes": "For REELS, Meta may need ~30-60 s of processing; add a Wait node if you publish video.",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v20.0/{{ $json.id }}?fields=id,permalink",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "20b4113f-0ed5-456d-a0e0-e9335f4615b2",
+      "name": "IG permalink",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        0
+      ],
+      "notes": "",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.tiktokapis.com/v2/post/publish/video/init/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n      post_info: { title: $json.text.slice(0, 150), privacy_level: 'PUBLIC_TO_EVERYONE', disable_comment: false, disable_duet: false, disable_stitch: false },\n      source_info: { source: 'PULL_FROM_URL', video_url: $json.mediaUrl },\n      post_mode: 'DIRECT_POST', media_type: 'VIDEO'\n    }) }}"
+      },
+      "id": "22904ea1-5a34-45ba-ab33-f38d9d05416e",
+      "name": "TikTok direct post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        180
+      ],
+      "notes": "TikTok Content Posting API (placeholder — requires an approved app + verified domain for PULL_FROM_URL). Credential: Header Auth \"TikTok\" (Authorization: Bearer <access token>).",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/v2/ugcPosts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n      author: 'urn:li:organization:' + $env.LINKEDIN_ORG_ID,\n      lifecycleState: 'PUBLISHED',\n      specificContent: { 'com.linkedin.ugc.ShareContent': { shareCommentary: { text: $json.text }, shareMediaCategory: $json.mediaUrl ? 'ARTICLE' : 'NONE', media: $json.mediaUrl ? [{ status: 'READY', originalUrl: $json.mediaUrl }] : undefined } },\n      visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' }\n    }) }}"
+      },
+      "id": "b09bc9c3-18ed-4fec-a3c8-23928346729e",
+      "name": "LinkedIn ugcPost",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        360
+      ],
+      "notes": "LinkedIn Marketing API. Credential: Header Auth \"LinkedIn\" (Authorization: Bearer <token with w_organization_social>).",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.x.com/2/tweets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.text }) }}"
+      },
+      "id": "71ac5d1a-8dd0-4f5d-abec-138266492e2d",
+      "name": "X create tweet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        540
+      ],
+      "notes": "X API v2. Credential: Header Auth \"X API\" (Authorization: Bearer <OAuth2 user-context token>).",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "beca94cd-e238-4bcd-a328-1ada90e69f6c",
+              "name": "error",
+              "value": "=Unsupported platform: {{ $json.platform }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d4f3a0ad-7d68-49a9-a5c9-cc938d7feb4f",
+      "name": "Unsupported platform",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Normalize post').first().json;\nconst r = $input.first().json || {};\nconst errText = e => typeof e === 'string' ? e : (e && (e.message || e.description)) || JSON.stringify(e);\nif (r.error) return [{ json: { ...p, status: 'failed', platformPostId: null, url: null, error: errText(r.error) } }];\nlet platformPostId = null, url = null;\nswitch (p.platform) {\n  case 'instagram':\n    platformPostId = r.id || null; url = r.permalink || null; break;\n  case 'tiktok':\n    platformPostId = (r.data || {}).publish_id || null; url = 'https://www.tiktok.com/' + p.account; break;\n  case 'linkedin':\n    platformPostId = r.id || null; url = platformPostId ? 'https://www.linkedin.com/feed/update/' + platformPostId : null; break;\n  case 'x':\n    platformPostId = (r.data || {}).id || null; url = platformPostId ? 'https://x.com/i/web/status/' + platformPostId : null; break;\n}\nconst ok = !!platformPostId;\nreturn [{ json: { ...p, status: ok ? 'published' : 'failed', platformPostId, url, error: ok ? null : 'no id returned by ' + p.platform, publishedAt: new Date().toISOString() } }];"
+      },
+      "id": "ba06d9d9-238c-463e-accf-68f98ec52651",
+      "name": "Build publish result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "4fed2053-29d9-4c43-a0ed-8ec56c559102",
+              "leftValue": "={{ $json.status === 'published' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a2fcb0e9-274b-4ca0-ab28-e2c063827df1",
+      "name": "Published?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: 'social.published', data: { postId: $json.postId, url: $json.url, platform: $json.platform, platformPostId: $json.platformPostId, publishedAt: $json.publishedAt } }) }}"
+      },
+      "id": "b8ea7d09-5b93-4ab8-ad52-c22b1b4dac6b",
+      "name": "Report social.published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        180
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Idempotency key = postId.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook' }}/rabith-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.FOUNDER_NOTIFY_CHANNEL || 'slack', text: '⚠️ Social publish FAILED · ' + $json.platform + ' · post ' + $json.postId + '\\n' + ($json.error || 'unknown error') + '\\n\\nMark as failed or retry from the dashboard.' }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "ec4319a8-b2f8-470d-a731-0d2197f56cff",
+      "name": "Notify publish failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        540
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Delivers through workflow 07 (rabith-notify).",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "68a88574-4eb1-4f79-aa34-9b19c6324fb1",
+      "name": "Daily 09:00 Jakarta",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        900
+      ],
+      "notes": "Timezone comes from workflow settings (Asia/Jakarta).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/social/posts?status=scheduled",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "90d60cf1-bf21-459d-aa85-766f007fe33c",
+      "name": "List scheduled posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        900
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = (($input.first().json || {}).items) || [];\nconst now = Date.now();\nconst due = items.filter(p => !p.scheduledAt || new Date(p.scheduledAt).getTime() <= now);\nreturn due.map(p => ({ json: { id: p.id, platform: p.platform, scheduledAt: p.scheduledAt } }));"
+      },
+      "id": "c8d67372-da45-488c-a4f1-470e9a45a37d",
+      "name": "Due posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/social/posts/{{ $json.id }}/publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}"
+      },
+      "id": "42a0ae77-cad8-4f9b-a24d-2dcde0d000ea",
+      "name": "Publish via API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        900
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "API forwards to rabith-social-publish → the webhook branch above does the actual publishing.",
+      "notesInFlow": true
+    }
+  ],
+  "connections": {
+    "Webhook rabith-social-publish": {
+      "main": [
+        [
+          {
+            "node": "Verify secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify secret": {
+      "main": [
+        [
+          {
+            "node": "Respond 202",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 202": {
+      "main": [
+        [
+          {
+            "node": "Normalize post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize post": {
+      "main": [
+        [
+          {
+            "node": "Route by platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by platform": {
+      "main": [
+        [
+          {
+            "node": "IG create container",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TikTok direct post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LinkedIn ugcPost",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "X create tweet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unsupported platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG create container": {
+      "main": [
+        [
+          {
+            "node": "IG publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG publish": {
+      "main": [
+        [
+          {
+            "node": "IG permalink",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG permalink": {
+      "main": [
+        [
+          {
+            "node": "Build publish result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok direct post": {
+      "main": [
+        [
+          {
+            "node": "Build publish result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn ugcPost": {
+      "main": [
+        [
+          {
+            "node": "Build publish result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "X create tweet": {
+      "main": [
+        [
+          {
+            "node": "Build publish result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unsupported platform": {
+      "main": [
+        [
+          {
+            "node": "Build publish result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build publish result": {
+      "main": [
+        [
+          {
+            "node": "Published?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Published?": {
+      "main": [
+        [
+          {
+            "node": "Report social.published",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify publish failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 09:00 Jakarta": {
+      "main": [
+        [
+          {
+            "node": "List scheduled posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List scheduled posts": {
+      "main": [
+        [
+          {
+            "node": "Due posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Due posts": {
+      "main": [
+        [
+          {
+            "node": "Publish via API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "rabith"
+  },
+  "tags": [
+    "rabith"
+  ]
+}

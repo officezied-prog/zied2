@@ -1,0 +1,623 @@
+{
+  "name": "Rabith 05 · Fraud Audit Nightly",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "5f819965-0a6e-4399-acb5-e56c6db91f4c",
+      "name": "Nightly 02:00 Jakarta",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/creators?sort=followers&limit=200",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "5baecbfe-60e2-4b3b-adcd-b59c8b79fbbd",
+      "name": "List top creators",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rabith-fraud-audit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f363472a-30e1-4e4d-a102-7db30cde81df",
+      "name": "Webhook rabith-fraud-audit",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        360
+      ],
+      "webhookId": "6bb2ca05-f6ab-45e6-a23b-4ce9a63c047f",
+      "notes": "Called by API for an on-demand deep audit → { creatorIds: [] }",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "5ec40b3d-8453-4716-addd-966d1b59b560",
+              "leftValue": "={{ $json.headers['x-rabith-secret'] }}",
+              "rightValue": "={{ $env.RABITH_WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a0e6ae37-d52a-4c10-abc7-1c204ff1cb9e",
+      "name": "Verify secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ],
+      "notes": "Rejects calls that do not carry the shared secret header x-rabith-secret.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: { code: 'unauthorized', message: 'bad x-rabith-secret' } }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "85126263-3786-4334-a02c-37655481ba97",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, accepted: ($json.body.creatorIds || []).length }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "63ea99a5-d1c5-44ff-abd6-d7d4d1f648fc",
+      "name": "Respond 202",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ids = (($input.first().json.body || {}).creatorIds) || [];\nreturn ids.map(id => ({ json: { creatorId: id } }));"
+      },
+      "id": "82892a05-2d0f-456e-a57b-8fca10b20fb8",
+      "name": "Creator ids",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/creators/{{ $json.creatorId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "4d5db01e-4218-48cd-a2ae-a64435bb7924",
+      "name": "Fetch creator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        360
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Accepts either { items: Creator[] } (list) or a single Creator (by id). One item per creator.\nconst out = [];\nfor (const it of $input.all()) {\n  const j = it.json || {};\n  if (j.error) continue;\n  const list = Array.isArray(j.items) ? j.items : (j.id ? [j] : []);\n  for (const c of list) if (c && c.id) out.push({ json: c });\n}\nreturn out;"
+      },
+      "id": "27d5a66c-0954-4774-ae08-eb6355ff2a78",
+      "name": "Flatten creators",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "b9813f90-df72-42ad-a050-848f336f2635",
+      "name": "Loop creators",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.FRAUD_SIGNALS_URL || 'https://api.modash.io/v1' }}/{{ $json.platform }}/profile/{{ String($json.handle || '').replace('@', '') }}/report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "2134cc31-029b-4385-a0ce-089230f7ec58",
+      "name": "External signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        360
+      ],
+      "notes": "PLACEHOLDER external audit (Modash / HypeAuditor / your scraper). Credential: Header Auth \"Fraud signals API\". On error the Code node falls back to heuristic signals only.",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Merge external report (if any) with heuristic signals. Runs once per item.\nconst c = $('Loop creators').item.json;\nconst r = $json || {};\nconst ext = r.error ? {} : (r.profile || r.data || r);\nconst aud = ext.audience || {};\nconst num = v => (v === undefined || v === null || v === '' || Number.isNaN(Number(v))) ? null : Number(v);\nconst signals = {\n  source: r.error ? 'heuristic' : 'external+heuristic',\n  followerFollowingRatio: c.following ? +(c.followers / c.following).toFixed(2) : null,\n  engagementRate: num(c.engagementRate),\n  genericCommentRatio: num(c.genericCommentRatio),\n  growth30d: num(c.growth30d),\n  likesToViews: c.avgViews ? +(c.avgLikes / c.avgViews).toFixed(3) : null,\n  audienceCredibility: num(aud.credibility ?? ext.audience_credibility ?? ext.aqs),\n  suspiciousFollowersPct: num(ext.fake_followers_pct ?? aud.suspicious ?? (aud.credibility != null ? (1 - aud.credibility) * 100 : null)),\n  massFollowersPct: num(aud.massFollowers ?? aud.mass_followers),\n  audienceIndonesiaPct: num(((aud.geoCountries || []).find(g => /indonesia|ID/i.test(g.name || g.code || '')) || {}).weight),\n  auditedAt: new Date().toISOString(),\n  externalError: r.error ? String((r.error && (r.error.message || r.error.description)) || r.error) : null,\n};\nconst flags = [];\nif (signals.engagementRate !== null && signals.engagementRate < 1 && c.followers > 10000) flags.push('low_engagement_for_size');\nif (signals.followerFollowingRatio !== null && signals.followerFollowingRatio < 1.2 && c.followers > 5000) flags.push('follow_for_follow_pattern');\nif (signals.genericCommentRatio !== null && signals.genericCommentRatio > 0.5) flags.push('generic_comments');\nif (signals.growth30d !== null && signals.growth30d > 40) flags.push('growth_spike');\nif (signals.likesToViews !== null && signals.likesToViews > 0.5) flags.push('likes_exceed_plausible_views');\nif (signals.suspiciousFollowersPct !== null && signals.suspiciousFollowersPct > 25) flags.push('external_fake_followers');\nif (signals.audienceIndonesiaPct !== null && signals.audienceIndonesiaPct < 0.4) flags.push('audience_outside_indonesia');\nreturn { json: { creatorId: c.id, handle: c.handle, platform: c.platform, followers: c.followers, signals: { ...signals, flags } } };"
+      },
+      "id": "9dfee6c7-e9e7-4cb4-acc6-0c570862ba48",
+      "name": "Compute signals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/webhooks/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: 'fraud.result', data: { creatorId: $json.creatorId, signals: $json.signals } }) }}"
+      },
+      "id": "1b8ff83c-a9da-4d20-ada5-99ccabd4e7c4",
+      "name": "Report fraud.result",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        360
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Idempotency key = creatorId + signals.auditedAt (night). API merges signals and recomputes fraudScore.",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.RABITH_API_BASE }}/creators?sort=fraud&limit=25",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "de84292f-552a-4894-ab25-6b7e52ff4ddf",
+      "name": "Top fraud after audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = (($input.first().json || {}).items) || [];\nlet audited = 0;\nfor (let run = 0; run < 100; run++) { let its; try { its = $('Compute signals').all(0, run); } catch (e) { break; } if (!its || !its.length) break; audited += its.length; }\nconst worst = items.slice(0, 15).map(c => ({ id: c.id, handle: c.handle, platform: c.platform, followers: c.followers, fraudScore: c.fraudScore, flags: c.fraudFlags || [] }));\nconst message = 'Nightly fraud audit finished. ' + audited + ' creators re-scored. Summarise anomalies, list creators that must be blocked from matching (fraudScore ≥ 60) and creators to re-check manually (40-59). Data: ' + JSON.stringify(worst);\nreturn [{ json: { audited, worst, message } }];"
+      },
+      "id": "197befb1-9925-44ba-a62b-3ed78a4033a2",
+      "name": "Build audit brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RABITH_API_BASE }}/agent/run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 180000,
+          "redirect": {
+            "redirect": {}
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ agent: 'fraud', message: $json.message, context: {} }) }}"
+      },
+      "id": "380e120e-8027-4e7b-a6a4-62b733f605ff",
+      "name": "Run fraud agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 1,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook' }}/rabith-notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rabith-secret",
+              "value": "={{ $env.RABITH_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ channel: $env.FOUNDER_NOTIFY_CHANNEL || 'slack', text: '🛡️ Nightly fraud audit · ' + $('Build audit brief').item.json.audited + ' creators\\n\\n' + String($json.output || 'no agent output').slice(0, 2500) }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "18d73f69-b090-4e22-a2f4-87c927ab76f1",
+      "name": "Notify audit summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Delivers through workflow 07 (rabith-notify).",
+      "notesInFlow": false
+    }
+  ],
+  "connections": {
+    "Nightly 02:00 Jakarta": {
+      "main": [
+        [
+          {
+            "node": "List top creators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List top creators": {
+      "main": [
+        [
+          {
+            "node": "Flatten creators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook rabith-fraud-audit": {
+      "main": [
+        [
+          {
+            "node": "Verify secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify secret": {
+      "main": [
+        [
+          {
+            "node": "Respond 202",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 202": {
+      "main": [
+        [
+          {
+            "node": "Creator ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creator ids": {
+      "main": [
+        [
+          {
+            "node": "Fetch creator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch creator": {
+      "main": [
+        [
+          {
+            "node": "Flatten creators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten creators": {
+      "main": [
+        [
+          {
+            "node": "Loop creators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop creators": {
+      "main": [
+        [
+          {
+            "node": "Top fraud after audit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "External signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "External signals": {
+      "main": [
+        [
+          {
+            "node": "Compute signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute signals": {
+      "main": [
+        [
+          {
+            "node": "Report fraud.result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report fraud.result": {
+      "main": [
+        [
+          {
+            "node": "Loop creators",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Top fraud after audit": {
+      "main": [
+        [
+          {
+            "node": "Build audit brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build audit brief": {
+      "main": [
+        [
+          {
+            "node": "Run fraud agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run fraud agent": {
+      "main": [
+        [
+          {
+            "node": "Notify audit summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "rabith"
+  },
+  "tags": [
+    "rabith"
+  ]
+}

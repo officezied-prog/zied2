@@ -1,0 +1,88 @@
+{
+ "rules": [
+  "Personalize line one. Name a real campaign, influencer, or product of theirs.",
+  "Sell the pilot, not the platform. Low risk closes; big contracts stall.",
+  "Target a person, not a company inbox. Find the Brand Manager by name.",
+  "Lead with numbers and ROI — Indonesia 2026 buys measurable outcomes.",
+  "Keep it under 120 words. Decision-makers skim on mobile.",
+  "Match the language to the recipient. Gulf = Arabic, local = Indonesian/English.",
+  "Two follow-ups maximum. Never spam — it damages Rabith's reputation.",
+  "Respect Indonesia's data law (UU PDP) when storing contacts you collect."
+ ],
+ "items": [
+  {
+   "id": "beauty_en", "name": "Cold Email — Beauty Brands", "lang": "en", "channel": "email", "audience": "beauty",
+   "bestFor": "Somethinc, Scarlett, MS Glow, Avoskin, Y.O.U, Azarine, Skintific. Send to partnership@ and CC the marketing lead.",
+   "vars": ["brandName","firstName","yourName","phone"],
+   "subject": "Nano-creator network + fraud-checked reach for {{brandName}}",
+   "body": "Hi {{firstName}},\n\nI have been following {{brandName}}'s creator strategy — the way you turned reviewers into a real community stood out. Most platforms can hand you macro-influencers. The harder problem is running 100+ verified nano and micro creators at once without the operational chaos, and knowing their followers are real before you pay.\n\nThat is exactly what Rabith does. We are an influencer platform built for Indonesia with:\n• AI fraud detection — fake-follower and engagement-pod screening before a creator is booked\n• Bulk Nano-KOC campaigns — contract and track hundreds of small creators in one dashboard\n• Performance tracking tied to clicks and sales, not just reach\n\nCould I run a small paid pilot for one product line so you can see the numbers yourself? Fifteen minutes this week to show you the dashboard?\n\nWarm regards,\n{{yourName}} · Founder, Rabith · {{phone}}"
+  },
+  {
+   "id": "fmcg_en", "name": "Cold Email — FMCG / Large Brands", "lang": "en", "channel": "email", "audience": "fmcg",
+   "bestFor": "Unilever brands, Indofood, Mayora, Nutrifood. Target ONE Brand Manager. Propose a small pilot.",
+   "vars": ["product","firstName","yourName"],
+   "subject": "A measurable creator pilot for {{product}}",
+   "body": "Hi {{firstName}},\n\nIn Indonesia, 74% of influencer campaigns are now planned around measurable outcomes — yet most brands still buy reach and hope. I would like to show you a different model for {{product}}.\n\nRabith runs creator campaigns with performance tied to clicks and conversions, full fraud screening, and a layer of verified nano-creators that drive the highest engagement per rupiah. I am proposing one low-risk pilot: a defined budget, a clear KPI we agree on upfront, and a transparent report you can take to your team.\n\nIf the pilot hits the KPI, we scale. If it does not, you owe nothing beyond the pilot. Would a short call next week work to define the test?\n\nBest,\n{{yourName}} · Founder, Rabith"
+  },
+  {
+   "id": "linkedin_en", "name": "LinkedIn Connection + First Message", "lang": "en", "channel": "linkedin", "audience": "any",
+   "bestFor": "Any marketing lead / brand manager / KOL manager you find by name.",
+   "vars": ["firstName","brandName"],
+   "subject": "Connection note (≤300 chars)",
+   "body": "Hi {{firstName}} — I work on creator marketing for Indonesian brands and admire what {{brandName}} has built with its community. Would love to connect and trade notes on what's working in 2026.",
+   "followUp": "Thanks for connecting, {{firstName}}. I will keep this short — I run Rabith, a creator platform built for Indonesia with AI fraud-checking and bulk nano-creator campaigns. I am not pitching a big contract; I am offering one small paid pilot for {{brandName}} so you can judge the results directly. Open to a 15-min call? No pressure either way."
+  },
+  {
+   "id": "gulf_ar", "name": "بريد بارد — العلامات الخليجية", "lang": "ar", "channel": "email", "audience": "gulf",
+   "bestFor": "علامات التجميل، العطور، الأزياء المحتشمة، والأغذية الحلال الخليجية التي تريد دخول السوق الإندونيسي.",
+   "vars": ["firstName","yourName","phone"],
+   "subject": "بوابتكم إلى السوق الإندونيسي — 270 مليون مستهلك مسلم",
+   "body": "السلام عليكم {{firstName}}،\n\nإندونيسيا هي أكبر سوق مسلم في العالم — 270 مليون مستهلك يثقون بتوصيات المؤثرين أكثر من الإعلانات. لكن دخول هذا السوق يتطلب فهماً دقيقاً لمنصاته ولغته وثقافته، وهذا ما يصعب على العلامات الخليجية الوصول إليه بمفردها.\n\nفي Rabith نبني الجسر: شبكة مؤثرين إندونيسيين موثّقين، إنتاج محتوى ثلاثي اللغة (عربي/إنجليزي/إندونيسي)، وفريق يفهم السوقين الخليجي والإندونيسي معاً. نوفّر عليكم سنوات من التجربة والخطأ.\n\nما نقدّمه:\n• حملة تجريبية محدّدة المخاطر للسوق الإندونيسي\n• تحقّق بالذكاء الاصطناعي من المتابعين الوهميين قبل الدفع\n• تقارير أداء مرتبطة بالنتائج لا بالوصول فقط\n\nهل يناسبكم اتصال قصير هذا الأسبوع لأعرض عليكم كيف يمكن لعلامتكم أن تصل إلى الجمهور الإندونيسي؟\n\nمع خالص التقدير،\n{{yourName}} · مؤسّس Rabith · {{phone}}"
+  },
+  {
+   "id": "local_id", "name": "Email Dingin — Brand Lokal", "lang": "id", "channel": "email", "audience": "local",
+   "bestFor": "Brand kecantikan & FMCG lokal. Kirim ke partnership@ atau hubungi marketing lead via LinkedIn.",
+   "vars": ["brandName","firstName","yourName","phone"],
+   "subject": "Jaringan nano-creator terverifikasi untuk {{brandName}}",
+   "body": "Halo {{firstName}},\n\nSaya memperhatikan strategi creator {{brandName}} — cara Anda membangun komunitas dari para reviewer sangat menonjol. Tantangan terbesar bukan mencari macro-influencer, tapi menjalankan 100+ nano dan micro creator sekaligus tanpa kekacauan operasional, dan memastikan followers mereka asli sebelum dibayar.\n\nItulah yang Rabith lakukan — platform influencer untuk pasar Indonesia dengan:\n• Deteksi fraud berbasis AI — screening followers palsu sebelum booking\n• Kampanye Nano-KOC massal — kontrak & tracking ratusan creator dalam satu dashboard\n• Laporan performa berbasis klik & penjualan, bukan sekadar reach\n\nBoleh saya jalankan pilot kecil berbayar untuk satu lini produk, supaya Anda bisa lihat angkanya langsung? Ada waktu 15 menit minggu ini?\n\nSalam hangat,\n{{yourName}} · Founder, Rabith · {{phone}}"
+  },
+  {
+   "id": "agency_en", "name": "Agency Partnership Pitch", "lang": "en", "channel": "email", "audience": "agency",
+   "bestFor": "AnyMind, Partipost, GRIN, and Jakarta agencies. Fastest path to early revenue — use their relationships.",
+   "vars": ["agencyName","firstName","yourName"],
+   "subject": "White-label creator tech for {{agencyName}}",
+   "body": "Hi {{firstName}},\n\nYou already have the brand relationships — what eats your team's time is the operational side: vetting creators, catching fake followers, and managing hundreds of nano-creators per campaign.\n\nRabith is a creator platform that handles exactly that. My proposal is simple: use Rabith under your own brand as your tech layer, and we share the margin. You move faster, unlock bulk nano-KOC campaigns you can't run manually today, and add a verification layer your clients will value. No cost to evaluate it — I will set up a demo workspace with your logo. Worth a short call?\n\nBest,\n{{yourName}} · Founder, Rabith"
+  },
+  {
+   "id": "followup1_en", "name": "Follow-up 1 — after 4 days", "lang": "en", "channel": "email", "audience": "any", "sequenceStep": 1, "delayDays": 4,
+   "vars": ["firstName","brandName"],
+   "subject": "Re: pilot for {{brandName}}",
+   "body": "Hi {{firstName}}, floating this back to the top of your inbox. The pilot offer for {{brandName}} still stands — small, measurable, no long-term commitment. Even a 'not now' is helpful so I know whether to check back later. Thanks!"
+  },
+  {
+   "id": "followup2_en", "name": "Follow-up 2 — after 8 more days", "lang": "en", "channel": "email", "audience": "any", "sequenceStep": 2, "delayDays": 12,
+   "vars": ["firstName","brandName"],
+   "subject": "Re: pilot for {{brandName}}",
+   "body": "Hi {{firstName}}, last note from me so I'm not crowding your inbox. If creator marketing for {{brandName}} becomes a priority this quarter, I'd love to help with a low-risk test. I'll leave the door open — feel free to reach out anytime."
+  },
+  {
+   "id": "followup1_ar", "name": "متابعة بالعربية — بعد 4 أيام", "lang": "ar", "channel": "email", "audience": "gulf", "sequenceStep": 1, "delayDays": 4,
+   "vars": ["firstName"],
+   "subject": "متابعة: الحملة التجريبية",
+   "body": "السلام عليكم {{firstName}}، أعيد رسالتي إلى أعلى بريدكم. عرض الحملة التجريبية لا يزال قائماً — محدّد المخاطر وبلا التزام طويل. حتى ردّ بـ«ليس الآن» مفيد لي. شكراً لكم."
+  },
+  {
+   "id": "followup1_id", "name": "Follow-up — Bahasa, setelah 4 hari", "lang": "id", "channel": "email", "audience": "local", "sequenceStep": 1, "delayDays": 4,
+   "vars": ["firstName","brandName"],
+   "subject": "Re: pilot untuk {{brandName}}",
+   "body": "Halo {{firstName}}, menaikkan pesan ini ke atas inbox Anda. Tawaran pilot untuk {{brandName}} masih berlaku — kecil, terukur, tanpa komitmen jangka panjang. Jawaban 'belum sekarang' pun membantu. Terima kasih!"
+  },
+  {
+   "id": "creator_invite_id", "name": "Undangan Creator — WhatsApp", "lang": "id", "channel": "whatsapp", "audience": "creator",
+   "bestFor": "Mengundang nano/micro creator ke kampanye setelah AI matching.",
+   "vars": ["creatorName","brandName","feeIDR","deliverable"],
+   "subject": "Kolaborasi berbayar dengan {{brandName}}",
+   "body": "Halo {{creatorName}}! 👋 Kami dari Rabith. Brand {{brandName}} tertarik kolaborasi dengan kamu: {{deliverable}}, fee Rp{{feeIDR}}, kontrak resmi + pembayaran escrow (aman, dibayar setelah konten tayang). Berminat? Balas YA dan kami kirim brief-nya."
+  }
+ ]
+}
