@@ -4,3 +4,4 @@ apps/api/data/*.json
 !apps/api/data/.gitkeep
 *.log
 .DS_Store
+config/agents.json

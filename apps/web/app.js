@@ -851,7 +851,8 @@ function setLang(l) {
 }
 function setModeChip() { const el = $("#mode-chip"); el.className = "mode-chip " + (S.mode === "checking" ? "checking" : S.mode === "online" ? "online" : "offline"); el.querySelector(".lbl").textContent = S.mode === "checking" ? t("mode_checking") : S.mode === "online" ? (S.brain === "claude" ? t("mode_online") : t("mode_online_off")) : t("mode_offline"); el.title = S.mode === "online" ? API : "localStorage"; }
 async function boot() {
-  try { const h = await Promise.race([D.health(), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 2500))]); if (!h.ok) throw new Error("bad health"); S.mode = "online"; S.brain = h.mode; S.authRequired = Boolean(h.auth?.required); }
+  if (window.RABITH_FORCE_OFFLINE) S.mode = "offline"; // demo builds skip the probe entirely
+  else try { const h = await Promise.race([D.health(), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 2500))]); if (!h.ok) throw new Error("bad health"); S.mode = "online"; S.brain = h.mode; S.authRequired = Boolean(h.auth?.required); }
   catch { S.mode = "offline"; S.brain = "offline"; }
   if (online()) {
     try { const [cr, br, ag, tp, cp] = await Promise.all([api("/creators?limit=200"), D.brands(), D.agents(), D.templates(), D.campaigns()]); S.creators = cr.items; S.brands = br.items; S.campaigns = cp.items; await Promise.all([D.outreach(), D.posts(), D.runs()]).catch(() => {}); const saved = lsLoad(); S.contracts = saved.contracts || []; }

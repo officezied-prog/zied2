@@ -7,6 +7,7 @@ import * as store from "./store/jsonStore.js";
 import { isOnline, MODEL } from "./integrations/claude.js";
 import * as n8n from "./integrations/n8n.js";
 import { ensureDemoUsers } from "./auth/users.js";
+import { agentsSummary } from "./agents/registry.js";
 import { purgeExpired, authRequired } from "./auth/sessions.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -44,6 +45,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.log(`Brain       → ${isOnline() ? "Claude " + MODEL : "OFFLINE rule-based planner (set ANTHROPIC_API_KEY)"}`);
     console.log(`Hands (n8n) → ${n8n.isConfigured() ? process.env.N8N_WEBHOOK_BASE : "not configured (N8N_WEBHOOK_BASE)"}`);
     console.log(`Config      → ${ENV_FILE || "no .env file found (using shell environment only)"}`);
+    const ag = agentsSummary();
+    console.log(`Agents      → ${ag.total} total${ag.custom ? ` (${ag.custom} from ${ag.file})` : " (no custom agents — see config/agents.example.json)"}`);
+    for (const e of ag.errors) console.log(`              ⚠ ${e}`);
     console.log(`Accounts    → sign-in ${authRequired() ? "REQUIRED for every write" : "optional (open demo mode)"}`);
     if (accounts.created) {
       console.log(`              seeded ${accounts.created} accounts — admin: ${accounts.adminEmail}`);

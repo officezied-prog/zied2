@@ -3,6 +3,8 @@
  * Each agent = a role prompt + the subset of tools it may call. The orchestrator plans,
  * delegates to specialists, reconciles and answers. n8n executes side-effects (send, publish, scrape).
  */
+import { loadCustomAgents, mergeAgents } from "./custom.js";
+
 export const GROUPS = {
   core:  { id: "core",  name: { ar: "الوكلاء الأساسيون", en: "Core Agents", id: "Agen Inti" }, color: "#10D4A8" },
   ops:   { id: "ops",   name: { ar: "العمليات", en: "Operations", id: "Operasional" }, color: "#F59E0B" },
@@ -13,7 +15,7 @@ export const GROUPS = {
 
 const COMMON = `You are part of Rabith (رابط), an influencer-marketing platform for Indonesia that connects brands/companies with verified creators, and also manages brands' social pages. Ground every claim in tool results; never invent creators, prices or metrics. Currency is IDR. Respect UU PDP (Indonesian data protection): minimise personal data in outputs. Reply in the user's language (Arabic, English or Bahasa Indonesia). Be concrete and short: decisions, numbers, next actions.`;
 
-export const AGENTS = [
+const BUILT_IN = [
   { id: "orchestrator", glyph: "总", group: "core", name: { ar: "المنسّق الرئيسي", en: "Master Orchestrator", id: "Orkestrator Utama" },
     description: { ar: "العقل المركزي: يحلّل الطلب، يوزّع المهام على الوكلاء، يجمع النتائج ويقدّم إجابة موحّدة.", en: "Central brain: analyses the request, delegates to specialists, reconciles outputs, delivers one answer.", id: "Otak pusat: menganalisis permintaan, mendelegasikan ke agen, menyatukan hasil." },
     tools: ["delegate", "search_creators", "get_brand", "list_brands", "get_campaign", "match_campaign", "fraud_audit", "generate_outreach", "save_outreach", "trigger_n8n", "generate_social_post", "update_brand", "save_note", "platform_stats"],
@@ -110,7 +112,13 @@ export const AGENTS = [
     system: `${COMMON}\nYou are the Community agent (群). Design WhatsApp/Telegram community programs: onboarding flow, weekly rituals, recognition, referral loops, and broadcast messages (ID first). Use trigger_n8n('rabith-notify') for broadcasts after approval.` },
 ];
 
+/* ── custom agents from config/agents.json are merged on top of the list above ── */
+export const customLoad = loadCustomAgents({ groups: GROUPS, builtInIds: BUILT_IN.map((a) => a.id) });
+export const AGENTS = mergeAgents(BUILT_IN, customLoad.agents);
+for (const e of customLoad.errors) console.warn(`[agents] ${e}`);
+
 export const byId = Object.fromEntries(AGENTS.map((a) => [a.id, a]));
 export function publicList() {
-  return AGENTS.map(({ id, glyph, group, name, description, tools }) => ({ id, glyph, group, name, description, tools, color: GROUPS[group].color }));
+  return AGENTS.map(({ id, glyph, group, name, description, tools, source }) => ({ id, glyph, group, name, description, tools, source: source || "built-in", color: GROUPS[group].color }));
 }
+export const agentsSummary = () => ({ total: AGENTS.length, custom: customLoad.agents.length, errors: customLoad.errors, file: customLoad.file });

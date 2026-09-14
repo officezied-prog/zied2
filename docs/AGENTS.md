@@ -37,11 +37,30 @@ Response = `AgentRun`: `plan[]` (the orchestrator's first-turn plan), `steps[]` 
 
 Direct specialist call: `{"agent":"fraud","message":"…","context":{"creatorId":"cr_0007"}}`.
 
-## Adding an agent
-1. Add an entry to `AGENTS` in `registry.js` (id, glyph, group, names in 3 languages, description, tools, system prompt).
-2. If it needs a new capability, add a tool schema + executor in `tools.js`.
-3. For offline mode, add a keyword rule and a `specialistOffline` branch in `orchestrator.js`.
-4. The web app's Agents page renders the registry automatically.
+## Adding an agent — no code required
+
+Copy `config/agents.example.json` to `config/agents.json` (or point `RABITH_AGENTS_FILE` elsewhere) and add an entry:
+
+```json
+[{ "id": "halal", "glyph": "清", "group": "spec",
+   "name": { "ar": "وكيل التوافق الحلال", "en": "Halal Compliance", "id": "Kepatuhan Halal" },
+   "description": { "en": "Reviews products and content for halal compliance." },
+   "tools": ["get_brand", "get_campaign", "save_note"],
+   "system": "You are the Halal Compliance agent (清) at Rabith. …" }]
+```
+
+- `group` is one of `core` `ops` `intel` `spec` `dev`; `tools` may only name tools that exist in `tools.js`.
+- A plain string for `name` / `description` is used for all three languages.
+- **Reusing a built-in id patches that agent** — `{"id": "sales", "system": "…"}` retunes the sales voice and keeps its glyph, group and tools.
+- Invalid entries are skipped and printed at startup; a typo never takes the platform down. The startup line and `GET /agents` (`config` field) report what loaded.
+- New agents appear in the web console automatically, and the orchestrator's `delegate` tool advertises the live roster, so it can hand work to them with no further change.
+
+Walkthrough in Arabic, including how to write a good agent prompt: [`docs/AGENTS-AR.md`](AGENTS-AR.md).
+
+## Adding a capability (code)
+1. Add a tool schema to `TOOL_DEFS` and an executor branch in `execute()` — both in `agents/tools.js`.
+2. Name the tool in the agent's `tools` list.
+3. Optionally add an offline keyword rule and a `specialistOffline` branch in `orchestrator.js` so the tool also works without credentials.
 
 ## Model settings
 `claude-opus-5`, adaptive thinking, effort `high` for the orchestrator and `medium` for delegated specialists, `max_tokens` 16000, prompt caching on the role prompt, server-side refusal fallbacks (`fallbacks: "default"`). Change with `CLAUDE_MODEL` / `CLAUDE_EFFORT`.

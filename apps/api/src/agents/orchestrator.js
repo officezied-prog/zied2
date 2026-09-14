@@ -37,6 +37,19 @@ export async function runAgent({ agent = "orchestrator", message, context = {}, 
   return store.get("runs", run.id);
 }
 
+/** Rewrites the delegate tool so its description and enum list the agents that actually exist right now. */
+function withRoster(tools) {
+  const specialists = AGENTS.filter((a) => a.id !== "orchestrator");
+  return tools.map((t) => t.name !== "delegate" ? t : {
+    ...t,
+    description: `Delegate a sub-task to a specialist agent. Returns the specialist's answer. Call several in parallel when sub-tasks are independent.\nAvailable specialists:\n${specialists.map((a) => `- ${a.id} (${a.glyph}): ${a.description?.en || ""}`).join("\n")}`,
+    input_schema: { type: "object", properties: {
+      agent: { type: "string", enum: specialists.map((a) => a.id), description: "Specialist id from the list above." },
+      task: { type: "string", description: "Clear, self-contained instruction incl. ids (brandId, campaignId, creatorIds) the specialist needs." },
+    }, required: ["agent", "task"] },
+  });
+}
+
 function makeCtx(def, run, context, depth) {
   return {
     agentId: def.id,
@@ -56,7 +69,7 @@ function record(run, step) {
 
 /* ───────────── Claude mode ───────────── */
 async function runClaude(def, run, message, context, depth) {
-  const tools = toolsFor(def);
+  const tools = withRoster(toolsFor(def));
   const ctx = makeCtx(def, run, context, depth);
   const system = [
     { type: "text", text: def.system, cache_control: { type: "ephemeral" } },
@@ -248,7 +261,13 @@ async function specialistOffline(def, message, context, call, c) {
     case "campaign": return L(c, "خطة الحملة: الهدف → KPI → تقسيم الميزانية (70% أتعاب، 15% إنتاج، 10% ترويج، 5% احتياط) → جدول 4 أسابيع → مزيج نانو/مايكرو → تتبع UTM وأكواد.", "Campaign plan: objective → KPI → budget split (70% fees, 15% production, 10% boosting, 5% contingency) → 4-week timeline → nano/micro mix → UTM + promo codes.", "Rencana kampanye: tujuan → KPI → pembagian anggaran (70% fee, 15% produksi, 10% boosting, 5% cadangan) → timeline 4 minggu → mix nano/micro → UTM + kode promo.");
     case "marketing": return L(c, "تقويم أسبوعي: الاثنين تعليمي، الأربعاء قصة نجاح، الجمعة ترند، الأحد خلف الكواليس. أفضل الأوقات 12:00 و19:00 WIB.", "Weekly calendar: Mon educational, Wed success story, Fri trend, Sun behind-the-scenes. Best times 12:00 & 19:00 WIB.", "Kalender mingguan: Sen edukasi, Rab kisah sukses, Jum tren, Min behind-the-scenes. Waktu terbaik 12:00 & 19:00 WIB.");
     case "content": return L(c, "بريف المحتوى: الخطاف، 3 رسائل أساسية، افعل/لا تفعل، CTA، الهاشتاقات، مدة 15–45 ثانية.", "Content brief: hook, 3 key messages, do/don't, CTA, hashtags, 15–45s.", "Brief konten: hook, 3 pesan kunci, do/don't, CTA, hashtag, 15–45 detik.");
-    default: return L(c, "كيف أستطيع المساعدة؟ اسأل عن المؤثرين، الشركات، الحملات، الرسائل، الاحتيال، العقود أو إدارة الصفحات.", "How can I help? Ask about creators, brands, campaigns, outreach, fraud, contracts or page management.", "Ada yang bisa dibantu? Tanyakan tentang kreator, brand, kampanye, outreach, fraud, kontrak, atau pengelolaan halaman.");
+    default: {
+      // Custom agents have no offline rule of their own: state what they are and what they would reach for.
+      const own = def.description?.[c.lang] || def.description?.en || "";
+      const tools = (def.tools || []).join(", ");
+      if (def.source === "custom") return `${own}\n\n` + L(c, `هذا وكيل مخصّص. بلا مفتاح Claude لا يمكنه التفكير، لكنه سيستخدم عند التفعيل: ${tools}`, `This is a custom agent. Without a Claude key it cannot reason, but once enabled it will use: ${tools}`, `Ini agen kustom. Tanpa kunci Claude ia belum bisa bernalar, tetapi akan memakai: ${tools}`);
+      return L(c, "كيف أستطيع المساعدة؟ اسأل عن المؤثرين، الشركات، الحملات، الرسائل، الاحتيال، العقود أو إدارة الصفحات.", "How can I help? Ask about creators, brands, campaigns, outreach, fraud, contracts or page management.", "Ada yang bisa dibantu? Tanyakan tentang kreator, brand, kampanye, outreach, fraud, kontrak, atau pengelolaan halaman.");
+    }
   }
 }
 

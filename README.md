@@ -60,6 +60,7 @@ docker compose up --build       # API on :8787, n8n on :5678 (import n8n/workflo
 | `apps/api/src/algorithms/matching.js` | 8-factor creator↔campaign scoring + budget-constrained plan (greedy knapsack on quality-weighted reach per rupiah). |
 | `apps/api/src/algorithms/outreach.js` | Template engine for the outreach playbook (beauty / FMCG / agency / Gulf-Arabic / local-Indonesian / follow-ups / creator WhatsApp invite). |
 | `apps/api/src/agents/registry.js` | The 21 agents: role prompts + allowed tools, 5 groups. |
+| `config/agents.json` | Your own agents — add or retune agents without touching code (`config/agents.example.json` to start). |
 | `apps/api/src/agents/tools.js` | Tool schemas (Claude tool-use) + executors over the store, algorithms and n8n. |
 | `apps/api/src/agents/orchestrator.js` | Plan → Act → Reflect loop with parallel tool calls and delegation; offline planner. |
 | `apps/api/src/integrations/` | `claude.js` (model, effort, server-side refusal fallbacks), `n8n.js` (outbound webhooks), `vision.js` (image analysis: brand safety, product detection, quality, authenticity). |
@@ -79,6 +80,8 @@ docker compose up --build       # API on :8787, n8n on :5678 (import n8n/workflo
 | Intelligence | 析 Business Analytics · 销 Sales & Growth · 留 Retention & Upsell |
 | Specialized | 播 Live Commerce · 谈 Negotiation · 危 Crisis Management · 迎 Onboarding |
 | Development | 势 Trend Intelligence · 育 Creator Development · 策 Brand Strategy · 群 Community |
+
+Build your own with a JSON file — see [`docs/AGENTS-AR.md`](docs/AGENTS-AR.md) (Arabic walkthrough) or the English section in `docs/AGENTS.md`.
 
 The orchestrator receives a request (from the web app, from n8n, or from you), plans, delegates sub-tasks in parallel via the `delegate` tool, reconciles, and answers. Side-effects (send, publish, notify) always go through n8n so a human can approve drafts first. See `docs/AGENTS.md`.
 

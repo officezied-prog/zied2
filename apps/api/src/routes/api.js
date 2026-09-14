@@ -4,7 +4,7 @@ import { computeFraud, explainFraud } from "../algorithms/fraud.js";
 import { matchCampaign } from "../algorithms/matching.js";
 import { TEMPLATES, followUpFor, deriveVars, render } from "../algorithms/outreach.js";
 import { searchCreators, generateOutreach, stats, execute } from "../agents/tools.js";
-import { publicList, GROUPS } from "../agents/registry.js";
+import { publicList, GROUPS, agentsSummary } from "../agents/registry.js";
 import { runAgent } from "../agents/orchestrator.js";
 import { createMessage, isOnline, textOf, MODEL } from "../integrations/claude.js";
 import * as n8n from "../integrations/n8n.js";
@@ -134,7 +134,7 @@ api.post("/outreach/:id/send", wrap(async (req, res) => {
 }));
 
 /* ── agents ── */
-api.get("/agents", (_req, res) => res.json({ items: publicList(), groups: GROUPS, mode: isOnline() ? "claude" : "offline" }));
+api.get("/agents", (_req, res) => res.json({ items: publicList(), groups: GROUPS, mode: isOnline() ? "claude" : "offline", config: agentsSummary() }));
 api.post("/agent/run", wrap(async (req, res) => {
   const { agent = "orchestrator", message, context = {} } = req.body || {};
   if (!message || typeof message !== "string") return err(res, 400, "validation", "message is required");
