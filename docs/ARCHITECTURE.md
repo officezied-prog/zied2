@@ -6,7 +6,7 @@
 2. **API + brain** — `apps/api` (Node 22, Express, ESM).
    - `store/` JSON document store with atomic writes (swap for Postgres later; the API only uses `all/get/insert/update/upsert/remove`).
    - `algorithms/` pure, tested functions: fraud scoring, matching + budget plan, outreach templating.
-   - `agents/` the 21-agent team. `registry.js` = who they are; `tools.js` = what they can do; `orchestrator.js` = how they run.
+   - `agents/` the 22-agent team (staff-only surface). `registry.js` = who they are; `tools.js` = what they can do; `orchestrator.js` = how they run.
    - `auth/` accounts and sessions: scrypt hashes, bearer tokens (only the SHA-256 is stored), roles, per-role data scoping.
    - `integrations/` Claude (model, effort, fallbacks), n8n (outbound), vision.
 3. **Hands** — n8n workflows (`n8n/workflows`). Every side-effect with the outside world (email, WhatsApp, LinkedIn, Instagram/TikTok publishing, scraping, notifications) lives here, so channel credentials never touch the API and every send is auditable in n8n executions.

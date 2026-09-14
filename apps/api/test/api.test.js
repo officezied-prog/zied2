@@ -45,8 +45,9 @@ test("outreach generate → save → send (n8n unconfigured ⇒ scheduled) → b
   const sent = await j(`/outreach/${s.body.id}/send`, { method: "POST", body: {} }); assert.equal(sent.body.status, "scheduled"); assert.equal(sent.body.n8n.skipped, true);
   const b = await j("/brands/br_0003"); assert.equal(b.body.pipeline, "contacted");
 });
-test("agents list has 21 agents in 5 groups; orchestrator run works offline (ar)", async () => {
-  const a = await j("/agents"); assert.equal(a.body.items.length, 21); assert.equal(Object.keys(a.body.groups).length, 5);
+test("agents list has 22 agents in 5 groups; orchestrator run works offline (ar)", async () => {
+  const a = await j("/agents"); assert.equal(a.body.items.length, 22); assert.equal(Object.keys(a.body.groups).length, 5);
+  assert.ok(a.body.items.some((x) => x.id === "halal"));
   const r = await j("/agent/run", { method: "POST", body: { message: "ابحث عن 3 مؤثر نانو للتجميل في جاكرتا" } });
   assert.equal(r.status, 200); assert.equal(r.body.status, "done"); assert.equal(r.body.mode, "offline"); assert.ok(r.body.plan.length >= 1); assert.ok(r.body.steps.some((s) => s.tool === "match_campaign")); assert.ok(r.body.output.includes("@"));
   const runs = await j("/agent/runs?limit=5"); assert.ok(runs.body.items.some((x) => x.id === r.body.id));

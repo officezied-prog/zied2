@@ -1,7 +1,7 @@
 # رابط · Rabith — AI-orchestrated Influencer × Brand Platform (Indonesia)
 
 <p dir="rtl">
-منصة تربط العلامات التجارية والشركات والوكالات بصنّاع المحتوى الموثّقين في إندونيسيا، ويديرها فريق من 21 وكيلًا ذكيًا بعقل
+منصة تربط العلامات التجارية والشركات والوكالات بصنّاع المحتوى الموثّقين في إندونيسيا، ويديرها من الخلف فريق من 22 وكيلًا ذكيًا (لا يراه العملاء) بعقل
 </p>
 
 Claude
@@ -55,11 +55,11 @@ docker compose up --build       # API on :8787, n8n on :5678 (import n8n/workflo
 
 | Path | What |
 |---|---|
-| `apps/web/` | Single-page app (AR/EN/ID, RTL) — Discover, Brands CRM, Campaigns, Outreach, Agents console, Social, Legal, Pricing. Works online (API) and offline (embedded seed + localStorage). |
+| `apps/web/` | Single-page app (AR/EN/ID, RTL) — Discover, Brands CRM, Campaigns, Outreach, Social, Legal, Pricing, plus the staff-only operations room. Works online (API) and offline (embedded seed + localStorage). |
 | `apps/api/src/algorithms/fraud.js` | Fake-follower / engagement-pod / follower-spike scoring (0–100) with explainable flags. |
 | `apps/api/src/algorithms/matching.js` | 8-factor creator↔campaign scoring + budget-constrained plan (greedy knapsack on quality-weighted reach per rupiah). |
 | `apps/api/src/algorithms/outreach.js` | Template engine for the outreach playbook (beauty / FMCG / agency / Gulf-Arabic / local-Indonesian / follow-ups / creator WhatsApp invite). |
-| `apps/api/src/agents/registry.js` | The 21 agents: role prompts + allowed tools, 5 groups. |
+| `apps/api/src/agents/registry.js` | The 22 agents: role prompts + allowed tools, 5 groups. |
 | `config/agents.json` | Your own agents — add or retune agents without touching code (`config/agents.example.json` to start). |
 | `apps/api/src/agents/tools.js` | Tool schemas (Claude tool-use) + executors over the store, algorithms and n8n. |
 | `apps/api/src/agents/orchestrator.js` | Plan → Act → Reflect loop with parallel tool calls and delegation; offline planner. |
@@ -71,19 +71,19 @@ docker compose up --build       # API on :8787, n8n on :5678 (import n8n/workflo
 | `docs/` | `API.md`, `ARCHITECTURE.md`, `AGENTS.md`, `N8N.md`. |
 | `legacy/lamha-mobile.html` | The unrelated file that was previously at the repo root (kept untouched). |
 
-## The agent team (总 + 20)
+## The agent team (总 + 21) — staff only
 
 | Group | Agents |
 |---|---|
 | Core | 配 Discovery & Matching · 创 Content Studio · 约 Legal & Contracts · 智 Campaign Manager · 服 Support · 宣 Marketing & Social Pages |
 | Operations | 财 Finance & Payments · 质 Quality Control · 防 Fraud Surveillance |
 | Intelligence | 析 Business Analytics · 销 Sales & Growth · 留 Retention & Upsell |
-| Specialized | 播 Live Commerce · 谈 Negotiation · 危 Crisis Management · 迎 Onboarding |
+| Specialized | 播 Live Commerce · 谈 Negotiation · 危 Crisis Management · 迎 Onboarding · 清 Halal Compliance |
 | Development | 势 Trend Intelligence · 育 Creator Development · 策 Brand Strategy · 群 Community |
 
 Build your own with a JSON file — see [`docs/AGENTS-AR.md`](docs/AGENTS-AR.md) (Arabic walkthrough) or the English section in `docs/AGENTS.md`.
 
-The orchestrator receives a request (from the web app, from n8n, or from you), plans, delegates sub-tasks in parallel via the `delegate` tool, reconciles, and answers. Side-effects (send, publish, notify) always go through n8n so a human can approve drafts first. See `docs/AGENTS.md`.
+The agent team is **internal**: the operations room and everything about agents is visible only to `admin` (staff) accounts, and `/api/agents` + `/api/agent/*` refuse a signed-in customer. Brands and creators see a plain influencer-marketing platform. The orchestrator receives a request (from the web app, from n8n, or from you), plans, delegates sub-tasks in parallel via the `delegate` tool, reconciles, and answers. Side-effects (send, publish, notify) always go through n8n so a human can approve drafts first. See `docs/AGENTS.md`.
 
 ## Configuration
 

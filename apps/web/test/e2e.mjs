@@ -20,7 +20,8 @@ try {
   check("mode chip", MODE === "online" ? chip.includes("online") : chip.includes("offline"), chip);
   // Home
   const stats = await page.locator("#home-stats .counter-num").allTextContents(); check("home stats", Number(stats[0].replace(/,/g, "")) >= 120, stats.join("/"));
-  check("team strip", (await page.locator("#team-strip .group-card").count()) === 5); await shot("1-home");
+  check("ops room hidden from customers", !(await page.locator("#team-strip").isVisible()) && !(await page.locator('.nav-tab[data-page="agents"]').isVisible()));
+  await shot("1-home");
   // Discover
   await page.click('.nav-tab[data-page="discover"]'); await page.waitForTimeout(600);
   const n0 = await page.locator("#disc-grid .creator-card").count(); check("discover cards", n0 === 24, String(n0));
@@ -47,8 +48,13 @@ try {
   const subj = await page.locator("#o-preview .subj").textContent(); check("outreach preview", subj.length > 5 && !subj.includes("{{"), subj.slice(0, 50));
   await page.click('[data-action="o-save"]'); await page.waitForTimeout(500); await page.click('[data-itab="o-seq"]'); await page.waitForTimeout(500); check("sequence list", (await page.locator(".seq-item").count()) >= 1);
   await page.click('[data-itab="o-tpl"]'); await page.waitForTimeout(300); check("templates", (await page.locator(".tpl-card").count()) === 11); await shot("5-outreach");
-  // Agents
-  await page.click('.nav-tab[data-page="agents"]'); await page.waitForTimeout(500); check("21 agents", (await page.locator(".agent-tile").count()) === 21);
+  // Ops room — staff only, so sign in as the demo admin first
+  await page.click("#auth-btn"); await page.waitForTimeout(400);
+  await page.fill("#a-email", "admin@rabith.id"); await page.fill("#a-password", "rabith-admin");
+  await page.click('[data-auth="submit"]'); await page.waitForTimeout(1400);
+  const staffHidden = await page.$$eval("[data-staff]", (els) => els.map((e) => e.hidden));
+  check("ops room appears for staff", (await page.locator('.nav-tab[data-page="agents"]').isVisible()) && staffHidden.every((h) => h === false), `${staffHidden.length} staff surfaces`);
+  await page.click('.nav-tab[data-page="agents"]'); await page.waitForTimeout(500); check("22 agents", (await page.locator(".agent-tile").count()) === 22);
   await page.locator("[data-quick='q1']").click(); await page.waitForTimeout(MODE === "online" ? 3000 : 1500);
   const bot = await page.locator(".msg.bot").last().textContent(); check("agent reply", bot.includes("@") && (await page.locator(".msg.bot .step").count()) >= 1, bot.slice(0, 60).replace(/\n/g, " "));
   check("runs list", (await page.locator(".run-item").count()) >= 1); await shot("6-agents");

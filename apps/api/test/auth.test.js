@@ -135,6 +135,27 @@ test("brand accounts only see their own brand, campaigns and outreach", async ()
   assert.ok((await j("/campaigns")).body.total >= 1, "the anonymous demo still sees everything");
 });
 
+test("the agent console is staff-only: customers are refused, machines and the open demo are not", async () => {
+  const brand = await register({ email: "nosee@test.id" });
+  assert.equal((await j("/agents", { token: brand.body.token })).status, 403, "a brand account must not even see the roster");
+  assert.equal((await j("/agent/run", { method: "POST", token: brand.body.token, body: { message: "hi" } })).status, 403);
+  assert.equal((await j("/agent/runs", { token: brand.body.token })).status, 403);
+
+  const admin = await j("/auth/login", { method: "POST", body: { email: "admin@rabith.id", password: "rabith-admin" } });
+  assert.equal((await j("/agents", { token: admin.body.token })).status, 200);
+  assert.equal((await j("/agent/run", { method: "POST", token: admin.body.token, body: { message: "platform report", context: { lang: "en" } } })).status, 200);
+
+  assert.equal((await j("/agents")).status, 200, "the anonymous open demo keeps working");
+
+  process.env.RABITH_AUTH_REQUIRED = "1";
+  process.env.RABITH_WEBHOOK_SECRET = "s3cret";
+  try {
+    assert.equal((await j("/agents")).status, 401, "with sign-in required, anonymous access closes");
+    const viaSecret = await fetch(base + "/agent/run", { method: "POST", headers: { "content-type": "application/json", "x-rabith-secret": "s3cret" }, body: JSON.stringify({ message: "report", context: { lang: "en" } }) });
+    assert.equal(viaSecret.status, 200, "n8n calls in with the shared secret, not a session");
+  } finally { delete process.env.RABITH_AUTH_REQUIRED; delete process.env.RABITH_WEBHOOK_SECRET; }
+});
+
 test("RABITH_AUTH_REQUIRED gates every write but leaves reads and webhooks alone", async () => {
   const r = await register({ email: "gate@test.id" });
   process.env.RABITH_AUTH_REQUIRED = "1";

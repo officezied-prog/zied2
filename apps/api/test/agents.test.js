@@ -9,26 +9,33 @@ process.env.RABITH_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "rabith-agen
 const cfgDir = fs.mkdtempSync(path.join(os.tmpdir(), "rabith-cfg-"));
 const cfg = path.join(cfgDir, "agents.json");
 fs.writeFileSync(cfg, JSON.stringify([
-  { id: "halal", glyph: "清", group: "spec", name: { ar: "الحلال", en: "Halal Compliance", id: "Halal" }, description: { en: "Checks halal compliance." }, tools: ["get_brand", "save_note"], system: "You are the Halal agent." },
+  { id: "custom_qc", glyph: "查", group: "spec", name: { ar: "تدقيق", en: "Custom QC", id: "QC Kustom" }, description: { en: "Checks halal compliance." }, tools: ["get_brand", "save_note"], system: "You are the custom QC agent." },
   { id: "sales", system: "Retuned sales voice." },                                  // override: keeps the built-in tools
   { id: "onelang", glyph: "一", group: "dev", name: "One Language", description: "Same text in every language.", tools: ["platform_stats"], system: "prompt" },
   { id: "BAD ID", glyph: "x", group: "spec", name: "x", system: "x" },              // invalid id
   { id: "nogroup", glyph: "x", group: "nope", name: "x", system: "x" },             // unknown group
   { id: "notools", glyph: "x", group: "spec", name: "x", system: "x", tools: ["delete_everything"] }, // unknown tool
   { id: "noprompt", glyph: "x", group: "spec", name: "x" },                         // missing system prompt
-  { id: "halal", glyph: "x", group: "spec", name: "x", system: "x" },               // duplicate
+  { id: "custom_qc", glyph: "x", group: "spec", name: "x", system: "x" },          // duplicate
 ]));
 process.env.RABITH_AGENTS_FILE = cfg;
 const { AGENTS, byId, agentsSummary, publicList } = await import("../src/agents/registry.js");
 const { runAgent } = await import("../src/agents/orchestrator.js");
 
+test("the built-in halal agent ships with the platform", () => {
+  const h = byId.halal;
+  assert.equal(h.glyph, "清"); assert.equal(h.group, "spec"); assert.equal(h.source, undefined, "it is built in, not loaded from config");
+  assert.ok(h.tools.includes("get_campaign"));
+  assert.match(h.system, /BPJPH/);
+});
+
 test("a custom agent joins the roster with its own glyph, group and tools", () => {
-  const a = byId.halal;
+  const a = byId.custom_qc;
   assert.ok(a, "the custom agent must be registered");
-  assert.equal(a.glyph, "清"); assert.equal(a.group, "spec"); assert.equal(a.source, "custom");
+  assert.equal(a.glyph, "查"); assert.equal(a.group, "spec"); assert.equal(a.source, "custom");
   assert.deepEqual(a.tools, ["get_brand", "save_note"]);
-  assert.equal(a.name.en, "Halal Compliance");
-  assert.equal(AGENTS.length, 21 + 2, "two valid new agents on top of the built-in 21");
+  assert.equal(a.name.en, "Custom QC");
+  assert.equal(AGENTS.length, 22 + 2, "two valid new agents on top of the built-in 22");
 });
 
 test("a plain string name or description fills all three languages", () => {
@@ -56,13 +63,13 @@ test("every broken entry is reported and skipped, never fatal", () => {
 
 test("the public listing marks where each agent came from", () => {
   const list = publicList();
-  assert.equal(list.find((a) => a.id === "halal").source, "custom");
+  assert.equal(list.find((a) => a.id === "custom_qc").source, "custom");
   assert.equal(list.find((a) => a.id === "discovery").source, "built-in");
   assert.ok(list.every((a) => a.color));
 });
 
 test("a custom agent runs and explains itself while the brain is offline", async () => {
-  const run = await runAgent({ agent: "halal", message: "check this brand", context: { lang: "en" } });
+  const run = await runAgent({ agent: "custom_qc", message: "check this brand", context: { lang: "en" } });
   assert.equal(run.status, "done");
   assert.match(run.output, /Checks halal compliance/);
   assert.match(run.output, /get_brand, save_note/);

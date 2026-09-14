@@ -1,5 +1,7 @@
 # The Rabith Agent Team
 
+**The agent team is staff-only.** The operations room is hidden from the web app unless an `admin` account is signed in, and `/api/agents` and `/api/agent/*` answer only staff, machine callers holding the n8n secret, or the anonymous open demo. Customers never see that agents exist.
+
 The orchestrator (总) is the only agent the outside world talks to. It uses the `delegate` tool to run specialists as child runs (max depth 2), executes independent tool calls in parallel, and reconciles conflicting advice with a bias to caution (fraud, legal, finance override growth).
 
 | id | Glyph | Group | Mission | Tools |
@@ -21,6 +23,7 @@ The orchestrator (总) is the only agent the outside world talks to. It uses the
 | negotiation | 谈 | spec | Rates, terms, bonus structures | search_creators, get_campaign |
 | crisis | 危 | spec | 24h playbooks, statements, founder alert | save_note, trigger_n8n |
 | onboarding | 迎 | spec | Checklists, WhatsApp invites | update_brand, generate_outreach |
+| halal | 清 | spec | BPJPH/MUI certification, ingredients, claims and content fit | get_brand, get_campaign, search_creators, save_note, trigger_n8n |
 | trend | 势 | dev | Seasonal moments, formats | search_creators |
 | creatordev | 育 | dev | Academy coaching | search_creators, fraud_audit |
 | strategy | 策 | dev | 90-day Indonesia GTM (Gulf bridge) | list_brands, platform_stats |

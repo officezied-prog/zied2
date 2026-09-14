@@ -504,3 +504,5 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
 .user-row.suspended{opacity:.55}
 /* the display rules above beat the UA [hidden] rule, so restate it for the toggled elements */
 .nav-tab[hidden],.user-chip[hidden],#auth-btn[hidden]{display:none!important}
+/* staff-only surfaces stay out of the customer-facing app until a team member signs in */
+[data-staff][hidden]{display:none!important}

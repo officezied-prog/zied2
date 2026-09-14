@@ -29,6 +29,8 @@ api.use("/auth", auth);
 api.use((req, res, next) => {
   if (req.method === "GET" || req.method === "OPTIONS") return next();
   if (!authRequired() || req.path.startsWith("/webhooks/")) return next();
+  const secret = process.env.RABITH_WEBHOOK_SECRET;
+  if (secret && req.get("x-rabith-secret") === secret) return next(); // n8n authenticates with the shared secret, not a session
   return requireAuth(req, res, next);
 });
 
@@ -133,16 +135,25 @@ api.post("/outreach/:id/send", wrap(async (req, res) => {
   res.json(updated);
 }));
 
-/* ── agents ── */
-api.get("/agents", (_req, res) => res.json({ items: publicList(), groups: GROUPS, mode: isOnline() ? "claude" : "offline", config: agentsSummary() }));
-api.post("/agent/run", wrap(async (req, res) => {
+/* ── agents: the operations room, not a customer-facing surface ──
+   Allowed for staff (admin), for machine callers holding the n8n secret, and for the
+   anonymous open demo. A signed-in customer is refused. */
+function staffOnly(req, res, next) {
+  if (req.user) return req.user.role === "admin" ? next() : err(res, 403, "forbidden", "the agent console is staff only");
+  const secret = process.env.RABITH_WEBHOOK_SECRET;
+  if (secret && req.get("x-rabith-secret") === secret) return next();
+  return authRequired() ? err(res, 401, "unauthorized", "sign in to continue") : next();
+}
+
+api.get("/agents", staffOnly, (_req, res) => res.json({ items: publicList(), groups: GROUPS, mode: isOnline() ? "claude" : "offline", config: agentsSummary() }));
+api.post("/agent/run", staffOnly, wrap(async (req, res) => {
   const { agent = "orchestrator", message, context = {} } = req.body || {};
   if (!message || typeof message !== "string") return err(res, 400, "validation", "message is required");
   const run = await runAgent({ agent, message, context: { ...context, ...(req.user ? { userId: req.user.id, userRole: req.user.role, brandId: context.brandId || req.user.brandId || undefined } : {}) } });
   res.json(run);
 }));
-api.get("/agent/runs", (req, res) => { const items = [...store.all("runs")].filter((r) => !r.parentRunId || req.query.all).reverse().slice(0, Number(req.query.limit || 30)); res.json({ items }); });
-api.get("/agent/runs/:id", (req, res) => { const r = store.get("runs", req.params.id); if (!r) return err(res, 404, "not_found", "run not found"); const children = store.all("runs").filter((x) => x.parentRunId === r.id); res.json({ ...r, children }); });
+api.get("/agent/runs", staffOnly, (req, res) => { const items = [...store.all("runs")].filter((r) => !r.parentRunId || req.query.all).reverse().slice(0, Number(req.query.limit || 30)); res.json({ items }); });
+api.get("/agent/runs/:id", staffOnly, (req, res) => { const r = store.get("runs", req.params.id); if (!r) return err(res, 404, "not_found", "run not found"); const children = store.all("runs").filter((x) => x.parentRunId === r.id); res.json({ ...r, children }); });
 
 /* ── social ── */
 api.get("/social/posts", (req, res) => { let items = store.all("posts"); if (req.query.status) items = items.filter((p) => p.status === req.query.status); if (req.query.platform) items = items.filter((p) => p.platform === req.query.platform); if (req.query.due) { const now = new Date().toISOString(); items = items.filter((p) => p.status === "scheduled" && p.scheduledAt && p.scheduledAt <= now); } res.json({ items: items.sort((a, b) => (a.scheduledAt || "") < (b.scheduledAt || "") ? -1 : 1), total: items.length }); });
