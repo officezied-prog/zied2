@@ -37,6 +37,7 @@ cp .env.example .env            # add ANTHROPIC_API_KEY to enable the Claude bra
 npm install
 npm run dev                     # API + web app on http://localhost:8787
 npm test                        # 27 tests: fraud, matching, outreach, HTTP API
+# Browser end-to-end (needs Playwright): cd apps/web && node test/e2e.mjs online|offline
 ```
 
 Open http://localhost:8787 — the web app is served by the API. Without an API key the platform runs in **offline mode**: same data, same tools, a rule-based planner instead of Claude. Without `N8N_WEBHOOK_BASE` all sends/publishes are recorded as *scheduled* instead of executed.

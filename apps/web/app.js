@@ -465,7 +465,7 @@ function renderChat() {
   log.innerHTML = S.chat.map((m) => m.role === "user" ? `<div class="msg user">${esc(m.text)}</div>` : m.pending ? `<div class="msg bot"><span class="typing"><i></i><i></i><i></i></span> <span class="tiny muted">${t("thinking")}</span></div>` : botMsg(m)).join("");
   log.scrollTop = log.scrollHeight;
 }
-function md(s = "") { return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/_(.+?)_/g, "<i>$1</i>"); }
+function md(s = "") { return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|\s)_([^_\n]+?)_(?=\s|$)/gm, "$1<i>$2</i>"); }
 function botMsg(m) {
   const r = m.run; if (!r) return `<div class="msg bot"><div class="out">${md(m.text)}</div></div>`;
   const ag = (id) => S.agents.find((a) => a.id === id) || { glyph: "•", name: { en: id }, color: "#7C5CF8" };
