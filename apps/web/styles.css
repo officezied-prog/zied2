@@ -480,8 +480,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
 .user-chip{display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--border2);border-radius:999px;padding:3px 10px 3px 3px;transition:.15s;max-width:190px}
 [dir="rtl"] .user-chip{padding:3px 3px 3px 10px}
 .user-chip:hover{border-color:var(--purple);background:var(--purple3)}
-.user-chip .uav{width:26px;height:26px;border-radius:50%;overflow:hidden;background:var(--s3);flex-shrink:0;display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--purple2)}
-.user-chip .uav img{width:100%;height:100%}
+.user-chip .uav{position:relative;width:26px;height:26px;border-radius:50%;overflow:hidden;background:var(--s3);flex-shrink:0;display:grid;place-items:center;font-size:10px;font-weight:800;color:var(--purple2)}
+.user-chip .uav img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .user-chip .uinfo{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.15}
 .user-chip .un{font-size:11.5px;font-weight:700;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .user-chip .ur{font-size:9.5px;color:var(--purple2);text-transform:uppercase;letter-spacing:.06em;font-weight:700}

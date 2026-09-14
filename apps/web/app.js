@@ -620,8 +620,12 @@ function refreshAuthUI() {
     btn.hidden = true; chip.hidden = false;
     $("#user-name").textContent = S.user.name;
     $("#user-role").textContent = roleLabel(S.user.role);
-    const av = $("#user-avatar");
-    if (S.user.avatar) { av.src = S.user.avatar; av.hidden = false; } else av.hidden = true;
+    const uav = $("#user-chip .uav"); // initials stay visible if the avatar service is unreachable
+    uav.textContent = S.user.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    if (S.user.avatar) {
+      const img = document.createElement("img"); img.id = "user-avatar"; img.alt = "";
+      img.onerror = () => img.remove(); img.src = S.user.avatar; uav.appendChild(img);
+    }
   } else { btn.hidden = false; chip.hidden = true; }
   applyRoleUI();
 }
@@ -777,8 +781,8 @@ async function renderAdminUsers() {
       <div class="ua">${x.id === S.user.id ? `<span class="badge b-gray">${esc(t("account"))}</span>` : `
         <select class="sel" data-auth="user-role" data-id="${x.id}" style="padding:4px 8px;font-size:11px">${["admin", "brand", "creator"].map((r) => `<option value="${r}"${r === x.role ? " selected" : ""}>${esc(roleLabel(r))}</option>`).join("")}</select>
         <button class="btn btn-ghost btn-xs" data-auth="user-suspend" data-id="${x.id}" data-status="${x.status === "active" ? "suspended" : "active"}">${esc(x.status === "active" ? t("suspend") : t("activate"))}</button>
-        <button class="btn btn-ghost btn-xs" data-auth="user-password" data-id="${x.id}">${esc(t("reset_pw"))}</button>
-        <button class="btn btn-danger btn-xs" data-auth="user-delete" data-id="${x.id}">✕</button>`}</div></div>`).join("");
+        <button class="btn btn-ghost btn-xs" data-auth="user-password" data-id="${x.id}" title="${esc(t("reset_pw"))}" aria-label="${esc(t("reset_pw"))}">🔑</button>
+        <button class="btn btn-danger btn-xs" data-auth="user-delete" data-id="${x.id}" title="${esc(t("delete_user"))}" aria-label="${esc(t("delete_user"))}">✕</button>`}</div></div>`).join("");
   } catch (e) { box.innerHTML = `<div class="auth-err">${esc(e.message)}</div>`; }
 }
 
